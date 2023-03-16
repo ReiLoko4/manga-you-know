@@ -1,33 +1,71 @@
 # Graphic User Interface for the project
 
-import customtkinter as ctk
+from customtkinter import *
+from PIL import Image
+from MYK import *
 
+set_appearance_mode("System")
+set_default_color_theme("green")
 
-ctk.set_appearance_mode("System")
-ctk.set_default_color_theme("green")
+def window_close():
+    root.iconify()
 
-def print_nothing_to_use():
-    print("nothing")
-
-root = ctk.CTk()
-root.geometry("700x450")
+root = CTk()
+root.geometry("700x460")
 root.resizable(width=False, height=False)
 root.wm_title("Manga You Know")
 root.iconbitmap(bitmap="assets/pasta_vermelha.ico")
 
+tabs = CTkTabview(master=root, width=500, height=450)
+tabs.pack()
+tabs.add("Favoritos")
+tabs.add("Adicionar")
+tabs.add("Configurações")
 
-frame = ctk.CTkFrame(master=root, width=200, height=400).place(x=90, y=9)
 
-label = ctk.CTkLabel(master=frame, text="Downloand any mangas from Manga Livre")
-label.pack(pady=12, padx=10)
+# Favoritos display
 
-input = ctk.CTkEntry(master=frame, placeholder_text="Manga link")
-input.pack(pady=12, padx=10)
 
-button = ctk.CTkButton(master=frame, text="Procurar", command=print_nothing_to_use)
-button.pack(pady=12, padx=10)
+tabfav = CTkScrollableFrame(master=tabs.tab("Favoritos"), width=500, height=20000)
+tabfav.pack()
 
-checkbox = ctk.CTkCheckBox(master=frame, text="Save all mangas")
-checkbox.pack(pady=12, padx=10)
+capa = CTkImage(Image.open("C:/Users/thiag/Downloads/onepiece.jpg"), size=(110, 170))
+
+space = 10
+for i in range(3):
+    card1 = CTkFrame(master=tabfav, width=160, height=220)
+    card1.pack(anchor="w", pady=10, padx=5)
+    img1 = CTkLabel(master=card1, text="", image=capa, width=140, height=150)
+    img1.place(x=4, y=4)
+    button1 = CTkButton(master=card1, text="Ver capítulos", width=100)
+    button1.place(x=9, y=185)
+    card2 = CTkFrame(master=tabfav, width=160, height=220)
+    card2.place(x=180, y=space)
+    button2 = CTkButton(master=card2, text="Ver capítulos", width=100)
+    button2.place(x=9, y=185)
+    card3 = CTkFrame(master=tabfav, width=160, height=220)
+    card3.place(x=355,y=space)
+    button3 = CTkButton(master=card3, text="Ver capítulos", width=100)
+    button3.place(x=9, y=185)
+    space+=240
+
+
+# Adicionar display
+
+
+new_fav = CTkEntry(master=tabs.tab("Adicionar"), placeholder_text="https://mangalivre.net/genero/nomeDoManga/idDoManga", width=330)
+new_fav.pack(pady=13,padx=13)
+
+
+# Configurações display
+
+
+always_donwload = CTkCheckBox(master=tabs.tab("Configurações"), text="Sempre baixar novos capítulos")
+always_donwload.pack(pady=13, padx=13)
+save = CTkButton(master=tabs.tab("Configurações"), text="Salvar")
+save.pack(pady=13, padx=13)
+
+btn = CTkButton(master=tabfav, text="sumir", command=window_close)
+btn.pack()
 
 root.mainloop()
