@@ -1,6 +1,5 @@
 # why you see this trash project? I believe you can do more.
 
-from manga_livre_dl import MangaLivreDl as md
 import csv
 
 userManga = [
@@ -11,7 +10,7 @@ userManga = [
     'C:/Users/ReiLoko4/Downloads/covers/one.jpg'
 ]
 
-with open('data.csv', 'a+') as file:
+with open('database/data.csv', 'a+') as file:
     data = csv.writer(file, lineterminator='\n')
     data.writerow(userManga)
 
