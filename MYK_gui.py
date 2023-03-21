@@ -13,7 +13,7 @@ root = CTk()
 root.geometry('800x550+300+80')
 root.resizable(width=False, height=False)
 root.wm_title('Manga You Know')
-root.iconbitmap('assets/pasta_vermelha.ico')
+root.wm_iconbitmap('assets/pasta_vermelha.ico')
 
 
 
@@ -42,7 +42,7 @@ def reader_open():
     reader.geometry('800x545+300+80')
     reader.resizable(width=False, height=False)
     reader.wm_title('Reader')
-    reader.iconbitmap(bitmap='assets/pasta_vermelha.ico')
+    reader.wm_iconbitmap('assets/pasta_vermelha.ico')
 
     def previous_page(page_index_out):
         
