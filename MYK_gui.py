@@ -1,6 +1,8 @@
 # Graphic User Interface for the project
 
 from customtkinter import *
+import os
+from pathlib import Path
 from PIL import Image
 import csv
 from math import ceil
@@ -45,90 +47,20 @@ def reader_open():
     reader.wm_iconbitmap('assets/pasta_vermelha.ico')
     reader.config(bg='black')
 
-    def previous_page(page_index_out):
-        
-        global page_index
-        page_index=page_index_out
-        page_index-=2
-        if (page_index < 0):
-            print('no more chapters, bitch')
-            page_index+=2
-        else:
-            try:
-                first_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg')
-                second_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg')
-                if (first_img.width > first_img.height):
-                    wall = CTkLabel(reader, width=720, height=545, bg_color='black')
-                    wall.place(x=40, y=0)
-                    page_img1 = CTkImage(first_img, size=(673,520))
-                    page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
-                    page1.place(x=65, y=12)
-                    print('primeiro if')
-                    page_index+=1
-                elif (second_img.width > second_img.height):
-                    wall = CTkLabel(reader, width=720, height=545, bg_color='black')
-                    wall.place(x=40, y=0)
-                    page_img1 = CTkImage(second_img, size=(673,520))
-                    page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
-                    page1.place(x=65, y=12)
-                    print(str(first_img.width) + ' ' + str(first_img.height))
-                    page_index+=1
-                    print('segundo if')
-                else:
-                    wall = CTkLabel(reader, width=720, height=545, bg_color='black')
-                    wall.place(x=40, y=0)
-                    page_img1 = CTkImage(first_img, size=(350,545))
-                    page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
-                    page_img2 = CTkImage(second_img, size=(350, 545))
-                    page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
-                    page1.place(x=50, y=0)
-                    page2.place(x=400, y=0)
-            except Exception:
-                print('no back more bitches')
 
-
-    def next_page(page_index_out):
-        global page_index
-        page_index=page_index_out
-        page_index+=2
-        try:
-            first_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg')
-            second_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg')
-            if (first_img.width > first_img.height):
-                wall = CTkLabel(reader, width=720, height=545, bg_color='black')
-                wall.place(x=40, y=0)
-                page_img1 = CTkImage(first_img, size=(673,520))
-                page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
-                page1.place(x=65, y=12)
-                page_index-=1
-                print('primeiro if')
-
-            elif (second_img.width > second_img.height):
-                wall = CTkLabel(reader, width=720, height=545, bg_color='black')
-                wall.place(x=40, y=0)
-                page_img1 = CTkImage(second_img, size=(673,520))
-                page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
-                page1.place(x=65, y=12)
-                page_index-=2
-                print('segundo if')
-            else:
-                wall = CTkLabel(reader, width=720, height=545, bg_color='black')
-                wall.place(x=40, y=0)
-                page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg'), size=(350,545))
-                page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
-                page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg'), size=(350, 545))
-                page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
-                page1.place(x=50, y=0)
-                page2.place(x=400, y=0)
-        except Exception as e:
-            print(e)
-            print('you read the last page, lol')
-            page_index-=2
+    # Caminho para a pasta que contém as imagens
+    path = Path('C:/Users/ReiLoko4/Manga Livre DL/One Punch Man/Chapter 216/')
+    manga_pages = []
+    for i in path.glob('*'):
+        if i.name.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+            manga_pages.append(i)
+    print(manga_pages)
+    
             
 
-    page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/0.jpg'), size=(350,545))
+    page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Punch Man/Chapter 216/00.png'), size=(350,545))
     page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
-    page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/1.jpg'), size=(350, 545))
+    page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Punch Man/Chapter 216/01.png'), size=(350, 545))
     page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
     page1.place(x=400, y=0)
     page2.place(x=50, y=0)
@@ -136,8 +68,8 @@ def reader_open():
    
     previous_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/next.ico'), size=(13,20))
     next_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/previous.ico'), size=(13,20))
-    previous_btn = CTkButton(reader, width=13, height=50, text=None, image=next_img, command=lambda: next_page(page_index))
-    next_btn = CTkButton(reader, width=13, height=50, text=None, image=previous_img, command=lambda: previous_page(page_index))
+    previous_btn = CTkButton(reader, width=13, height=50, text=None, image=next_img,)
+    next_btn = CTkButton(reader, width=13, height=50, text=None, image=previous_img,)
     previous_btn.place(x=5, y=272)
     next_btn.place(x=765, y=272)
     reader.grab_set()
