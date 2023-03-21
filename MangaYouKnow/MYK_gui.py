@@ -10,7 +10,7 @@ set_appearance_mode('System')
 set_default_color_theme('green')
 
 root = CTk()
-root.geometry('800x550')
+root.geometry('800x550+300+80')
 root.resizable(width=False, height=False)
 root.wm_title('Manga You Know')
 root.iconbitmap('assets/pasta_vermelha.ico')
@@ -35,10 +35,11 @@ with open('database/data.csv', mode='r') as data_csv:
 # delete the line 1 because this is just the name of the columns
 del[data[0]]
 
+# manga reader
 page_index = 0
 def reader_open():
     reader = CTkToplevel(root)
-    reader.geometry('800x545')
+    reader.geometry('800x545+300+80')
     reader.resizable(width=False, height=False)
     reader.wm_title('Reader')
     reader.iconbitmap(bitmap='assets/pasta_vermelha.ico')
@@ -99,16 +100,24 @@ def reader_open():
         if root.state != 'normal': root.deiconify()
     reader.protocol('WM_DELETE_WINDOW', lambda: reaper(reader))
 
-
+# manga options
 def options_window(id_database):
     window = CTkToplevel(tabfav)
-    window.geometry('400x400')
+    window.geometry('400x400+500+200')
     window.title('Options')
     for i in range(len(data)):
         if(str(id_database) == data[i][0]): config = data[i]
     print(config)
+    window.grab_set()
+    def reaper(window_out):
+        window_out.destroy()
+        window.grab_release()
+        if root.state != 'normal': root.deiconify()
+    window.protocol('WM_DELETE_WINDOW', lambda: reaper(window))
         
-    
+
+# manga more
+#        
 
 tabfav = CTkScrollableFrame(master=tabs.tab('Favoritos'), width=550, height=20000)
 tabfav.pack()
