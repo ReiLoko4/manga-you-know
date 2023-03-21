@@ -43,6 +43,7 @@ def reader_open():
     reader.resizable(width=False, height=False)
     reader.wm_title('Reader')
     reader.wm_iconbitmap('assets/pasta_vermelha.ico')
+    reader.config(bg='black')
 
     def previous_page(page_index_out):
         
@@ -53,12 +54,37 @@ def reader_open():
             print('no more chapters, bitch')
             page_index+=2
         else:
-            page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg'), size=(350,545))
-            page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
-            page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg'), size=(350, 545))
-            page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
-            page1.place(x=49, y=0)
-            page2.place(x=401, y=0)
+            try:
+                first_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg')
+                second_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg')
+                if (first_img.width > first_img.height):
+                    wall = CTkLabel(reader, width=720, height=545, bg_color='black')
+                    wall.place(x=40, y=0)
+                    page_img1 = CTkImage(first_img, size=(673,520))
+                    page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
+                    page1.place(x=65, y=12)
+                    print('primeiro if')
+                    page_index+=1
+                elif (second_img.width > second_img.height):
+                    wall = CTkLabel(reader, width=720, height=545, bg_color='black')
+                    wall.place(x=40, y=0)
+                    page_img1 = CTkImage(second_img, size=(673,520))
+                    page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
+                    page1.place(x=65, y=12)
+                    print(str(first_img.width) + ' ' + str(first_img.height))
+                    page_index+=1
+                    print('segundo if')
+                else:
+                    wall = CTkLabel(reader, width=720, height=545, bg_color='black')
+                    wall.place(x=40, y=0)
+                    page_img1 = CTkImage(first_img, size=(350,545))
+                    page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
+                    page_img2 = CTkImage(second_img, size=(350, 545))
+                    page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
+                    page1.place(x=50, y=0)
+                    page2.place(x=400, y=0)
+            except Exception:
+                print('no back more bitches')
 
 
     def next_page(page_index_out):
@@ -66,22 +92,46 @@ def reader_open():
         page_index=page_index_out
         page_index+=2
         try:
-            page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg'), size=(350,545))
-            page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
-            page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg'), size=(350, 545))
-            page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
-            page1.place(x=49, y=0)
-            page2.place(x=401, y=0)
-        except Exception:
+            first_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg')
+            second_img = Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg')
+            if (first_img.width > first_img.height):
+                wall = CTkLabel(reader, width=720, height=545, bg_color='black')
+                wall.place(x=40, y=0)
+                page_img1 = CTkImage(first_img, size=(673,520))
+                page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
+                page1.place(x=65, y=12)
+                page_index-=1
+                print('primeiro if')
+
+            elif (second_img.width > second_img.height):
+                wall = CTkLabel(reader, width=720, height=545, bg_color='black')
+                wall.place(x=40, y=0)
+                page_img1 = CTkImage(second_img, size=(673,520))
+                page1 = CTkLabel(reader, width=673, height=520, text='', image=page_img1)
+                page1.place(x=65, y=12)
+                page_index-=2
+                print('segundo if')
+            else:
+                wall = CTkLabel(reader, width=720, height=545, bg_color='black')
+                wall.place(x=40, y=0)
+                page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index+1}.jpg'), size=(350,545))
+                page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
+                page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/{page_index}.jpg'), size=(350, 545))
+                page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
+                page1.place(x=50, y=0)
+                page2.place(x=400, y=0)
+        except Exception as e:
+            print(e)
             print('you read the last page, lol')
             page_index-=2
+            
 
     page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/0.jpg'), size=(350,545))
     page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
     page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/1.jpg'), size=(350, 545))
     page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
-    page1.place(x=401, y=0)
-    page2.place(x=49, y=0)
+    page1.place(x=400, y=0)
+    page2.place(x=50, y=0)
 
    
     previous_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/next.ico'), size=(13,20))
