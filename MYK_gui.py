@@ -1,11 +1,11 @@
 # Graphic User Interface for the project
 
 from customtkinter import *
-import os
+from tkinter import filedialog
 from pathlib import Path
 from PIL import Image
 import csv
-from math import ceil
+from math import ceil, floor
 
 
 set_appearance_mode('System')
@@ -41,7 +41,7 @@ del[data[0]]
 page_index = 0
 def reader_open():
     reader = CTkToplevel(root)
-    reader.geometry('800x545+300+80')
+    reader.geometry('840x545+300+80')
     reader.resizable(width=False, height=False)
     reader.wm_title('Reader')
     reader.wm_iconbitmap('assets/pasta_vermelha.ico')
@@ -52,26 +52,60 @@ def reader_open():
     path = Path('C:/Users/ReiLoko4/Manga Livre DL/One Punch Man/Chapter 216/')
     manga_pages = []
     for i in path.glob('*'):
-        if i.name.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
-            manga_pages.append(i)
-    print(manga_pages)
-    
-            
+        if i.name.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp')):
+            page = Image.open(i)
+            double_page = False
+            if page.width > page.height: double_page = True
+            manga_pages.append([i, page.width, page.height, double_page])
+    if manga_pages[0][3]:
+        img_w = manga_pages[0][1]
+        img_h = manga_pages[0][2]
+        while img_w > 760 or img_h > 545:
+            img_w = img_w/1.005
+            img_h = img_h/1.005
+        print(img_w)
+        page_1_img = CTkImage(Image.open(manga_pages[0][0]), size=(img_w, img_h))
+        page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_w, height=545, bg_color='black')
+        page_1.place(x=floor(800-img_w), y=0)
+    elif manga_pages[1][3]:
+        img_w = manga_pages[0][1]
+        img_h = manga_pages[0][2]
+        if (img_w < 380 or img_h < 545):
+            img_w *= 5
+            img_h *= 5
+        while img_w > 380 or img_h > 545:
+            img_w /= 1.005
+            img_h /= 1.005
+        page_1_img = CTkImage(Image.open(manga_pages[0][0]), size=(img_w, img_h))
+        page_1 = CTkLabel(reader, text=None, image=page_1_img, width=760, height=545, bg_color='black')
+        page_1.place(x=60, y=0)
+    else:
+        img_1_w = manga_pages[0][1]
+        img_2_w = manga_pages[1][1]
+        img_1_h = manga_pages[0][2]
+        img_2_h = manga_pages[1][2]
+        while (img_1_w > 380 or img_1_h > 545 or
+               img_2_w > 380 or img_2_h > 545):
+            img_1_w /= 1.005
+            img_2_w /= 1.005
+            img_1_h /= 1.005
+            img_2_h /= 1.005
+        print(f'{img_1_w} {img_2_w}')
+        page_1_img = CTkImage(Image.open(manga_pages[0][0]), size=(img_1_w, img_1_h))
+        page_2_img = CTkImage(Image.open(manga_pages[1][0]), size=(img_2_w, img_2_h))
+        page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_1_w, height=545, bg_color='black')
+        page_2 = CTkLabel(reader, text=None, image=page_2_img, width=img_2_w, height=545, bg_color='black')
+        # japanese format lol
+        page_1.place(x=floor(801-img_2_w), y=0)
+        page_2.place(x=ceil(420-img_1_w), y=0)
 
-    page_img1 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Punch Man/Chapter 216/00.png'), size=(350,545))
-    page1 = CTkLabel(reader, width=350, height=545, text='', image=page_img1)
-    page_img2 = CTkImage(Image.open(f'C:/Users/ReiLoko4/Manga Livre DL/One Punch Man/Chapter 216/01.png'), size=(350, 545))
-    page2 = CTkLabel(reader, width=350, height=545, text='', image=page_img2)
-    page1.place(x=400, y=0)
-    page2.place(x=50, y=0)
-
-   
     previous_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/next.ico'), size=(13,20))
     next_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/previous.ico'), size=(13,20))
     previous_btn = CTkButton(reader, width=13, height=50, text=None, image=next_img,)
     next_btn = CTkButton(reader, width=13, height=50, text=None, image=previous_img,)
     previous_btn.place(x=5, y=272)
-    next_btn.place(x=765, y=272)
+    next_btn.place(x=807, y=272)
+
     reader.grab_set()
     root.withdraw()
     def reaper(window):
@@ -98,6 +132,29 @@ def options_window(id_database):
     window.protocol('WM_DELETE_WINDOW', lambda: reaper(window))
         
 
+class FolderSelector(CTkFrame):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.path_entry = CTkEntry(self, width=200, state=DISABLED)
+        self.path_entry.pack(side=LEFT, padx=5, pady=5)
+
+        self.select_button = CTkButton(self, text="Selecionar pasta", command=self.select_folder)
+        self.select_button.pack(side=LEFT, padx=5, pady=5)
+
+    def select_folder(self):
+        folder_path = filedialog.askdirectory()
+        if len(folder_path) != 0:
+            self.path_entry.configure(state=NORMAL)
+            self.path_entry.delete(0, END)
+            self.path_entry.insert(0, folder_path)
+            self.path_entry.configure(state=DISABLED)
+
+    def get_folder_path(self):
+        return self.path_entry.get()
+
+
+
 # manga more
 #        
 
@@ -107,6 +164,8 @@ tabfav.pack()
 edit = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/editar.ico'), size=(15,15))
 
 trash = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/lixo.ico'), size=(15,20))
+
+
 
 space = 10
 count = 0
@@ -155,6 +214,8 @@ for i in range(ceil((len(data)) /3)):
 btn = CTkButton(master=tabfav, text='Abrir leitor', command=reader_open)
 btn.pack()
 
+
+
 # # # Adicionar display
 
 
@@ -169,5 +230,15 @@ always_donwload = CTkCheckBox(master=tabs.tab('Configurações'), text='Sempre b
 always_donwload.pack(pady=13, padx=13)
 save = CTkButton(master=tabs.tab('Configurações'), text='Salvar')
 save.pack(pady=13, padx=13)
+
+def import_perfil(folder_path):
+    print(folder_path + ' importado')
+
+load_perfil = CTkLabel(tabs.tab('Configurações'), text='Importar perfil')
+load_perfil.pack()
+folder_selector = FolderSelector(tabs.tab('Configurações'))
+folder_selector.pack()
+run_import_perfil = CTkButton(tabs.tab('Configurações'), text='Importar', command=lambda: import_perfil(folder_selector.get_folder_path()))
+run_import_perfil.pack()
 
 root.mainloop()
