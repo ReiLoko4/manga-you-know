@@ -37,7 +37,7 @@ with open('database/data.csv', mode='r') as data_csv:
 # delete the line 1 because this is just the name of the columns
 del[data[0]]
 
-# manga reader
+# manga reader self.bind('<Return>', lambda event: popular(True))
 page_index = 0
 def reader_open():
     reader = CTkToplevel(root)
@@ -49,7 +49,7 @@ def reader_open():
 
 
     # Caminho para a pasta que contém as imagens
-    path = Path('C:/Users/ReiLoko4/Manga Livre DL/One Punch Man/Chapter 216/')
+    path = Path('C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/')
     manga_pages = []
     for i in path.glob('*'):
         if i.name.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp')):
@@ -57,54 +57,148 @@ def reader_open():
             double_page = False
             if page.width > page.height: double_page = True
             manga_pages.append([i, page.width, page.height, double_page])
-    if manga_pages[0][3]:
-        img_w = manga_pages[0][1]
-        img_h = manga_pages[0][2]
-        while img_w > 760 or img_h > 545:
-            img_w = img_w/1.005
-            img_h = img_h/1.005
-        print(img_w)
-        page_1_img = CTkImage(Image.open(manga_pages[0][0]), size=(img_w, img_h))
-        page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_w, height=545, bg_color='black')
-        page_1.place(x=floor(800-img_w), y=0)
-    elif manga_pages[1][3]:
-        img_w = manga_pages[0][1]
-        img_h = manga_pages[0][2]
-        if (img_w < 380 or img_h < 545):
-            img_w *= 5
-            img_h *= 5
-        while img_w > 380 or img_h > 545:
-            img_w /= 1.005
-            img_h /= 1.005
-        page_1_img = CTkImage(Image.open(manga_pages[0][0]), size=(img_w, img_h))
-        page_1 = CTkLabel(reader, text=None, image=page_1_img, width=760, height=545, bg_color='black')
-        page_1.place(x=60, y=0)
-    else:
-        img_1_w = manga_pages[0][1]
-        img_2_w = manga_pages[1][1]
-        img_1_h = manga_pages[0][2]
-        img_2_h = manga_pages[1][2]
-        while (img_1_w > 380 or img_1_h > 545 or
-               img_2_w > 380 or img_2_h > 545):
-            img_1_w /= 1.005
-            img_2_w /= 1.005
-            img_1_h /= 1.005
-            img_2_h /= 1.005
-        print(f'{img_1_w} {img_2_w}')
-        page_1_img = CTkImage(Image.open(manga_pages[0][0]), size=(img_1_w, img_1_h))
-        page_2_img = CTkImage(Image.open(manga_pages[1][0]), size=(img_2_w, img_2_h))
-        page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_1_w, height=545, bg_color='black')
-        page_2 = CTkLabel(reader, text=None, image=page_2_img, width=img_2_w, height=545, bg_color='black')
-        # japanese format lol
-        page_1.place(x=floor(801-img_2_w), y=0)
-        page_2.place(x=ceil(420-img_1_w), y=0)
+    def next_page(first, page_index_out):
+        wall = CTkLabel(reader, text=None, bg_color='black', width=764, height=545)
+        wall.place(x=33, y=0)
+        global page_index
+        page_index = page_index_out
+        if not first:
+            page_index += 1
+        if manga_pages[page_index][3]:
+            img_w = manga_pages[page_index][1]
+            img_h = manga_pages[page_index][2]
+            while img_w > 760 or img_h > 545:
+                img_w = img_w/1.005
+                img_h = img_h/1.005
+            page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
+            page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_w, height=545, bg_color='black')
+            page_1.place(x=floor((840-img_w)/2), y=0)
+        else:
+            if page_index +1 == len(manga_pages):
+                img_w = manga_pages[page_index][1]
+                img_h = manga_pages[page_index][2]
+                if (img_w < 380 or img_h < 545):
+                    img_w *= 5
+                    img_h *= 5
+                while img_w > 380 or img_h > 545:
+                    img_w /= 1.005
+                    img_h /= 1.005
+                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
+                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
+                page_1.place(x=35, y=0)
+            elif manga_pages[page_index+1][3]:
+                img_w = manga_pages[page_index][1]
+                img_h = manga_pages[page_index][2]
+                if (img_w < 380 or img_h < 545):
+                    img_w *= 5
+                    img_h *= 5
+                while img_w > 380 or img_h > 545:
+                    img_w /= 1.005
+                    img_h /= 1.005
+                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
+                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
+                page_1.place(x=35, y=0)
+            else:
+                
+                img_1_w = manga_pages[page_index][1]
+                img_2_w = manga_pages[page_index+1][1]
+                img_1_h = manga_pages[page_index][2]
+                img_2_h = manga_pages[page_index+1][2]
+                while (img_1_w > 380 or img_1_h > 545 or
+                    img_2_w > 380 or img_2_h > 545):
+                    img_1_w /= 1.005
+                    img_2_w /= 1.005
+                    img_1_h /= 1.005
+                    img_2_h /= 1.005
+                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_1_w, img_1_h))
+                page_2_img = CTkImage(Image.open(manga_pages[page_index+1][0]), size=(img_2_w, img_2_h))
+                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_1_w, height=545, bg_color='black')
+                page_2 = CTkLabel(reader, text=None, image=page_2_img, width=img_2_w, height=545, bg_color='black')
+                # japanese format lol
+                page_1.place(x=421, y=0)
+                page_2.place(x=ceil(421-img_2_w), y=0)
+                page_index+=1
+        if page_index +1 == len(manga_pages): next_btn.place_forget()
+        if page_index == 1: previous_btn.place(x=807, y=272)
 
-    previous_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/next.ico'), size=(13,20))
-    next_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/previous.ico'), size=(13,20))
-    previous_btn = CTkButton(reader, width=13, height=50, text=None, image=next_img,)
-    next_btn = CTkButton(reader, width=13, height=50, text=None, image=previous_img,)
-    previous_btn.place(x=5, y=272)
-    next_btn.place(x=807, y=272)
+    def previous_page( page_index_out):
+        wall = CTkLabel(reader, text=None, bg_color='black', width=764, height=545)
+        wall.place(x=33, y=0)
+        global page_index
+        page_index = page_index_out
+        if not page_index == 0:
+            page_index -= 1
+        if manga_pages[page_index][3]:
+            img_w = manga_pages[page_index][1]
+            img_h = manga_pages[page_index][2]
+            while img_w > 760 or img_h > 545:
+                img_w = img_w/1.005
+                img_h = img_h/1.005
+            page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
+            page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_w, height=545, bg_color='black')
+            page_1.place(x=floor((840-img_w)/2), y=0)
+        else:
+            if page_index -1 == 0:
+                img_w = manga_pages[page_index][1]
+                img_h = manga_pages[page_index][2]
+                if (img_w < 380 or img_h < 545):
+                    img_w *= 5
+                    img_h *= 5
+                while img_w > 380 or img_h > 545:
+                    img_w /= 1.005
+                    img_h /= 1.005
+                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
+                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
+                page_1.place(x=35, y=0)
+            elif manga_pages[page_index-1][3]:
+                img_w = manga_pages[page_index][1]
+                img_h = manga_pages[page_index][2]
+                if (img_w < 380 or img_h < 545):
+                    img_w *= 5
+                    img_h *= 5
+                while img_w > 380 or img_h > 545:
+                    img_w /= 1.005
+                    img_h /= 1.005
+                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
+                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
+                page_1.place(x=35, y=0)
+            else:
+                
+                img_1_w = manga_pages[page_index][1]
+                img_2_w = manga_pages[page_index-1][1]
+                img_1_h = manga_pages[page_index][2]
+                img_2_h = manga_pages[page_index-1][2]
+                while (img_1_w > 380 or img_1_h > 545 or
+                    img_2_w > 380 or img_2_h > 545):
+                    img_1_w /= 1.005
+                    img_2_w /= 1.005
+                    img_1_h /= 1.005
+                    img_2_h /= 1.005
+                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_1_w, img_1_h))
+                page_2_img = CTkImage(Image.open(manga_pages[page_index+1][0]), size=(img_2_w, img_2_h))
+                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_1_w, height=545, bg_color='black')
+                page_2 = CTkLabel(reader, text=None, image=page_2_img, width=img_2_w, height=545, bg_color='black')
+                # japanese format lol
+                page_1.place(x=421, y=0)
+                page_2.place(x=ceil(421-img_2_w), y=0)
+                page_index-=1
+        print(f'{page_index+1} {len(manga_pages)}')
+        if page_index == 0: previous_btn.place_forget()
+        if page_index +1 == len(manga_pages)-1: next_btn.place(x=5, y=272)
+            
+            
+    next_page(True, page_index)
+
+    previous_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/previous.ico'), size=(13,20))
+    next_img= CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/next.ico'), size=(13,20))
+    previous_btn = CTkButton(reader, width=13, height=50, text=None, image=next_img, command=lambda: previous_page(page_index))
+    next_btn = CTkButton(reader, width=13, height=50, text=None, image=previous_img, command=lambda: next_page(False, page_index))
+    previous_btn.place(x=807, y=272)
+    next_btn.place(x=5, y=272)
+    previous_btn.bind('<Right>')
+    next_btn.bind('<Left>', lambda: print("fds"))
+
+    previous_btn.place_forget()
 
     reader.grab_set()
     root.withdraw()
