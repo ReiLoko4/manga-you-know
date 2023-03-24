@@ -39,7 +39,7 @@ del[data[0]]
 
 # manga reader self.bind('<Return>', lambda event: popular(True))
 page_index = 0
-def reader_open():
+def reader_japanese_pass_open():
     reader = CTkToplevel(root)
     reader.geometry('840x545+300+80')
     reader.resizable(width=False, height=False)
@@ -118,8 +118,10 @@ def reader_open():
                 page_1.place(x=421, y=0)
                 page_2.place(x=ceil(421-img_2_w), y=0)
                 page_index+=1
+        print(f'{page_index+1} {len(manga_pages)}')
         if page_index +1 == len(manga_pages): next_btn.place_forget()
         if page_index == 1: previous_btn.place(x=807, y=272)
+        
 
     def previous_page( page_index_out):
         wall = CTkLabel(reader, text=None, bg_color='black', width=764, height=545)
@@ -127,7 +129,7 @@ def reader_open():
         global page_index
         page_index = page_index_out
         if not page_index == 0:
-            page_index -= 1
+            page_index-=1
         if manga_pages[page_index][3]:
             img_w = manga_pages[page_index][1]
             img_h = manga_pages[page_index][2]
@@ -138,7 +140,7 @@ def reader_open():
             page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_w, height=545, bg_color='black')
             page_1.place(x=floor((840-img_w)/2), y=0)
         else:
-            if page_index -1 == 0:
+            if page_index == 0:
                 img_w = manga_pages[page_index][1]
                 img_h = manga_pages[page_index][2]
                 if (img_w < 380 or img_h < 545):
@@ -150,41 +152,41 @@ def reader_open():
                 page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
                 page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
                 page_1.place(x=35, y=0)
-            elif manga_pages[page_index-1][3]:
-                img_w = manga_pages[page_index][1]
-                img_h = manga_pages[page_index][2]
-                if (img_w < 380 or img_h < 545):
-                    img_w *= 5
-                    img_h *= 5
-                while img_w > 380 or img_h > 545:
-                    img_w /= 1.005
-                    img_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
-                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
-                page_1.place(x=35, y=0)
-            else:
-                
-                img_1_w = manga_pages[page_index][1]
-                img_2_w = manga_pages[page_index-1][1]
-                img_1_h = manga_pages[page_index][2]
-                img_2_h = manga_pages[page_index-1][2]
+            elif not manga_pages[page_index][3] and not manga_pages[page_index-1][3]:
+                page_index-=1
+                img_1_w = manga_pages[page_index-1][1]
+                img_2_w = manga_pages[page_index][1]
+                img_1_h = manga_pages[page_index-1][2]
+                img_2_h = manga_pages[page_index][2]
                 while (img_1_w > 380 or img_1_h > 545 or
                     img_2_w > 380 or img_2_h > 545):
                     img_1_w /= 1.005
                     img_2_w /= 1.005
                     img_1_h /= 1.005
                     img_2_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_1_w, img_1_h))
-                page_2_img = CTkImage(Image.open(manga_pages[page_index+1][0]), size=(img_2_w, img_2_h))
+                page_1_img = CTkImage(Image.open(manga_pages[page_index-1][0]), size=(img_1_w, img_1_h))
+                page_2_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_2_w, img_2_h))
                 page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_1_w, height=545, bg_color='black')
                 page_2 = CTkLabel(reader, text=None, image=page_2_img, width=img_2_w, height=545, bg_color='black')
                 # japanese format lol
                 page_1.place(x=421, y=0)
                 page_2.place(x=ceil(421-img_2_w), y=0)
-                page_index-=1
-        print(f'{page_index+1} {len(manga_pages)}')
+            else:
+                img_w = manga_pages[page_index][1]
+                img_h = manga_pages[page_index][2]
+                if (img_w < 380 or img_h < 545):
+                    img_w *= 5
+                    img_h *= 5
+                while img_w > 380 or img_h > 545:
+                    img_w /= 1.005
+                    img_h /= 1.005
+                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
+                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
+                page_1.place(x=35, y=0)
         if page_index == 0: previous_btn.place_forget()
         if page_index +1 == len(manga_pages)-1: next_btn.place(x=5, y=272)
+        print(f'{page_index+1} {len(manga_pages)}')
+        
             
             
     next_page(True, page_index)
@@ -196,7 +198,7 @@ def reader_open():
     previous_btn.place(x=807, y=272)
     next_btn.place(x=5, y=272)
     previous_btn.bind('<Right>')
-    next_btn.bind('<Left>', lambda: print("fds"))
+    reader.bind('<Left>',lambda:print("fds"))
 
     previous_btn.place_forget()
 
@@ -210,9 +212,25 @@ def reader_open():
         if root.state != 'normal': root.deiconify()
     reader.protocol('WM_DELETE_WINDOW', lambda: reaper(reader))
 
+def reader_pass_open():
+    reader = CTkToplevel(root)
+    reader.geometry('840x545+300+80')
+    reader.resizable(width=False, height=False)
+    reader.wm_title('Reader')
+    reader.wm_iconbitmap('assets/pasta_vermelha.ico')
+    reader.config(bg='black')
+
+    reader.protocol('')
+
+def reader_japanase_scroll_open():
+    reader = CTkToplevel(root)
+
+def reader_scroll_open():
+    reader = CTkToplevel(root)
+
 # manga options
 def options_window(id_database):
-    window = CTkToplevel(tabfav)
+    window = CTkToplevel(tab_fav)
     window.geometry('400x400+500+200')
     window.title('Options')
     for i in range(len(data)):
@@ -252,8 +270,8 @@ class FolderSelector(CTkFrame):
 # manga more
 #        
 
-tabfav = CTkScrollableFrame(master=tabs.tab('Favoritos'), width=550, height=20000)
-tabfav.pack()
+tab_fav = CTkScrollableFrame(master=tabs.tab('Favoritos'), width=550, height=20000)
+tab_fav.pack()
 
 edit = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/editar.ico'), size=(15,15))
 
@@ -264,7 +282,7 @@ trash = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/lixo.ico'), size=(15,20
 space = 10
 count = 0
 for i in range(ceil((len(data)) /3)):
-    card1 = CTkFrame(master=tabfav, width=160, height=270)
+    card1 = CTkFrame(master=tab_fav, width=160, height=270)
     card1.pack(anchor='w', pady=10, padx=5)
     capa1 = CTkImage(Image.open(data[count][4]), size=(145, 220))
     img1 = CTkLabel(master=card1, text='', image=capa1, width=140, height=150)
@@ -277,7 +295,7 @@ for i in range(ceil((len(data)) /3)):
     count+=1
     try:
         if str(count) in data[count][0]:
-            card2 = CTkFrame(master=tabfav, width=160, height=270)
+            card2 = CTkFrame(master=tab_fav, width=160, height=270)
             card2.place(x=180, y=space)
             capa2 = CTkImage(Image.open(data[count][4]), size=(145, 220))
             img2 = CTkLabel(master=card2, text=None, image=capa2, width=140, height=150)
@@ -290,7 +308,7 @@ for i in range(ceil((len(data)) /3)):
 
             count+=1
             if str(count) in data[count][0]:
-                card3 = CTkFrame(master=tabfav, width=160, height=270)
+                card3 = CTkFrame(master=tab_fav, width=160, height=270)
                 card3.place(x=355,y=space)
                 capa3 = CTkImage(Image.open(data[count][4]), size=(145, 220))
                 img3 = CTkLabel(master=card3, text='', image=capa3, width=140, height=150)
@@ -305,7 +323,7 @@ for i in range(ceil((len(data)) /3)):
         break            
     space+=290
 
-btn = CTkButton(master=tabfav, text='Abrir leitor', command=reader_open)
+btn = CTkButton(master=tab_fav, text='Abrir leitor', command=reader_japanese_pass_open)
 btn.pack()
 
 
@@ -319,20 +337,30 @@ new_fav.pack(pady=13,padx=13)
 
 # # # Configurações display
 
+tab_config = CTkScrollableFrame(tabs.tab('Configurações'), width=550, height=20000)
+tab_config.pack()
 
-always_donwload = CTkCheckBox(master=tabs.tab('Configurações'), text='Sempre baixar novos capítulos')
+always_donwload = CTkCheckBox(tab_config, text='Sempre baixar novos capítulos')
 always_donwload.pack(pady=13, padx=13)
-save = CTkButton(master=tabs.tab('Configurações'), text='Salvar')
+save = CTkButton(tab_config, text='Salvar')
 save.pack(pady=13, padx=13)
+
+reader_type = CTkSegmentedButton(tab_config, values=['N-Scrollable', 'N-Pass', 'J-Scrollable', 'J-Pass'], )
+reader_type.set('N-Pass')
+reader_type.pack(pady=20, padx=20)
+
+color_selector = CTkOptionMenu(tab_config, values=['Amarelo', 'Azul', 'Vermelho','Roxo','Rosa'])
+color_selector.pack(pady=20, padx=20)
+
 
 def import_perfil(folder_path):
     print(folder_path + ' importado')
 
-load_perfil = CTkLabel(tabs.tab('Configurações'), text='Importar perfil')
-load_perfil.pack()
-folder_selector = FolderSelector(tabs.tab('Configurações'))
-folder_selector.pack()
-run_import_perfil = CTkButton(tabs.tab('Configurações'), text='Importar', command=lambda: import_perfil(folder_selector.get_folder_path()))
-run_import_perfil.pack()
+load_perfil = CTkLabel(tab_config, text='Importar perfil')
+load_perfil.pack(pady=5, padx=20)
+folder_selector = FolderSelector(tab_config)
+folder_selector.pack(pady=20, padx=20)
+run_import_perfil = CTkButton(tab_config, text='Importar', command=lambda: import_perfil(folder_selector.get_folder_path()))
+run_import_perfil.pack(pady=20, padx=20)
 
 root.mainloop()
