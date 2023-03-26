@@ -2,10 +2,11 @@
 
 from bs4 import BeautifulSoup
 import csv
+from customtkinter import *
 from requests import Session
 from pathlib import Path
 
-class MangaYouKnow:
+class MangaYouKnowDl:
     def __init__(self):
         self.session = Session()
         self.session.headers.update({
@@ -30,7 +31,8 @@ class MangaYouKnow:
             if not response:
                 break
             for chapter in response:
-                chapters_list.append(chapter['number'])
+                if chapter['number'] not in chapters_list:
+                    chapters_list.append(chapter['number'])
             offset += 1
         return chapters_list
     
@@ -73,13 +75,21 @@ class MangaYouKnow:
                         file.write(data)
                 return True
         
-    def download_manga_chapter(self, chapter:str, manga_name:str, manga_id:str):
+    def download_manga_chapter(self, chapter:str, manga_name:str, manga_id:str, progress_bar:CTkProgressBar):
+        progress_bar.set(0)
         id_release = MangaYouKnow.get_manga_id_release(chapter, manga_id)
+        if not id_release:
+            return False
+        progress_bar.set(0.1)
+
 
     def download_all_manga_chapters(self):
         pass
 
     
+geter = MangaYouKnow()
+print(geter.get_manga_chapters('1036'))
+
 
 # userManga = [
 #     7,
