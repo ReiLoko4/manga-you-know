@@ -12,18 +12,53 @@ set_appearance_mode('System')
 set_default_color_theme('green')
 
 root = CTk()
-root.geometry('800x550+300+80')
+root.geometry('770x630+300+40')
 root.resizable(width=False, height=False)
 root.wm_title('Manga You Know')
 root.wm_iconbitmap('assets/pasta_vermelha.ico')
 
+to_read_label = CTkFrame(root, width=140, height=600)
+to_read_label.place(x=20, y=20)
 
+to_read_tab = CTkScrollableFrame(to_read_label, width=140, height=585)
+to_read_tab.pack()
 
-tabs = CTkTabview(master=root, width=600, height=545)
-tabs.pack()
+search = CTkEntry(root, placeholder_text='nome do manga', width=450)
+search.place(x=210, y=20)
+search_ico = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/search.ico'), size=(15,15))
+btn_search = CTkButton(root, text=None, width=27, image=search_ico)
+btn_search.place(x=670, y=20)
+
+tabs = CTkTabview(master=root, width=550, height=545)
+tabs.pack(anchor=E, padx=12, pady=(50,12))
 tabs.add('Favoritos')
 tabs.add('Adicionar')
 tabs.add('Configurações')
+
+
+# # # to read
+
+mangas = [
+    ['Naruto', 'cap700', 'cap701'],
+    ['Fire Force', 'cap300', 'cap302', 'cap304', 'cap305'],
+    ['Jujutsu Kaisen', 'cap270'],
+    ['Uchuu Kyoudai', 'cap180', 'cap181', 'cap182']
+]
+
+for i in range(len(mangas)):
+    card = CTkFrame(to_read_tab, width=130, height=50+(len(mangas[i]) * 30), fg_color='gray')
+    card.pack(padx=(10,0), pady=5)
+    first = 0
+    for z in mangas[i]:
+        text = CTkLabel(card, width=110,
+            height=30,
+            text=z,
+            font=('Times new Roman', 16) if z == mangas[i][0] else None,
+            fg_color= 'black' if z == mangas[i][0] else None
+        )
+        text.pack(padx=5, pady=2)
+
+    
 
 
 # # # Favoritos display
@@ -198,7 +233,8 @@ def reader_japanese_pass_open():
     previous_btn.place(x=807, y=272)
     next_btn.place(x=5, y=272)
     previous_btn.bind('<Right>')
-    reader.bind('<Left>',lambda:print("fds"))
+    
+    reader.bind('<Left>',next_page)
 
     previous_btn.place_forget()
 
@@ -265,12 +301,9 @@ class FolderSelector(CTkFrame):
     def get_folder_path(self):
         return self.path_entry.get()
 
-
-
 # manga more
-#        
 
-tab_fav = CTkScrollableFrame(master=tabs.tab('Favoritos'), width=550, height=20000)
+tab_fav = CTkScrollableFrame(tabs.tab('Favoritos'), width=515, height=20000)
 tab_fav.pack()
 
 edit = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/editar.ico'), size=(15,15))
@@ -278,6 +311,7 @@ edit = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/editar.ico'), size=(15,1
 trash = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/lixo.ico'), size=(15,20))
 
 
+# Load cards with information on the data.csv
 
 space = 10
 count = 0
@@ -332,12 +366,14 @@ btn.pack()
 
 
 new_fav = CTkEntry(master=tabs.tab('Adicionar'), placeholder_text='https://mangalivre.net/genero/nomeDoManga/idDoManga', width=330)
-new_fav.pack(pady=13,padx=13)
+new_fav.place(x=50, y=30)
+btn_add = CTkButton(tabs.tab('Adicionar'), text='Adicionar', width=70)
+btn_add.place(x=390, y=30)
 
 
 # # # Configurações display
 
-tab_config = CTkScrollableFrame(tabs.tab('Configurações'), width=550, height=20000)
+tab_config = CTkScrollableFrame(tabs.tab('Configurações'), width=515, height=20000)
 tab_config.pack()
 
 always_donwload = CTkCheckBox(tab_config, text='Sempre baixar novos capítulos')
