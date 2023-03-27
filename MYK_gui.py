@@ -46,17 +46,16 @@ mangas = [
 ]
 
 for i in range(len(mangas)):
-    card = CTkFrame(to_read_tab, width=130, height=50+(len(mangas[i]) * 30), fg_color='gray')
+    card = CTkFrame(to_read_tab, width=130, height=50+(len(mangas[i]) * 30))
     card.pack(padx=(10,0), pady=5)
     first = 0
     for z in mangas[i]:
-        text = CTkLabel(card, width=110,
-            height=30,
-            text=z,
-            font=('Times new Roman', 16) if z == mangas[i][0] else None,
-            fg_color= 'black' if z == mangas[i][0] else None
-        )
-        text.pack(padx=5, pady=2)
+        if not z == mangas[i][0]:
+            text = CTkLabel(card, width=90, height=30, text=z)
+            text.pack(padx=5, pady=2)
+        else:
+            title_btn = CTkButton(card, width=120, height=30, text=z)
+            title_btn.pack()
 
     
 
