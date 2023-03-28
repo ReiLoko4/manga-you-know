@@ -39,24 +39,32 @@ tabs.add('Configurações')
 # # # to read
 
 mangas = [
-    ['Naruto', 'cap700', 'cap701'],
-    ['Fire Force', 'cap300', 'cap302', 'cap304', 'cap305'],
-    ['Jujutsu Kaisen', 'cap270'],
-    ['Uchuu Kyoudai', 'cap180', 'cap181', 'cap182']
+    ['Naruto', True, 'cap700', 'cap701'],
+    ['Fire Force', True, 'cap300', 'cap302', 'cap304', 'cap305'],
+    ['Jujutsu Kaisen', True, 'cap270'],
+    ['Uchuu Kyoudai', True,'cap180', 'cap181', 'cap182']
 ]
-
-for i in range(len(mangas)):
-    card = CTkFrame(to_read_tab, width=130, height=50+(len(mangas[i]) * 30))
-    card.pack(padx=(10,0), pady=5)
-    first = 0
-    for z in mangas[i]:
-        if not z == mangas[i][0]:
-            text = CTkLabel(card, width=90, height=30, text=z)
-            text.pack(padx=5, pady=2)
+def side_left_bar(mangas2:list[list[any]]):
+    global mangas
+    mangas = mangas2
+    for i in range(len(mangas2)):
+        card = CTkFrame(to_read_tab, width=130, height=50+(len(mangas2[i]) * 30) if mangas2[i][1] else 50)
+        card.pack(padx=(10,0), pady=5)
+        for z in mangas2[i]:
+            if not z == mangas2[i][0]:
+                if mangas2[i][1] and not z == mangas2[i][1]:
+                    text = CTkLabel(card, width=90, height=30, text=z)
+                    text.pack(padx=5, pady=2)
+            else:
+                title_btn = CTkButton(card, width=120, height=30, text=z, command=lambda: side_left_bar(mangas))
+                title_btn.pack()
+        if mangas2[i][1]:
+            mangas[i][1] = False
         else:
-            title_btn = CTkButton(card, width=120, height=30, text=z)
-            title_btn.pack()
+            mangas[i][1] = True
+    
 
+side_left_bar(mangas)
     
 
 
