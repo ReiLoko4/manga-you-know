@@ -1,10 +1,10 @@
 # why you see this trash project? I believe you can do more.
 
 from bs4 import BeautifulSoup
-import csv
 from customtkinter import *
 from requests import Session
 from pathlib import Path
+from myk_db import MangaYouKnowDB
 
 class MangaYouKnowDl:
     def __init__(self):
@@ -48,9 +48,9 @@ class MangaYouKnowDl:
                     return chapter['releases'][key_scan]['id_release']
             offset +=1
 
-    def download_manga_cover(self, url:str):
-        manga_id = url.split('/')[-1]
-        manga_name = url.split('/')[-2]
+    def download_manga_cover(self, manga_name:str, manga_id:str) -> BooleanVar:
+        manga_name = manga_name.replace(' ', '-').lower()
+        manga_id = str(manga_id)
         response = self.session.get(f'https://mangalivre.net/manga/{manga_name}/{manga_id}')
         if not response:
             return False
@@ -68,7 +68,7 @@ class MangaYouKnowDl:
                 return False
             else:
                 manga_path = Path(f'Mangas/{manga_name}/cover')
-                manga_path.mkdir(parents = True, exist_ok = True)
+                manga_path.mkdir(parents=True, exist_ok=True)
                 block_size = 1024
                 with open(f'{manga_path}/{manga_name}.jpg', 'wb') as file:
                     for data in cover.iter_content(block_size):
@@ -77,7 +77,7 @@ class MangaYouKnowDl:
         
     def download_manga_chapter(self, chapter:str, manga_name:str, manga_id:str, progress_bar:CTkProgressBar):
         progress_bar.set(0)
-        id_release = MangaYouKnow.get_manga_id_release(chapter, manga_id)
+        id_release = MangaYouKnowDl.get_manga_id_release(chapter, manga_id)
         if not id_release:
             return False
         progress_bar.set(0.1)
@@ -87,9 +87,8 @@ class MangaYouKnowDl:
         pass
 
     
-geter = MangaYouKnow()
-print(geter.get_manga_chapters('1036'))
-
+geter = MangaYouKnowDl()
+print(geter.download_manga_cover('ONE PIECE', '13'))
 
 # userManga = [
 #     7,
