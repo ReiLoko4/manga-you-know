@@ -15,6 +15,7 @@ class MangaYouKnowDB:
                 writer_csv.writerow([
                     'id_manga',
                     'name_manga',
+                    'last_read',
                     'type',
                     'manga_path'
                 ])
@@ -52,7 +53,8 @@ class MangaYouKnowDB:
             writer_csv = csv.writer(file, lineterminator='\n')
             writer_csv.writerow(manga)
     
-    def del_manga(self, manga_id:str):
+    def delete_manga(self, manga_id:str):
+        manga_id = str(manga_id)
         with open(self.database, "r") as file:
             leitor_csv = csv.reader(file)
             lista_csv = list(leitor_csv)
@@ -62,3 +64,5 @@ class MangaYouKnowDB:
         with open(self.database, "w", newline="") as arquivo_csv:
             escritor_csv = csv.writer(arquivo_csv)
             escritor_csv.writerows(lista_csv)
+
+
