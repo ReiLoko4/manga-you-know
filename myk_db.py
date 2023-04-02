@@ -22,7 +22,7 @@ class MangaYouKnowDB:
 
     def get_database(self) -> list:
         self.create_database()
-        with open(self.database, mode='r') as file:
+        with open(self.database, mode='r', encoding='utf-8') as file:
             leitor_csv = csv.reader(file)
             database = []
             for linha in leitor_csv:
@@ -43,7 +43,7 @@ class MangaYouKnowDB:
 
     def get_config(self) -> dict:
         self.create_config()
-        with open(self.config, mode='r') as file:
+        with open(self.config, mode='r', encoding='utf-8') as file:
             config = json.load(file)
         return config
 
@@ -53,6 +53,17 @@ class MangaYouKnowDB:
             writer_csv = csv.writer(file, lineterminator='\n')
             writer_csv.writerow(manga)
     
+    def add_data_chapters_txt(self,chapters_list:list, manga_name:str):
+        manga_data_path = Path(f'Mangas/{manga_name}/data/')
+        manga_data_path.mkdir(parents=True, exist_ok=True)
+        data_file = Path(f'{manga_data_path}/{manga_name}.txt')
+        data_file.touch(exist_ok=True)
+        with open(data_file, mode='a+', encoding='utf-8') as file:
+            file.write(str(chapters_list))
+        # for chapter in chapters_list:
+        #     with open(data_file, mode='a+', encoding='utf-8') as file:
+        #         file.write(f'{chapter} ')
+
     def delete_manga(self, manga_id:str):
         manga_id = str(manga_id)
         with open(self.database, "r") as file:
