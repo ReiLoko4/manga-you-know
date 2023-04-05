@@ -6,6 +6,7 @@ from requests import Session
 from pathlib import Path
 from threading import Thread
 from unidecode import unidecode
+from myk_thread import ThreadManager
 from myk_db import MangaYouKnowDB
 
 class MangaYouKnowDl:
@@ -31,7 +32,10 @@ class MangaYouKnowDl:
         chapters_list = []
         offset = 0
         while True:
-            response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
+            try:
+                response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
+            except:
+                print(self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json())
             if not response:
                 break
             for chapter in response:
@@ -80,7 +84,7 @@ class MangaYouKnowDl:
             return True
             
 
-    def download_manga_cover(self, manga_name:str, manga_id:str) -> any:
+    def download_manga_cover(self, manga_name:str, manga_id:str) -> list:
         manga_name = manga_name.replace(' ', '-').lower()
         manga_id = str(manga_id)
         response = self.session.get(f'https://mangalivre.net/manga/{manga_name}/{manga_id}')
@@ -129,19 +133,29 @@ class MangaYouKnowDl:
         response = self.session.get(f'https://mangalivre.net/leitor/pages/{id_release}.json', stream=True).json()['images']
         if not response:
             return False
-        block_size = 1024
+        thread = ThreadManager()
+        chapter_path = Path(f'Mangas/{manga_name}/chapters/{chapter}/')
+        chapter_path.mkdir(parents=True, exist_ok=True)
         for img in response:
             page_number = img['legacy'].split('/')[-1]
             if '_' in page_number: page_number = page_number.split('_')[-1]
             if not page_number.split('.')[-2].isnumeric(): page_number = f'000.{page_number.split(".")[-1]}'
-            page_img = self.session.get(img['legacy'])
-            chapter_path = Path(f'Mangas/{manga_name}/chapters/{chapter}/')
-            chapter_path.mkdir(parents=True, exist_ok=True)
-            with open(f'{chapter_path}/{page_number}', 'wb') as file:
-                for data in page_img.iter_content(block_size):
-                    file.write(data)
+            page_path = Path(f'{chapter_path}/{page_number}')
+            download = Thread(target=lambda url=img['legacy'], path=page_path: self.download_manga_page(url, path))
+            thread.add_thread(download)
+        thread.start()
+        thread.join()
         return True
-
+    
+    def download_manga_page(self, url:str, path:Path):
+        block_size = 1024
+        page_img = self.session.get(url)
+        with open(path, 'wb') as file:
+            for data in page_img.iter_content(block_size):
+                file.write(data)
 
     def download_all_manga_chapters(self):
         pass
+
+dl = MangaYouKnowDl()
+print(dl.download_manga_chapter('215', 'One Punch Man', '1036'))
