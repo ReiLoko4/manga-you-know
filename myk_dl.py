@@ -1,13 +1,14 @@
 # why you see this trash project? I believe you can do more.
 
-from bs4 import BeautifulSoup
+from pathlib import Path
 from customtkinter import *
 from requests import Session
-from pathlib import Path
 from threading import Thread
+from bs4 import BeautifulSoup
 from unidecode import unidecode
-from myk_thread import ThreadManager
 from myk_db import MangaYouKnowDB
+from myk_thread import ThreadManager
+
 
 class MangaYouKnowDl:
     def __init__(self):
@@ -26,63 +27,61 @@ class MangaYouKnowDl:
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 OPR/96.0.0.0',
             'x-requested-with': 'XMLHttpRequest',
         })
-            
+
     def get_manga_chapters(self, manga_id:str, manga_name:str):
         manga_name = manga_name.replace(' ', '-').lower()
         chapters_list = []
         offset = 0
         while True:
-            try:
-                response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
-            except:
-                print(self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json())
-            if not response:
-                break
+            try: response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
+            except: response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
+            if not response: break
             for chapter in response:
-                if chapter['number'] not in chapters_list:
-                    chapters_list.append(chapter['number'])
+                key_scan = list(chapter['releases'].keys())[0]
+                id_release = chapter['releases'][key_scan]['id_release']
+                if id_release not in [i[1] for i in chapters_list]:
+                    chapters_list.append([chapter['number'], id_release])
             offset += 1
-        add_to_data = Thread(target=self.connection_data.add_data_chapters_txt(chapters_list, manga_name))
-        add_to_data.start()
+        Thread(self.connection_data.add_data_chapters(manga_name, chapters_list)).start()
         return chapters_list
     
-    def get_manga_id_release(self, chapter_num:str, manga_id:str):
+    
+    def get_manga_id_release(self, chapter:str, manga_id:str):
         offset = 0
         while True:
             response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
             if not response:
                 return False
             for chapter in response:
-                if chapter_num == chapter['number']:
+                if chapter == chapter['number']:
                     key_scan = list(chapter['releases'].keys())[0]
                     return chapter['releases'][key_scan]['id_release']
             offset +=1
 
-    def save_manga_info(self, manga_name:str, manga_id:str, last_read:str) -> BooleanVar:
+    def save_manga_info(self, manga_name:str, manga_id:str, last_read:str) -> bool:
         manga_name = manga_name.replace(' ', '-').lower()
         manga_id = str(manga_id)
         response = self.session.get(f'https://mangalivre.net/manga/{manga_name}/{manga_id}')
         if not response:
             return False
-        else:
             # create a list to send to data.csv all manga if covers is downloaded
-            manga_bd = []
-            manga_bd.append(manga_id)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            h1_tags = soup.find_all('h1')
-            nome = str(h1_tags[-1])
-            nome = nome.replace('<h1>', '')
-            nome = nome.replace('</h1>', '')
-            nome = unidecode(nome)
-            manga_bd.append(nome)
-            manga_bd.append(last_read)
-            manga_path = Path(f'Mangas/{manga_name}/cover/{manga_name}.jpg')
-            if not manga_path.exists():
-                return False
-            manga_bd.append(manga_path)
-            self.connection_data.add_manga(manga_bd)
-            return True
             
+        soup = BeautifulSoup(response.text, 'html.parser')
+        h1_tags = soup.find_all('h1')
+        nome = str(h1_tags[-1])
+        nome = nome.replace('<h1>', '')
+        nome = nome.replace('</h1>', '')
+        nome = unidecode(nome)
+        manga_path = Path(f'Mangas/{manga_name}/cover/{manga_name}.jpg')
+        if not manga_path.exists():
+            return False
+        manga_bd.append(manga_path)
+        manga_bd = []
+        manga_bd.append(manga_id)
+        manga_bd.append(nome)
+        manga_bd.append(last_read)
+        self.connection_data.add_manga(manga_bd)
+        return True
 
     def download_manga_cover(self, manga_name:str, manga_id:str) -> list:
         manga_name = manga_name.replace(' ', '-').lower()
@@ -107,29 +106,32 @@ class MangaYouKnowDl:
             cover = self.session.get(cover_url)
             if not cover:
                 return False
-            else:
-                manga_path = Path(f'Mangas/{manga_name}/cover')
-                manga_path.mkdir(parents=True, exist_ok=True)
-                block_size = 1024
-                with open(f'{manga_path}/{manga_name}.jpg', 'wb') as file:
-                    for data in cover.iter_content(block_size):
-                        file.write(data)
-                
-                h1_tags = soup.find_all('h1')
-                manga_name_from_site = str(h1_tags[-1])
-                manga_name_from_site = manga_name_from_site.replace('<h1>', '')
-                manga_name_from_site = manga_name_from_site.replace('</h1>', '')
-                manga_name_from_site = unidecode(manga_name_from_site)
-                manga_info = []
-                manga_info.append(Path(f'{manga_path}/{manga_name}.jpg'))
-                manga_info.append(manga_name_from_site)
-                return manga_info
-        
-    def download_manga_chapter(self, chapter:str, manga_name:str, manga_id:str,) -> BooleanVar: #progress_bar:CTkProgressBar):
-        id_release = MangaYouKnowDl.get_manga_id_release(self, chapter, manga_id)
+            manga_path = Path(f'Mangas/{manga_name}/cover')
+            manga_path.mkdir(parents=True, exist_ok=True)
+            block_size = 1024
+            with open(f'{manga_path}/{manga_name}.jpg', 'wb') as file:
+                for data in cover.iter_content(block_size):
+                    file.write(data)
+            h1_tags = soup.find_all('h1')
+            manga_name_from_site = str(h1_tags[-1])
+            manga_name_from_site = manga_name_from_site.replace('<h1>', '')
+            manga_name_from_site = manga_name_from_site.replace('</h1>', '')
+            manga_name_from_site = unidecode(manga_name_from_site)
+            manga_info = []
+            manga_info.append(Path(f'{manga_path}/{manga_name}.jpg'))
+            manga_info.append(manga_name_from_site)
+            return manga_info
+
+    def download_manga_page(self, url:str, path:Path):
+        block_size = 1024
+        page_img = self.session.get(url)
+        with open(path, 'wb') as file:
+            for data in page_img.iter_content(block_size):
+                file.write(data)
+
+    def download_manga_chapter(self, chapter:str, manga_name:str) -> bool:
+        id_release = self.connection_data.get_chapter_id(manga_name, chapter)
         manga_name = manga_name.replace(' ', '-').lower()
-        if not id_release:
-            return False
         response = self.session.get(f'https://mangalivre.net/leitor/pages/{id_release}.json', stream=True).json()['images']
         if not response:
             return False
@@ -147,15 +149,8 @@ class MangaYouKnowDl:
         thread.join()
         return True
     
-    def download_manga_page(self, url:str, path:Path):
-        block_size = 1024
-        page_img = self.session.get(url)
-        with open(path, 'wb') as file:
-            for data in page_img.iter_content(block_size):
-                file.write(data)
-
     def download_all_manga_chapters(self):
         pass
 
-dl = MangaYouKnowDl()
-print(dl.download_manga_chapter('215', 'One Punch Man', '1036'))
+
+
