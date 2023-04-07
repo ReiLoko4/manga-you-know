@@ -1,11 +1,14 @@
-from customtkinter import *
 from PIL import Image
+from customtkinter import *
 from threading import Thread
 from myk_db import MangaYouKnowDB
 from myk_dl import MangaYouKnowDl
+from myk_thread import ThreadManager
+
 
 
 __version__ = '0.1 (BETA)'
+
 
 
 class MangaYouKnowGUI:
@@ -51,6 +54,7 @@ class MangaYouKnowGUI:
         self.img_edit = CTkImage(Image.open('assets/edit.ico'), size=(15,15))
         self.img_search = CTkImage(Image.open('assets/search.ico'), size=(15,15))
         self.img_trash = CTkImage(Image.open('assets/trash.ico'), size=(15,20))
+        self.img_fav = CTkImage(Image.open('assets/fav.ico'), size=(25,25))
         self.connection_data = MangaYouKnowDB()
         self.connection_api = MangaYouKnowDl()
 
@@ -87,48 +91,85 @@ class MangaYouKnowGUI:
                 buttonedit1.place(x=123, y=235)
 
     def update_sidebar(self):
-        data = self.connection_data.get_database()
-        for i in range(len(data)):
-            chapters = self.connection_api.get_manga_chapters(data[i][0], data[i][1])
-            chapters_to_read = []
-            for chapter in chapters:
-                if chapter == data[i][2]: break
-                chapters_to_read.append(chapter)
-            if len(chapters_to_read) == 0: continue
-            card = CTkFrame(master=self.sidebar, width=130, height=50, fg_color='transparent')
-            card.pack(padx=10, pady=5)
-            btn_title = CTkButton(card, width=120, height=30, text=(data[i][1])[:16], )
-            btn_title.pack()
-            chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
-            chapters_frame.pack()
-            remaing_chapters = CTkLabel(chapters_frame, width=80, height=30, text=f'+{len(chapters_to_read)}')
-            remaing_chapters.pack(padx=2, pady=(0,2))
+        database = self.connection_data.get_database()
+        threads = ThreadManager()
+        for data in database:
+            t = Thread(target=lambda data=data: each_card(self, data))
+            threads.add_thread(t)
+            def each_card(self, data):
+                chapters = self.connection_api.get_manga_chapters(data[0], data[1])
+                chapters_to_read = []
+                for chapter in chapters:
+                    if chapter[0] == data[2]: break
+                    chapters_to_read.append(chapter)
+                if len(chapters_to_read) == 0: return False
+                card = CTkFrame(master=self.sidebar, width=130, height=50, fg_color='transparent')
+                card.pack(padx=10, pady=5)
+                btn_title = CTkButton(card, width=120, height=30, text=(data[1])[:16], )
+                btn_title.pack()
+                chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
+                chapters_frame.pack()
+                remaing_chapters = CTkLabel(chapters_frame, width=80, height=30, text=f'+{len(chapters_to_read)}')
+                remaing_chapters.pack(padx=2, pady=(0,2))
+        threads.start()
 
     def frame_change(self, frame:CTkFrame):
         if frame.winfo_exists(): frame.destroy()
         else: frame.pack()
 
     def add_manga(self):
-        if not self.fav_entry.get():
-            return print(False)
-        manga_info = self.connection_api.download_manga_cover(self.fav_entry.get().split('/')[-2], self.fav_entry.get().split('/')[-1])
+        try:
+            manga_name = self.fav_entry.get().split('/')[-2]
+            manga_id = self.fav_entry.get().split('/')[-1]
+        except:
+            return False
+        manga_info = self.connection_api.download_manga_cover(manga_name, manga_id)
+        if not manga_info: return False
         tab_add = CTkToplevel(self.main_w)
-        tab_add.geometry('370x450+500+150')
+        tab_add.geometry('390x310+500+150')
         tab_add.resizable(width=False, height=False)
         tab_add.wm_title('Pesquisar')
         img = CTkImage(Image.open(manga_info[0]), size=(172, 272.25))
-        img_frame = CTkFrame(tab_add, width=160, height=300)
-        img_frame.pack(anchor=W, padx=10, pady=10)
-        img_label = CTkLabel(img_frame, width=145, height=220, image=img,text=None)
-        img_label.pack()
-        manga_name_frame = CTkFrame(tab_add, width=180, height=100)
-        manga_name_frame.place(x=190, y=10)
-        manga_name = CTkLabel(manga_name_frame, width=180, height=100, text=manga_info[1])
-        manga_name.pack()
+        frame = CTkFrame(tab_add, width=390, height=310)
+        frame.pack(padx=10, pady=10)
+        img_label = CTkLabel(frame, width=145, height=220, image=img,text=None)
+        img_label.place(x=10, y=10)
+        font_text = CTkFont('Times new Roman', size=20)
+        manga_title = CTkTextbox(frame, width=175, height=100, font=font_text)
+        manga_title.place(x=190, y=10)
+        manga_title.insert(1.0, f'\n{manga_info[1]}')
+        manga_title.configure(state='disabled')
+        manga_chapters = CTkTextbox(frame, width=175, height=30)
+        manga_chapters.place(x=190, y=120)
+        manga_chapters.insert(1.0, 'Buscando capítulos...')
+        manga_chapters.configure(state='disabled')
+        text_fav = CTkTextbox(frame, width=100, height=33) 
+        text_fav.place(x=215, y=250)
+        text_fav.insert(1.0, '      Favoritar')
+        text_fav.configure(state='disabled')
+        def favorite(self):
+            if chapters_search.is_alive():
+                text_fav.configure(state='normal')
+                text_fav.delete(1.0, END)
+                text_fav.insert(1.0, 'Espere achar os capítulos')
+                text_fav.configure(state='disabled')
+                return False
+            chapters = self.connection_data.get_data_chapters(manga_name)
+            self.connection_data.add_manga([manga_id, manga_info[1], chapters[-1][0], manga_info[0]])
+        button_fav = CTkButton(frame, width=30, height=30, text=None, image=self.img_fav, command=lambda: favorite(self))
+        button_fav.place(x=320, y=250)
         tab_add.grab_set()
+        def search_chapters(self, manga_id:str, manga_name:str):
+            chapters = self.connection_api.get_manga_chapters(manga_id, manga_name)
+            manga_chapters.configure(state='normal')
+            manga_chapters.delete(1.0, END)
+            manga_chapters.insert(END, f'{len(chapters)} capítulos disponíveis')
+            manga_chapters.configure(state='disabled')
+            self.connection_data.add_data_chapters(manga_name, chapters)
+        chapters_search = Thread(target=lambda: search_chapters(self, manga_id, manga_name))
+        chapters_search.start()
         
-
-
+        
 
 gui = MangaYouKnowGUI()
 gui.run()
