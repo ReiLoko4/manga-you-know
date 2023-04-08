@@ -45,7 +45,6 @@ class MangaYouKnowDB:
         return config
 
     def add_manga(self, manga:list) -> bool:
-        self.create_database()
         list_favs = self.get_database()
         if manga[0] in [i[0] for i in list_favs]: return False
         with open(self.database, mode='a') as file:
