@@ -34,7 +34,8 @@ class MangaYouKnowDl:
         offset = 0
         while True:
             try: response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
-            except: response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
+            except: 
+                response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
             if not response: break
             for chapter in response:
                 key_scan = list(chapter['releases'].keys())[0]
@@ -64,8 +65,6 @@ class MangaYouKnowDl:
         response = self.session.get(f'https://mangalivre.net/manga/{manga_name}/{manga_id}')
         if not response:
             return False
-            # create a list to send to data.csv all manga if covers is downloaded
-            
         soup = BeautifulSoup(response.text, 'html.parser')
         h1_tags = soup.find_all('h1')
         nome = str(h1_tags[-1])
@@ -75,11 +74,11 @@ class MangaYouKnowDl:
         manga_path = Path(f'Mangas/{manga_name}/cover/{manga_name}.jpg')
         if not manga_path.exists():
             return False
-        manga_bd.append(manga_path)
         manga_bd = []
         manga_bd.append(manga_id)
         manga_bd.append(nome)
         manga_bd.append(last_read)
+        manga_bd.append(manga_path)
         self.connection_data.add_manga(manga_bd)
         return True
 
