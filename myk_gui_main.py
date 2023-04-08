@@ -11,7 +11,7 @@ __version__ = '0.1 (BETA)'
 
 
 
-class MangaYouKnowGUI:
+class MangaYouKnowGUI(CTk):
     def __init__(self):
         set_appearance_mode('System')
         set_default_color_theme('blue')
@@ -24,10 +24,10 @@ class MangaYouKnowGUI:
             print('cabo')
             window.destroy()
         self.main_w.protocol('WM_DELETE_WINDOW', lambda: destroy(self.main_w))
-        self.tab_informative = CTkFrame(self.main_w, width=160, height=80, bg_color='transparent')
-        self.tab_informative.place(x=20, y=20)
-        self.informative_text = CTkButton(self.tab_informative,width=160, height=80, text='Todos mangás\n em dia \nmeu consagrado!', state=False, hover=None, fg_color='black')
-        self.informative_text.pack()
+        self.informative_text = CTkTextbox(self.main_w,width=160, height=80)
+        self.informative_text.place(x=20, y=20)
+        self.informative_text.insert(1.0, 'Todos mangás\nem dia \nmeu consagrado!')
+        self.informative_text.configure(state='disabled')
         self.tab_to_read = CTkFrame(self.main_w, width=140, height=510)
         self.tab_to_read.place(x=20, y=109)
         self.sidebar = CTkScrollableFrame(self.tab_to_read, width=140, height=495)
@@ -44,7 +44,6 @@ class MangaYouKnowGUI:
         self.main_tabs.add('Configurações')
         # self.main_tabs._segmented_button.place(x=0,y=10)
         self.tab_favs = CTkScrollableFrame(self.main_tabs.tab('Favoritos'), width=515, height=20000)
-        self.tab_favs.pack()
         self.fav_entry = CTkEntry(self.main_tabs.tab('Adicionar'), placeholder_text='https://mangalivre.net/manga/nomeDoManga/idDoManga', width=330)
         self.fav_entry.place(x=50, y=30)
         self.btn_add = CTkButton(self.main_tabs.tab('Adicionar'), text='Pesquisar', width=70, command=self.add_manga)
@@ -59,13 +58,16 @@ class MangaYouKnowGUI:
         self.connection_api = MangaYouKnowDl()
 
     def run(self):
-        new = Thread(target=self.update_sidebar)
+        new = Thread(target=lambda: self.update_sidebar())
         new.start()
         self.update_tab_favs()
         self.main_w.mainloop()
-        
 
     def update_tab_favs(self):
+        if self.tab_favs.winfo_exists():
+            for child in self.tab_favs.winfo_children():
+                child.destroy()
+        self.tab_favs.pack()
         data = self.connection_data.get_database()
         x = [10, 180, 355]
         y = 10
@@ -85,7 +87,7 @@ class MangaYouKnowGUI:
                 capa1 = CTkImage(Image.open(manga[3]), size=(145, 220))
                 img1 = CTkLabel(master=card, text='', image=capa1, width=140, height=150)
                 img1.place(x=8, y=6)
-                button1 = CTkButton(master=card, text='Ver capítulos', width=107)
+                button1 = CTkButton(master=card, text='Ver capítulos', width=107, command=lambda id=manga[0]: self.show_manga(id))
                 button1.place(x=8, y=235)
                 buttonedit1 = CTkButton(master=card, text=None, width=15, image=self.img_edit, fg_color='white', command=lambda id=manga[0]: print(id))
                 buttonedit1.place(x=123, y=235)
@@ -127,7 +129,7 @@ class MangaYouKnowGUI:
         if not manga_info: return False
         tab_add = CTkToplevel(self.main_w)
         tab_add.geometry('390x310+500+150')
-        tab_add.resizable(width=False, height=False)
+        tab_add.resizable(False, False)
         tab_add.wm_title('Pesquisar')
         img = CTkImage(Image.open(manga_info[0]), size=(172, 272.25))
         frame = CTkFrame(tab_add, width=390, height=310)
@@ -155,7 +157,7 @@ class MangaYouKnowGUI:
                 text_fav.configure(state='disabled')
                 return False
             chapters = self.connection_data.get_data_chapters(manga_name)
-            self.connection_data.add_manga([manga_id, manga_info[1], chapters[-1][0], manga_info[0]])
+            self.connection_data.add_manga([manga_id, manga_info[1], '', manga_info[0]])
         button_fav = CTkButton(frame, width=30, height=30, text=None, image=self.img_fav, command=lambda: favorite(self))
         button_fav.place(x=320, y=250)
         tab_add.grab_set()
@@ -169,7 +171,35 @@ class MangaYouKnowGUI:
         chapters_search = Thread(target=lambda: search_chapters(self, manga_id, manga_name))
         chapters_search.start()
         
-        
+    def show_manga(self, manga_id:str):
+        manga = self.connection_data.get_manga(manga_id)
+        window_show = CTkToplevel(self.main_w)
+        window_show.geometry('390x470+500+150')
+        window_show.resizable(False, False)
+        window_show.wm_title(manga[1])
+        frame = CTkFrame(window_show, width=390, height=470)
+        frame.pack(padx=10, pady=10)
+        img = CTkImage(Image.open(manga[3]), size=(172, 272.25))
+        img_label = CTkLabel(frame, text=None, image=img)
+        img_label.place(x=10,y=10)
+        chapters = CTkScrollableFrame(frame, width=140)
+        chapters.place(x=200, y=10)
+        list_chapters = self.connection_data.get_data_chapters(manga[1])
+        for chapter in list_chapters:
+            card_chapter = CTkFrame(chapters, height=30, width=180)
+            card_chapter.pack(padx=2, pady=2)
+            num_chapter = CTkLabel(card_chapter, text=chapter[0])
+            num_chapter.place(x=5, y=1)
+            btn_open_chapter = CTkButton(card_chapter, width=50, height=20, text='Ler capítulo', command=lambda chapter=chapter[0], id=chapter[1]: self.reader_open(manga[1], chapter, id))
+            btn_open_chapter.place(x=40, y=5)
+        window_show.grab_set()
+
+    def reader_open(self, manga_name:str, chapter_num:str, chapter_id:str):
+        pass
+
+
+
+
 
 gui = MangaYouKnowGUI()
 gui.run()
