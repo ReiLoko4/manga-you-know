@@ -1,4 +1,5 @@
 from PIL import Image
+from pathlib import Path
 from customtkinter import *
 from threading import Thread
 from myk_db import MangaYouKnowDB
@@ -225,8 +226,16 @@ class MangaYouKnowGUI:
             # btn_open_chapter.place(x=40, y=5)
         window_show.grab_set()
 
-    def reader_open(self, manga_name:str, chapter_num:str, chapter_id:str):
-        pass
+    class Reader:
+        def __init__(self) -> None:
+            pass
+
+        def open(self, chapter_path:Path, type_reader:str):
+            pass
+
+        def horizontal(self):
+            pass
+
 
 
 gui = MangaYouKnowGUI()
