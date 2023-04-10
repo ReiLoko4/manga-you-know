@@ -15,3 +15,9 @@ class ThreadManager(Thread):
     def join(self):
         for thread in self.threads:
             thread.join()
+    
+    def get_len(self):
+        return len(self.threads)
+    
+    def delete_all_threads(self):
+        self.threads = []
