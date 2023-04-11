@@ -1,409 +1,239 @@
-# Graphic User Interface for the project
-
-from customtkinter import *
-from tkinter import filedialog
-from pathlib import Path
 from PIL import Image
-import csv
-from math import ceil, floor
+from pathlib import Path
+from customtkinter import *
+from threading import Thread
+from myk_db import MangaYouKnowDB
+from myk_dl import MangaYouKnowDl
+from myk_thread import ThreadManager
 
 
-set_appearance_mode('System')
-set_default_color_theme('green')
 
-root = CTk()
-root.geometry('770x630+300+40')
-root.resizable(width=False, height=False)
-root.wm_title('Manga You Know')
-root.wm_iconbitmap('assets/pasta_vermelha.ico')
-
-to_read_label = CTkFrame(root, width=140, height=600)
-to_read_label.place(x=20, y=20)
-
-to_read_tab = CTkScrollableFrame(to_read_label, width=140, height=585)
-to_read_tab.pack()
-
-search = CTkEntry(root, placeholder_text='nome do manga', width=450)
-search.place(x=210, y=20)
-search_ico = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/search.ico'), size=(15,15))
-btn_search = CTkButton(root, text=None, width=27, image=search_ico)
-btn_search.place(x=670, y=20)
-
-tabs = CTkTabview(master=root, width=550, height=545)
-tabs.pack(anchor=E, padx=12, pady=(50,12))
-tabs.add('Favoritos')
-tabs.add('Adicionar')
-tabs.add('Configurações')
+__version__ = '0.1b'
 
 
-# # # to read
 
-mangas = [
-    ['Naruto', True, 'cap700', 'cap701'],
-    ['Fire Force', True, 'cap300', 'cap302', 'cap304', 'cap305'],
-    ['Jujutsu Kaisen', True, 'cap270'],
-    ['Uchuu Kyoudai', True,'cap180', 'cap181', 'cap182']
-]
-def side_left_bar(mangas2:list[list[any]]):
-    global mangas
-    mangas = mangas2
-    for i in range(len(mangas2)):
-        card = CTkFrame(to_read_tab, width=130, height=50+(len(mangas2[i]) * 30) if mangas2[i][1] else 50)
-        card.pack(padx=(10,0), pady=5)
-        for z in mangas2[i]:
-            if not z == mangas2[i][0]:
-                if mangas2[i][1] and not z == mangas2[i][1]:
-                    text = CTkLabel(card, width=90, height=30, text=z)
-                    text.pack(padx=5, pady=2)
+class MangaYouKnowGUI:
+    def __init__(self):
+        set_appearance_mode('System')
+        set_default_color_theme('green')
+        self.main_w = CTk()
+        self.main_w.geometry('770x630+300+40')
+        self.main_w.resizable(width=False, height=False)
+        self.main_w.wm_title(f'Manga You Know {__version__}')
+        # self.main_w.wm_iconbitmap('assets/novoicon')
+        self.end = False
+        def destroy(window:CTk):
+            print('cabo')
+            self.end = True
+            window.destroy()
+        self.main_w.protocol('WM_DELETE_WINDOW', lambda: destroy(self.main_w))
+        self.informative_text = CTkTextbox(self.main_w,width=160, height=80)
+        self.informative_text.place(x=20, y=20)
+        self.informative_text.insert(1.0, 'Todos mangás\nem dia \nmeu consagrado!')
+        self.informative_text.configure(state='disabled')
+        self.tab_to_read = CTkFrame(self.main_w, width=140, height=510)
+        self.tab_to_read.place(x=20, y=109)
+        self.sidebar = CTkScrollableFrame(self.tab_to_read, width=140, height=495)
+        self.sidebar.pack()
+        self.search_entry = CTkEntry(self.main_w, placeholder_text='Nome do mangá (somente favoritos)', width=450)
+        self.search_entry.place(x=210, y=20)
+        self.search_ico = CTkImage(Image.open('assets/search.ico'))
+        self.search_btn = CTkButton(self.main_w, text=None, width=27, image=self.search_ico)
+        self.search_btn.place(x=670, y=20)
+        self.main_tabs = CTkTabview(self.main_w, width=550, height=566)
+        self.main_tabs.pack(anchor=E, padx=12, pady=(50,14))
+        self.main_tabs.add('Favoritos')
+        self.main_tabs.add('Adicionar')
+        self.main_tabs.add('Configurações')
+        self.main_tabs.add('Ajuda')
+        # self.main_tabs._segmented_button.place(x=0,y=10)
+        self.tab_favs = CTkScrollableFrame(self.main_tabs.tab('Favoritos'), width=515, height=20000)
+        self.fav_entry = CTkEntry(self.main_tabs.tab('Adicionar'), placeholder_text='https://mangalivre.net/manga/nomeDoManga/idDoManga', width=330)
+        self.fav_entry.place(x=50, y=30)
+        self.btn_add = CTkButton(self.main_tabs.tab('Adicionar'), text='Pesquisar', width=70, command=self.add_manga)
+        self.btn_add.place(x=390, y=30)
+        self.tab_config = CTkScrollableFrame(self.main_tabs.tab('Configurações'), width=515, height=20000)
+        self.tab_config.pack()
+        self.img_edit = CTkImage(Image.open('assets/edit.ico'), size=(15,15))
+        self.img_search = CTkImage(Image.open('assets/search.ico'), size=(15,15))
+        self.img_trash = CTkImage(Image.open('assets/trash.ico'), size=(15,20))
+        self.img_fav = CTkImage(Image.open('assets/fav.ico'), size=(25,25))
+        self.connection_data = MangaYouKnowDB()
+        self.connection_api = MangaYouKnowDl()
+
+    def run(self):
+        new = Thread(target=lambda: self.update_sidebar())
+        new.start()
+        self.update_tab_favs()
+        self.main_w.mainloop()
+
+    def update_tab_favs(self):
+        if self.tab_favs.winfo_exists():
+            for child in self.tab_favs.winfo_children():
+                child.destroy()
+        self.tab_favs.pack()
+        data = self.connection_data.get_database()
+        x = [10, 180, 350]
+        self.y = 10
+        self.last_x = 0
+        offset = 0
+        if len(data) != 0:
+            card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
+            card_space.pack(pady=10, anchor=W)
+            for manga in data:
+                card = CTkFrame(self.tab_favs, width=160, height=270)
+                card.place(x=x[offset], y=self.y)
+                self.last_x = x[offset]
+                offset+=1
+                if offset == 3 and manga[0] not in data[-1][0]:
+                    offset = 0
+                    self.y+=290
+                    card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
+                    card_space.pack(pady=10, anchor=W)
+                capa1 = CTkImage(Image.open(manga[3]), size=(145, 220))
+                img1 = CTkLabel(master=card, text='', image=capa1, width=140, height=150)
+                img1.place(x=8, y=6)
+                button1 = CTkButton(master=card, text='Ver capítulos', width=107, command=lambda id=manga[0]: self.show_manga(id))
+                button1.place(x=8, y=235)
+                buttonedit1 = CTkButton(master=card, text=None, width=15, image=self.img_edit, fg_color='white', command=lambda id=manga[0]: print(id))
+                buttonedit1.place(x=123, y=235)
+
+    def update_sidebar(self):
+        database = self.connection_data.get_database()
+        threads = ThreadManager()
+        for data in database:
+            t = Thread(target=lambda data=data: each_card(self, data))
+            threads.add_thread(t)
+            def each_card(self:MangaYouKnowGUI, data:list):
+                chapters = self.connection_api.get_manga_chapters(data[0], data[3].split('/')[-3] if '/' in data[3] else data[3].split('\\')[-3])
+                chapters_to_read = []
+                for chapter in chapters:
+                    if chapter[0] == data[2]: break
+                    chapters_to_read.append(chapter)
+                if len(chapters_to_read) == 0: return False
+                if self.end: return False
+                card = CTkFrame(self.sidebar, width=130, height=50, fg_color='transparent')
+                card.pack(padx=10, pady=5)
+                btn_title = CTkButton(card, width=120, height=30, text=(data[1])[:16], )
+                btn_title.pack()
+                chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
+                chapters_frame.pack()
+                remaing_chapters = CTkLabel(chapters_frame, width=80, height=30, text=f'+{len(chapters_to_read)}')
+                remaing_chapters.pack(padx=2, pady=(0,2))
+        threads.start()
+
+    def frame_change(self, frame:CTkFrame):
+        if frame.winfo_exists(): frame.destroy()
+        else: frame.pack()
+
+    def add_manga(self):
+        try:
+            manga_name = self.fav_entry.get().split('/')[-2]
+            manga_id = self.fav_entry.get().split('/')[-1]
+        except:
+            return False
+        manga_info = self.connection_api.download_manga_cover(manga_name, manga_id)
+        if not manga_info: return False
+        tab_add = CTkToplevel()
+        tab_add.geometry('390x310+500+150')
+        tab_add.resizable(False, False)
+        tab_add.wm_title('Pesquisar')
+        def destroy(window:CTkToplevel):
+            window.destroy()
+            self.main_w.grab_set()
+        tab_add.protocol('WM_DELETE_WINDOW', lambda: destroy(tab_add))
+        img = CTkImage(Image.open(manga_info[0]), size=(172, 272.25))
+        frame = CTkFrame(tab_add, width=390, height=310)
+        frame.pack(padx=10, pady=10)
+        img_label = CTkLabel(frame, width=145, height=220, image=img,text=None)
+        img_label.place(x=10, y=10)
+        font_text = CTkFont('Times new Roman', size=20)
+        manga_title = CTkTextbox(frame, width=175, height=100, font=font_text)
+        manga_title.place(x=190, y=10)
+        manga_title.insert(1.0, f'\n{manga_info[1]}')
+        manga_title.configure(state='disabled')
+        manga_chapters = CTkTextbox(frame, width=175, height=30)
+        manga_chapters.place(x=190, y=120)
+        manga_chapters.insert(1.0, 'Buscando capítulos...')
+        manga_chapters.configure(state='disabled')
+        text_fav = CTkTextbox(frame, width=100, height=33) 
+        text_fav.place(x=215, y=250)
+        text_fav.insert(1.0, '      Favoritar')
+        text_fav.configure(state='disabled')
+        def favorite(self:MangaYouKnowGUI):
+            if self.connection_data.add_manga([manga_id, manga_info[1], '', manga_info[0]]): 
+                tab_add.destroy()
+                self.main_w.grab_set()
             else:
-                title_btn = CTkButton(card, width=120, height=30, text=z, command=lambda: side_left_bar(mangas))
-                title_btn.pack()
-        if mangas2[i][1]:
-            mangas[i][1] = False
-        else:
-            mangas[i][1] = True
-    
-
-side_left_bar(mangas)
-    
-
-
-# # # Favoritos display
-
-# open my 'database'
-with open('database/data.csv', mode='r') as data_csv:
-    leitor_csv = csv.reader(data_csv)
-    data = []
-    for linha in leitor_csv:
-        data.append(linha)
-# delete the line 1 because this is just the name of the columns
-del[data[0]]
-
-# manga reader self.bind('<Return>', lambda event: popular(True))
-page_index = 0
-def reader_japanese_pass_open():
-    reader = CTkToplevel(root)
-    reader.geometry('840x545+300+80')
-    reader.resizable(width=False, height=False)
-    reader.wm_title('Reader')
-    reader.wm_iconbitmap('assets/pasta_vermelha.ico')
-    reader.config(bg='black')
-
-
-    # Caminho para a pasta que contém as imagens
-    path = Path('C:/Users/ReiLoko4/Manga Livre DL/One Piece/Chapter 1/')
-    manga_pages = []
-    for i in path.glob('*'):
-        if i.name.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp')):
-            page = Image.open(i)
-            double_page = False
-            if page.width > page.height: double_page = True
-            manga_pages.append([i, page.width, page.height, double_page])
-    def next_page(first, page_index_out):
-        wall = CTkLabel(reader, text=None, bg_color='black', width=764, height=545)
-        wall.place(x=33, y=0)
-        global page_index
-        page_index = page_index_out
-        if not first:
-            page_index += 1
-        if manga_pages[page_index][3]:
-            img_w = manga_pages[page_index][1]
-            img_h = manga_pages[page_index][2]
-            while img_w > 760 or img_h > 545:
-                img_w = img_w/1.005
-                img_h = img_h/1.005
-            page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
-            page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_w, height=545, bg_color='black')
-            page_1.place(x=floor((840-img_w)/2), y=0)
-        else:
-            if page_index +1 == len(manga_pages):
-                img_w = manga_pages[page_index][1]
-                img_h = manga_pages[page_index][2]
-                if (img_w < 380 or img_h < 545):
-                    img_w *= 5
-                    img_h *= 5
-                while img_w > 380 or img_h > 545:
-                    img_w /= 1.005
-                    img_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
-                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
-                page_1.place(x=35, y=0)
-            elif manga_pages[page_index+1][3]:
-                img_w = manga_pages[page_index][1]
-                img_h = manga_pages[page_index][2]
-                if (img_w < 380 or img_h < 545):
-                    img_w *= 5
-                    img_h *= 5
-                while img_w > 380 or img_h > 545:
-                    img_w /= 1.005
-                    img_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
-                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
-                page_1.place(x=35, y=0)
+                text_fav.configure(state='normal')
+                text_fav.delete(1.0, END)
+                text_fav.insert(1.0, 'O mangá já foi favoritado!')
+                text_fav.configure(state='disabled')
+                return False
+            chapters = self.connection_data.get_database()
+            card = CTkFrame(self.tab_favs, width=160, height=270)
+            if self.last_x in [0, 350]:
+                card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
+                card_space.pack(pady=10, anchor=W)
+                if self.last_x == 350: self.y += 290
+                self.last_x = 10
+                card.place(x=10, y=self.y)
             else:
-                
-                img_1_w = manga_pages[page_index][1]
-                img_2_w = manga_pages[page_index+1][1]
-                img_1_h = manga_pages[page_index][2]
-                img_2_h = manga_pages[page_index+1][2]
-                while (img_1_w > 380 or img_1_h > 545 or
-                    img_2_w > 380 or img_2_h > 545):
-                    img_1_w /= 1.005
-                    img_2_w /= 1.005
-                    img_1_h /= 1.005
-                    img_2_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_1_w, img_1_h))
-                page_2_img = CTkImage(Image.open(manga_pages[page_index+1][0]), size=(img_2_w, img_2_h))
-                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_1_w, height=545, bg_color='black')
-                page_2 = CTkLabel(reader, text=None, image=page_2_img, width=img_2_w, height=545, bg_color='black')
-                # japanese format lol
-                page_1.place(x=421, y=0)
-                page_2.place(x=ceil(421-img_2_w), y=0)
-                page_index+=1
-        print(f'{page_index+1} {len(manga_pages)}')
-        if page_index +1 == len(manga_pages): next_btn.place_forget()
-        if page_index == 1: previous_btn.place(x=807, y=272)
+                self.last_x += 170 
+                card.place(x=self.last_x, y=self.y)
+            capa = CTkImage(Image.open(chapters[-1][3]), size=(145, 220))
+            img = CTkLabel(card, text='', image=capa, width=140, height=150)
+            img.place(x=8, y=6)
+            button = CTkButton(card, text='Ver capítulos', width=107, command=lambda id=chapters[-1][0]: self.show_manga(id))
+            button.place(x=8, y=235)
+            button_edit = CTkButton(card, text=None, width=15, image=self.img_edit, fg_color='white', command=lambda id=chapters[-1][0]: print(id))
+            button_edit.place(x=123, y=235)
+        button_fav = CTkButton(frame, width=30, height=30, text=None, image=self.img_fav, command=lambda: favorite(self))
+        button_fav.place(x=320, y=250)
+        tab_add.grab_set()
+        def search_chapters(self:MangaYouKnowGUI, manga_id:str, manga_name:str):
+            chapters = self.connection_api.get_manga_chapters(manga_id, manga_name)
+            if not tab_add.winfo_exists(): return False
+            manga_chapters.configure(state='normal')
+            manga_chapters.delete(1.0, END)
+            manga_chapters.insert(END, f'{len(chapters)} capítulos disponíveis')
+            manga_chapters.configure(state='disabled')
+            self.connection_data.add_data_chapters(manga_name, chapters)
+        chapters_search = Thread(target=lambda: search_chapters(self, manga_id, manga_name))
+        chapters_search.start()
+        
+    def show_manga(self, manga_id:str):
+        manga = self.connection_data.get_manga(manga_id)
+        window_show = CTkToplevel(self.main_w)
+        window_show.geometry('390x440+500+150')
+        window_show.resizable(False, False)
+        window_show.wm_title(manga[1])
+        frame = CTkFrame(window_show, width=390, height=470)
+        frame.pack(padx=10, pady=10)
+        img = CTkImage(Image.open(manga[3]), size=(172, 272.25))
+        img_label = CTkLabel(frame, text=None, image=img)
+        img_label.place(x=10,y=10)
+        # chapters = CTkScrollableFrame(frame, width=140)
+        # chapters.place(x=200, y=10)
+        def edit_last_read(chapter):
+            self.connection_data.edit_manga(manga_id, chapter)
+        list_chapters = self.connection_data.get_data_chapters(manga[3].split('/')[-3] if '/' in manga[3] else manga[3].split('\\')[-3])
+        chapters = CTkOptionMenu(frame, values=[i[0] for i in list_chapters], command=edit_last_read)
+        chapters.place(x=200, y=10)
+        window_show.grab_set()
         
 
-    def previous_page( page_index_out):
-        wall = CTkLabel(reader, text=None, bg_color='black', width=764, height=545)
-        wall.place(x=33, y=0)
-        global page_index
-        page_index = page_index_out
-        if not page_index == 0:
-            page_index-=1
-        if manga_pages[page_index][3]:
-            img_w = manga_pages[page_index][1]
-            img_h = manga_pages[page_index][2]
-            while img_w > 760 or img_h > 545:
-                img_w = img_w/1.005
-                img_h = img_h/1.005
-            page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
-            page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_w, height=545, bg_color='black')
-            page_1.place(x=floor((840-img_w)/2), y=0)
-        else:
-            if page_index == 0:
-                img_w = manga_pages[page_index][1]
-                img_h = manga_pages[page_index][2]
-                if (img_w < 380 or img_h < 545):
-                    img_w *= 5
-                    img_h *= 5
-                while img_w > 380 or img_h > 545:
-                    img_w /= 1.005
-                    img_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
-                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
-                page_1.place(x=35, y=0)
-            elif not manga_pages[page_index][3] and not manga_pages[page_index-1][3]:
-                page_index-=1
-                img_1_w = manga_pages[page_index-1][1]
-                img_2_w = manga_pages[page_index][1]
-                img_1_h = manga_pages[page_index-1][2]
-                img_2_h = manga_pages[page_index][2]
-                while (img_1_w > 380 or img_1_h > 545 or
-                    img_2_w > 380 or img_2_h > 545):
-                    img_1_w /= 1.005
-                    img_2_w /= 1.005
-                    img_1_h /= 1.005
-                    img_2_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index-1][0]), size=(img_1_w, img_1_h))
-                page_2_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_2_w, img_2_h))
-                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=img_1_w, height=545, bg_color='black')
-                page_2 = CTkLabel(reader, text=None, image=page_2_img, width=img_2_w, height=545, bg_color='black')
-                # japanese format lol
-                page_1.place(x=421, y=0)
-                page_2.place(x=ceil(421-img_2_w), y=0)
-            else:
-                img_w = manga_pages[page_index][1]
-                img_h = manga_pages[page_index][2]
-                if (img_w < 380 or img_h < 545):
-                    img_w *= 5
-                    img_h *= 5
-                while img_w > 380 or img_h > 545:
-                    img_w /= 1.005
-                    img_h /= 1.005
-                page_1_img = CTkImage(Image.open(manga_pages[page_index][0]), size=(img_w, img_h))
-                page_1 = CTkLabel(reader, text=None, image=page_1_img, width=770, height=545, bg_color='black')
-                page_1.place(x=35, y=0)
-        if page_index == 0: previous_btn.place_forget()
-        if page_index +1 == len(manga_pages)-1: next_btn.place(x=5, y=272)
-        print(f'{page_index+1} {len(manga_pages)}')
-        
-            
-            
-    next_page(True, page_index)
+    class Reader:
+        def __init__(self, chapter_path:Path) -> None:
+            self.chapter_path = chapter_path
 
-    previous_img = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/previous.ico'), size=(13,20))
-    next_img= CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/next.ico'), size=(13,20))
-    previous_btn = CTkButton(reader, width=13, height=50, text=None, image=next_img, command=lambda: previous_page(page_index))
-    next_btn = CTkButton(reader, width=13, height=50, text=None, image=previous_img, command=lambda: next_page(False, page_index))
-    previous_btn.place(x=807, y=272)
-    next_btn.place(x=5, y=272)
-    previous_btn.bind('<Right>')
-    
-    reader.bind('<Left>',next_page)
+        def open(self, chapter_path:Path, type_reader:str):
+            pass
 
-    previous_btn.place_forget()
-
-    reader.grab_set()
-    root.withdraw()
-    def reaper(window):
-        global page_index
-        page_index = 0
-        window.destroy()
-        reader.grab_release()
-        if root.state != 'normal': root.deiconify()
-    reader.protocol('WM_DELETE_WINDOW', lambda: reaper(reader))
-
-def reader_pass_open():
-    reader = CTkToplevel(root)
-    reader.geometry('840x545+300+80')
-    reader.resizable(width=False, height=False)
-    reader.wm_title('Reader')
-    reader.wm_iconbitmap('assets/pasta_vermelha.ico')
-    reader.config(bg='black')
-
-    reader.protocol('')
-
-def reader_japanase_scroll_open():
-    reader = CTkToplevel(root)
-
-def reader_scroll_open():
-    reader = CTkToplevel(root)
-
-# manga options
-def options_window(id_database):
-    window = CTkToplevel(tab_fav)
-    window.geometry('400x400+500+200')
-    window.title('Options')
-    for i in range(len(data)):
-        if(str(id_database) == data[i][0]): config = data[i]
-    print(config)
-    window.grab_set()
-    def reaper(window_out):
-        window_out.destroy()
-        window.grab_release()
-        if root.state != 'normal': root.deiconify()
-    window.protocol('WM_DELETE_WINDOW', lambda: reaper(window))
-        
-
-class FolderSelector(CTkFrame):
-    def __init__(self, master=None, **kwargs):
-        super().__init__(master, **kwargs)
-
-        self.path_entry = CTkEntry(self, width=200, state=DISABLED)
-        self.path_entry.pack(side=LEFT, padx=5, pady=5)
-
-        self.select_button = CTkButton(self, text="Selecionar pasta", command=self.select_folder)
-        self.select_button.pack(side=LEFT, padx=5, pady=5)
-
-    def select_folder(self):
-        folder_path = filedialog.askdirectory()
-        if len(folder_path) != 0:
-            self.path_entry.configure(state=NORMAL)
-            self.path_entry.delete(0, END)
-            self.path_entry.insert(0, folder_path)
-            self.path_entry.configure(state=DISABLED)
-
-    def get_folder_path(self):
-        return self.path_entry.get()
-
-# manga more
-
-tab_fav = CTkScrollableFrame(tabs.tab('Favoritos'), width=515, height=20000)
-tab_fav.pack()
-
-edit = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/editar.ico'), size=(15,15))
-
-trash = CTkImage(Image.open('C:/Users/ReiLoko4/Downloads/lixo.ico'), size=(15,20))
-
-
-# Load cards with information on the data.csv
-
-space = 10
-count = 0
-for i in range(ceil((len(data)) /3)):
-    card1 = CTkFrame(master=tab_fav, width=160, height=270)
-    card1.pack(anchor='w', pady=10, padx=5)
-    capa1 = CTkImage(Image.open(data[count][4]), size=(145, 220))
-    img1 = CTkLabel(master=card1, text='', image=capa1, width=140, height=150)
-    img1.place(x=8, y=6)
-    button1 = CTkButton(master=card1, text='Ver capítulos', width=107)
-    button1.place(x=8, y=235)
-    buttonedit1 = CTkButton(master=card1, text=None, width=15, image=edit, fg_color='white', command=lambda count=count: options_window(count))
-    buttonedit1.place(x=123, y=235)
-
-    count+=1
-    try:
-        if str(count) in data[count][0]:
-            card2 = CTkFrame(master=tab_fav, width=160, height=270)
-            card2.place(x=180, y=space)
-            capa2 = CTkImage(Image.open(data[count][4]), size=(145, 220))
-            img2 = CTkLabel(master=card2, text=None, image=capa2, width=140, height=150)
-            img2.place(x=8, y=6)
-            button2 = CTkButton(master=card2, text='Ver capítulos', width=107)
-            button2.place(x=8, y=235)
-            buttonedit2 = CTkButton(master=card2, text=None, width=15, image=edit, fg_color='white', command=lambda count=count: options_window(count))
-            buttonedit2.place(x=123, y=235)
-
-
-            count+=1
-            if str(count) in data[count][0]:
-                card3 = CTkFrame(master=tab_fav, width=160, height=270)
-                card3.place(x=355,y=space)
-                capa3 = CTkImage(Image.open(data[count][4]), size=(145, 220))
-                img3 = CTkLabel(master=card3, text='', image=capa3, width=140, height=150)
-                img3.place(x=8, y=6)
-                button3 = CTkButton(master=card3, text='Ver capítulos', width=107)
-                button3.place(x=8, y=235)
-                buttonedit3 = CTkButton(master=card3, text='', width=15, image=edit, fg_color='white', command=lambda count=count: options_window(count))
-                buttonedit3.place(x=123, y=235)
-                count+=1
-            
-    except Exception:
-        break            
-    space+=290
-
-btn = CTkButton(master=tab_fav, text='Abrir leitor', command=reader_japanese_pass_open)
-btn.pack()
+        def horizontal(self):
+            pass
 
 
 
-# # # Adicionar display
-
-
-new_fav = CTkEntry(master=tabs.tab('Adicionar'), placeholder_text='https://mangalivre.net/genero/nomeDoManga/idDoManga', width=330)
-new_fav.place(x=50, y=30)
-btn_add = CTkButton(tabs.tab('Adicionar'), text='Adicionar', width=70)
-btn_add.place(x=390, y=30)
-
-
-# # # Configurações display
-
-tab_config = CTkScrollableFrame(tabs.tab('Configurações'), width=515, height=20000)
-tab_config.pack()
-
-always_donwload = CTkCheckBox(tab_config, text='Sempre baixar novos capítulos')
-always_donwload.pack(pady=13, padx=13)
-save = CTkButton(tab_config, text='Salvar')
-save.pack(pady=13, padx=13)
-
-reader_type = CTkSegmentedButton(tab_config, values=['N-Scrollable', 'N-Pass', 'J-Scrollable', 'J-Pass'], )
-reader_type.set('N-Pass')
-reader_type.pack(pady=20, padx=20)
-
-color_selector = CTkOptionMenu(tab_config, values=['Amarelo', 'Azul', 'Vermelho','Roxo','Rosa'])
-color_selector.pack(pady=20, padx=20)
-
-
-def import_perfil(folder_path):
-    print(folder_path + ' importado')
-
-load_perfil = CTkLabel(tab_config, text='Importar perfil')
-load_perfil.pack(pady=5, padx=20)
-folder_selector = FolderSelector(tab_config)
-folder_selector.pack(pady=20, padx=20)
-run_import_perfil = CTkButton(tab_config, text='Importar', command=lambda: import_perfil(folder_selector.get_folder_path()))
-run_import_perfil.pack(pady=20, padx=20)
-
-root.mainloop()
+gui = MangaYouKnowGUI()
+gui.run()
