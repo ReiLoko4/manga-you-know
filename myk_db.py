@@ -7,9 +7,11 @@ class MangaYouKnowDB:
     def __init__(self):
         self.database = Path('database/data.csv')
         self.config = Path('database/config.json')
+        self.dir = Path('database')
 
     def create_database(self):
         if not self.database.exists():
+            self.dir.mkdir(parents=True, exist_ok=True)
             self.database.touch()
             with open(self.database, mode='w') as file:
                 csv.writer(file, lineterminator='\n').writerow([
@@ -29,6 +31,7 @@ class MangaYouKnowDB:
 
     def create_config(self):
         if not self.config.exists():
+            self.dir.mkdir(parents=True, exist_ok=True)
             self.config.touch()
             with open(self.config, mode='w') as file:
                 json.dump({
@@ -54,8 +57,7 @@ class MangaYouKnowDB:
     def get_manga(self, manga_id:str) -> list or bool:
         list_mangas = self.get_database()
         for manga in list_mangas:
-            if manga[0] == manga_id:
-                return manga
+            if manga[0] == manga_id: return manga
         return False
 
     def edit_manga(self, manga_id:str, last_read:str) -> bool:
@@ -75,11 +77,10 @@ class MangaYouKnowDB:
         with open(self.database, 'r') as file:
             lista_csv = list(csv.reader(file))
         for line in lista_csv:
-            if manga_id in line:
-                lista_csv.remove(line)
+            if manga_id in line: lista_csv.remove(line)
         with open(self.database, 'w', newline='') as file:
-            escritor_csv = csv.writer(file)
-            escritor_csv.writerows(lista_csv)
+            csv.writer(file).writerows(lista_csv)
+        return True
 
     def add_data_chapters(self, manga_name:str, chapters_list:list):
         manga_data_path = Path(f'Mangas/{manga_name}/data/')
@@ -102,7 +103,4 @@ class MangaYouKnowDB:
     def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
         chapters = self.get_data_chapters(manga_name)
         for line in chapters:
-            if chapter == line[0]: return line[1]
-
-
-    
+            if line[0] == chapter: return line[1]
