@@ -5,7 +5,6 @@ from customtkinter import *
 from requests import Session
 from threading import Thread
 from bs4 import BeautifulSoup
-from unidecode import unidecode
 from myk_db import MangaYouKnowDB
 from myk_thread import ThreadManager
 
@@ -73,8 +72,7 @@ class MangaYouKnowDl:
         nome = str(h1_tags[-1])
         nome = nome.replace('<h1>', '')
         nome = nome.replace('</h1>', '')
-        nome = unidecode(nome)
-        manga_path = Path(f'Mangas/{manga_name}/cover/{manga_name}.jpg')
+        manga_path = Path(f'mangas/{manga_name}/cover/{manga_name}.jpg')
         if not manga_path.exists(): return False
         manga_bd = []
         manga_bd.append(manga_id)
@@ -103,7 +101,7 @@ class MangaYouKnowDl:
                     break
         cover = self.session.get(cover_url)
         if not cover: return False
-        manga_path = Path(f'Mangas/{manga_name}/cover')
+        manga_path = Path(f'mangas/{manga_name}/cover')
         manga_path.mkdir(parents=True, exist_ok=True)
         block_size = 1024
         with open(f'{manga_path}/{manga_name}.jpg', 'wb') as file:
@@ -113,7 +111,6 @@ class MangaYouKnowDl:
         manga_name_from_site = str(h1_tags[-1])
         manga_name_from_site = manga_name_from_site.replace('<h1>', '')
         manga_name_from_site = manga_name_from_site.replace('</h1>', '')
-        manga_name_from_site = unidecode(manga_name_from_site)
         return [Path(f'{manga_path}/{manga_name}.jpg'), manga_name_from_site]
 
     def download_manga_page(self, url:str, path:Path):
@@ -129,7 +126,7 @@ class MangaYouKnowDl:
         response = self.session.get(f'https://mangalivre.net/leitor/pages/{id_release}.json', stream=True).json()['images']
         if not response: return False
         threads = ThreadManager()
-        chapter_path = Path(f'Mangas/{manga_name}/chapters/{chapter}/')
+        chapter_path = Path(f'mangas/{manga_name}/chapters/{chapter}/')
         chapter_path.mkdir(parents=True, exist_ok=True)
         for i, img in enumerate(response):
             extension = (img['legacy'].split('/')[-1]).split('.')[-1]
