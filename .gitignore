@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+/*
+!myk_gui.py
+!myk_dl.py
+!myk_db.py
+!myk_thread.py
+!requirements.txt
