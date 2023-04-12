@@ -5,9 +5,9 @@ from pathlib import Path
 
 class MangaYouKnowDB:
     def __init__(self):
+        self.dir = Path('database')
         self.database = Path('database/data.csv')
         self.config = Path('database/config.json')
-        self.dir = Path('database')
 
     def create_database(self):
         if not self.database.exists():
@@ -83,7 +83,7 @@ class MangaYouKnowDB:
         return True
 
     def add_data_chapters(self, manga_name:str, chapters_list:list):
-        manga_data_path = Path(f'Mangas/{manga_name}/data/')
+        manga_data_path = Path(f'mangas/{manga_name}/data/')
         manga_data_path.mkdir(parents=True, exist_ok=True)
         data_file = Path(f'{manga_data_path}/chapters.csv')
         if path.isfile(data_file): remove(data_file)
@@ -95,7 +95,7 @@ class MangaYouKnowDB:
 
     def get_data_chapters(self, manga_name:str) -> list or bool :
         manga_name = manga_name.replace(' ', '-').lower()
-        manga_chapters = Path(f'Mangas/{manga_name}/data/chapters.csv')
+        manga_chapters = Path(f'mangas/{manga_name}/data/chapters.csv')
         if not manga_chapters.exists(): return False
         with open(manga_chapters, mode='r', encoding='utf-8') as file:
             return list(csv.reader(file))
@@ -104,3 +104,4 @@ class MangaYouKnowDB:
         chapters = self.get_data_chapters(manga_name)
         for line in chapters:
             if line[0] == chapter: return line[1]
+        return False
