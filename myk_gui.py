@@ -219,8 +219,8 @@ class MangaYouKnowGUI:
             if chapter == 'Nenhum lido': chapter = ''
             self.connection_data.edit_manga(manga_id, chapter)
         list_chapters = self.connection_data.get_data_chapters(manga[3].split('/')[-3] if '/' in manga[3] else manga[3].split('\\')[-3])
-        list_chapters.insert(0, 'Nenhum lido')
-        chapters = CTkOptionMenu(frame, values='Nenhum lido', next(i[0] for i in list_chapters), command=edit_last_read)
+        list_chapters.insert(0, ['Nenhum lido', '']
+        chapters = CTkOptionMenu(frame, values=[i[0] for i in list_chapters], command=edit_last_read)
         chapters.set('Nenhum lido' if manga[2] == '' else manga[2])
         chapters.place(x=200, y=10)
         window_show.grab_set()
