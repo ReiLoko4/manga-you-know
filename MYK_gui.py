@@ -15,7 +15,7 @@ __version__ = '0.1b'
 class MangaYouKnowGUI:
     def __init__(self):
         set_appearance_mode('System')
-        set_default_color_theme('green')
+        set_default_color_theme('yellow')
         self.main_w = CTk()
         self.main_w.geometry('770x630+300+40')
         self.main_w.resizable(width=False, height=False)
@@ -114,7 +114,7 @@ class MangaYouKnowGUI:
                 if self.end: return False
                 card = CTkFrame(self.sidebar, width=130, height=50, fg_color='transparent')
                 card.pack(padx=10, pady=5)
-                btn_title = CTkButton(card, width=120, height=30, text=(data[1])[:16], )
+                btn_title = CTkButton(card, width=120, height=30, text=(data[1])[:16], command=lambda id=data[0]: self.show_manga(id))
                 btn_title.pack()
                 chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
                 chapters_frame.pack()
@@ -216,9 +216,12 @@ class MangaYouKnowGUI:
         # chapters = CTkScrollableFrame(frame, width=140)
         # chapters.place(x=200, y=10)
         def edit_last_read(chapter):
+            if chapter == 'Nenhum lido': chapter = ''
             self.connection_data.edit_manga(manga_id, chapter)
         list_chapters = self.connection_data.get_data_chapters(manga[3].split('/')[-3] if '/' in manga[3] else manga[3].split('\\')[-3])
+        list_chapters.insert(0, 'Nenhum lido')
         chapters = CTkOptionMenu(frame, values=[i[0] for i in list_chapters], command=edit_last_read)
+        chapters.set('Nenhum lido' if manga[2] == '' else manga[2] )
         chapters.place(x=200, y=10)
         window_show.grab_set()
         
