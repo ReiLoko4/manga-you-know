@@ -3,11 +3,12 @@ import json
 from os import remove, path
 from pathlib import Path
 
+
 class MangaYouKnowDB:
     def __init__(self):
+        self.dir = Path('database')
         self.database = Path('database/data.csv')
         self.config = Path('database/config.json')
-        self.dir = Path('database')
 
     def create_database(self):
         if not self.database.exists():
@@ -18,8 +19,7 @@ class MangaYouKnowDB:
                     'id_manga',
                     'name_manga',
                     'last_read',
-                    'type',
-                    'manga_path'
+                    'cover_path'
                 ])
 
     def get_database(self) -> list:
@@ -102,5 +102,5 @@ class MangaYouKnowDB:
     
     def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
         chapters = self.get_data_chapters(manga_name)
-        for line in chapters:
+        for line in chapters: 
             if line[0] == chapter: return line[1]
