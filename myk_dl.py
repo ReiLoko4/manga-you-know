@@ -9,6 +9,7 @@ from myk_db import MangaYouKnowDB
 from myk_thread import ThreadManager
 
 
+
 class MangaYouKnowDl:
     def __init__(self):
         self.connection_data = MangaYouKnowDB()
@@ -27,7 +28,7 @@ class MangaYouKnowDl:
             'x-requested-with': 'XMLHttpRequest',
         })
 
-    def get_manga_chapters(self, manga_id:str, manga_name:str):
+    def get_manga_chapters(self, manga_id:str, manga_name:str) -> list:
         manga_name = manga_name.replace(' ', '-').lower()
         especial = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '.']
         if [i for i in manga_name] in [i for i in especial]:
@@ -50,7 +51,7 @@ class MangaYouKnowDl:
         return chapters_list
     
     
-    def get_manga_id_release(self, chapter:str, manga_id:str):
+    def get_manga_id_release(self, chapter:str, manga_id:str) -> str:
         offset = 0
         while True:
             response = self.session.get(f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}').json()['chapters']
@@ -103,9 +104,8 @@ class MangaYouKnowDl:
         if not cover: return False
         manga_path = Path(f'mangas/{manga_name}/cover')
         manga_path.mkdir(parents=True, exist_ok=True)
-        block_size = 1024
         with open(f'{manga_path}/{manga_name}.jpg', 'wb') as file:
-            for data in cover.iter_content(block_size):
+            for data in cover.iter_content(1024):
                 file.write(data)
         h1_tags = soup.find_all('h1')
         manga_name_from_site = str(h1_tags[-1])
@@ -114,11 +114,11 @@ class MangaYouKnowDl:
         return [Path(f'{manga_path}/{manga_name}.jpg'), manga_name_from_site]
 
     def download_manga_page(self, url:str, path:Path):
-        block_size = 1024
         page_img = self.session.get(url)
         with open(path, 'wb') as file:
-            for data in page_img.iter_content(block_size):
+            for data in page_img.iter_content(1024):
                 file.write(data)
+
 
     def download_manga_chapter(self, chapter:str, manga_name:str) -> bool:
         id_release = self.connection_data.get_chapter_id(manga_name, chapter)
@@ -149,3 +149,4 @@ class MangaYouKnowDl:
                 threads.join()
                 threads.delete_all_threads()
         return True
+    
