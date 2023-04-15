@@ -2,4 +2,3 @@ bs4
 customtkinter
 pillow
 requests
-unidecode
