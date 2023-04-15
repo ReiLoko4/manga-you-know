@@ -19,12 +19,13 @@ class MangaYouKnowDB:
                     'id_manga',
                     'name_manga',
                     'last_read',
-                    'cover_path'
+                    'cover_path',
+                    'name_with_hyphen'
                 ])
 
     def get_database(self) -> list:
         self.create_database()
-        with open(self.database, mode='r', encoding='utf-8') as file:
+        with open(self.database, 'r', encoding='UTF-8') as file:
             database = list(csv.reader(file))
         del[database[0]]
         return database
@@ -36,21 +37,22 @@ class MangaYouKnowDB:
             with open(self.config, mode='w') as file:
                 json.dump({
                     'config': {
-                    'reader-type':'pass-n',
-                    'theme-color':'blue'
+                    'theme-mode':'dark',
+                    'theme-color':'blue',
+                    'reader-type':'h-n'
                     }
                 }, file)
 
     def get_config(self) -> dict:
         self.create_config()
-        with open(self.config, mode='r', encoding='utf-8') as file:
+        with open(self.config, 'r', encoding='UTF-8') as file:
             config = json.load(file)
         return config
 
     def add_manga(self, manga:list) -> bool:
         list_favs = self.get_database()
         if manga[0] in [i[0] for i in list_favs]: return False
-        with open(self.database, mode='a') as file:
+        with open(self.database, 'a', encoding='UTF-8') as file:
             csv.writer(file, lineterminator='\n').writerow(manga)
         return True
     
@@ -60,25 +62,24 @@ class MangaYouKnowDB:
             if manga[0] == manga_id: return manga
         return False
 
-    def edit_manga(self, manga_id:str, last_read:str) -> bool:
-        self.create_database()
-        with open(self.database, mode='r', encoding='utf-8') as file:
+    def set_manga(self, manga_id:str, column:int, last_read:str) -> bool:
+        with open(self.database, 'r', encoding='UTF-8') as file:
             database = list(csv.reader(file))
         for line in database:
             if line[0] == manga_id:
-                line[2] = last_read
+                line[column] = last_read
                 break
-        with open(self.database, 'w', newline='') as file:
+        with open(self.database, 'w', encoding='UTF-8', newline='') as file:
             csv.writer(file).writerows(database)
         return True
 
     def delete_manga(self, manga_id:str):
         manga_id = str(manga_id)
-        with open(self.database, 'r') as file:
+        with open(self.database, 'r', encoding='UTF-8') as file:
             lista_csv = list(csv.reader(file))
         for line in lista_csv:
             if manga_id in line: lista_csv.remove(line)
-        with open(self.database, 'w', newline='') as file:
+        with open(self.database, 'w', encoding='UTF-8', newline='') as file:
             csv.writer(file).writerows(lista_csv)
         return True
 
@@ -89,9 +90,8 @@ class MangaYouKnowDB:
         if path.isfile(data_file): remove(data_file)
         data_file.touch(exist_ok=True)
         for chapter in chapters_list:
-            with open(data_file, mode='a+', encoding='utf-8') as file:
-                writer_csv = csv.writer(file, lineterminator='\n')
-                writer_csv.writerow(chapter)
+            with open(data_file, 'a+', encoding='UTF-8') as file:
+                csv.writer(file, lineterminator='\n').writerow(chapter)
 
     def get_data_chapters(self, manga_name:str) -> list or bool :
         manga_name = manga_name.replace(' ', '-').lower()
