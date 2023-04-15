@@ -216,7 +216,7 @@ class MangaYouKnowGUI:
         list_chapters = self.connection_data.get_data_chapters(manga[4])
         list_chapters.insert(0, 'Nenhum lido')
         chapters = CTkOptionMenu(frame, values=[i[0] for i in list_chapters], command=edit_last_read)
-        chapters.set('Nenhum lido' if manga[2] == '' else manga[2] )
+        chapters.set('Nenhum lido' if manga[2] == '' else manga[2])
         chapters.place(x=200, y=10)
         window_show.grab_set()
         
