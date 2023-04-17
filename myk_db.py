@@ -63,6 +63,18 @@ class MangaYouKnowDB:
         return False
 
     def set_manga(self, manga_id:str, column:int, last_read:str) -> bool:
+        """
+        def set_manga
+        -------------
+        set a atributte of an manga on data.csv file
+
+        column=0: edit id (id is stattic, but its localizated in 0 column)
+        column=1: edit manga name
+        column=2: edit last chapter read
+        column=3: edit cover path
+        """
+
+
         with open(self.database, 'r', encoding='UTF-8') as file:
             database = list(csv.reader(file))
         for line in database:
