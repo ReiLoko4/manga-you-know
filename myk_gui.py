@@ -1,4 +1,5 @@
 from PIL import Image
+from time import sleep
 from pathlib import Path
 from customtkinter import *
 from threading import Thread
@@ -46,7 +47,7 @@ class MangaYouKnowGUI:
         self.main_tabs.add('Configurações')
         self.main_tabs.add('Ajuda')
         # self.main_tabs._segmented_button.place(x=0,y=10)
-        self.tab_favs = CTkScrollableFrame(self.main_tabs.tab('Favoritos'), width=515, height=20000)
+        self.tab_favs = CTkScrollableFrame(self.main_tabs.tab('Favoritos'), width=515, height=600)
         self.fav_entry = CTkEntry(self.main_tabs.tab('Adicionar'), placeholder_text='https://mangalivre.net/manga/nomeDoManga/idDoManga', width=330)
         self.fav_entry.place(x=50, y=30)
         self.btn_add = CTkButton(self.main_tabs.tab('Adicionar'), text='Pesquisar', width=70, command=self.add_manga)
@@ -65,33 +66,65 @@ class MangaYouKnowGUI:
         Thread(target=lambda: self.update_sidebar()).start()
         self.main_w.mainloop()
 
-    def update_tab_favs(self):
+    def update_tab_favs(self, manga_id:str=None):
+        if manga_id != None: 
+            self.frames_fav[manga_id].destroy()
+            self.frames_fav['card_null'].pack_forget()
         self.tab_favs.pack()
         data = self.connection_data.get_database()
         x = [10, 180, 350]
         self.y = 10
         self.last_x = 0
         offset = 0
-        if len(data) != 0:
-            card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
-            card_space.pack(pady=10, anchor=W)
-            for manga in data:
-                card = CTkFrame(self.tab_favs, width=160, height=270)
-                card.place(x=x[offset], y=self.y)
-                self.last_x = x[offset]
-                offset+=1
-                if offset == 3 and manga[0] not in data[-1][0]:
-                    offset = 0
-                    self.y+=290
-                    card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
-                    card_space.pack(pady=10, anchor=W)
-                capa1 = CTkImage(Image.open(manga[3]), size=(145, 220))
-                img1 = CTkLabel(master=card, text='', image=capa1, width=140, height=150)
-                img1.place(x=8, y=6)
-                button1 = CTkButton(master=card, text='Ver capítulos', width=107, command=lambda id=manga[0]: self.show_manga(id))
-                button1.place(x=8, y=235)
-                buttonedit1 = CTkButton(master=card, text=None, width=15, image=self.img_edit, fg_color='white', command=lambda id=manga[0]: self.edit_manga(id))
-                buttonedit1.place(x=123, y=235)
+        try: 
+            if self.frames_fav.get('welcome') != None: self.frames_fav['welcome'].destroy()
+        except: self.frames_fav = {}
+        if len(data) == 0:
+            card_welcome = CTkFrame(self.tab_favs, width=495)
+            card_welcome.pack(padx=10, pady=10, anchor=N)
+            self.frames_fav['welcome'] = card_welcome
+            text_welcome = CTkTextbox(card_welcome, width=380, height=180, font=('Times new Roman', 16))
+            text_welcome.place(x=10,y=10)
+            text_welcome.configure(state='disabled')
+            btn_welcome = CTkButton(card_welcome,width=80, height=180, text='Leve me lá!', command=lambda: self.main_tabs.set('Adicionar'))
+            btn_welcome.place(x=405,y=10)
+            def print_text():
+                text = ['Seja bem vindo ao MangaYouKnow!', 'Atualmente você não possui nenhum manga favoritado...', 'Se desejar favoritar um manga, escolha entre as opções na \naba #Adicionar', 'Ou copie e cole o link da página do manga na url: \nhttps://mangalivre.net :)']
+                for phrase in text:
+                    for char in phrase:
+                        if not self.main_w.winfo_exists(): return False
+                        text_welcome.configure(state='normal')
+                        text_welcome.insert(END, char)
+                        text_welcome.configure(state='disabled')
+                        sleep(0.07)
+                    if not self.main_w.winfo_exists(): return False
+                    text_welcome.configure(state='normal')
+                    text_welcome.insert(END, '\n')
+                    text_welcome.configure(state='disabled')
+                    sleep(0.8)
+            Thread(target=print_text).start()
+            # self.main_tabs.set('Adicionar')
+            return False
+        card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
+        card_space.pack(pady=10, anchor=W)
+        self.frames_fav['card_null'] = card_space
+        for manga in data:
+            card = CTkFrame(self.tab_favs, width=160, height=270)
+            card.place(x=x[offset], y=self.y)
+            self.frames_fav[manga[0]] = card
+            self.last_x = x[offset]
+            offset+=1
+            if offset == 3 and manga[0] not in data[-1][0]:
+                offset = 0
+                self.y+=290
+                card_space.pack(pady=10, anchor=W)
+            capa = CTkImage(Image.open(manga[3]), size=(145, 220))
+            img = CTkLabel(master=card, text='', image=capa, width=140, height=150)
+            img.place(x=8, y=6)
+            btn_show = CTkButton(master=card, text='Ver capítulos', width=107, command=lambda id=manga[0]: self.show_manga(id))
+            btn_show.place(x=8, y=235)
+            btn_edit = CTkButton(master=card, text=None, width=15, image=self.img_edit, fg_color='white', command=lambda id=manga[0]: self.edit_manga(id))
+            btn_edit.place(x=123, y=235)
                 
     def update_sidebar(self):
         database = self.connection_data.get_database()
@@ -127,6 +160,9 @@ class MangaYouKnowGUI:
             manga_id = self.fav_entry.get().split('/')[-1]
         except:
             return False
+        if not str(manga_id).isdigit():
+            for char in manga_id:
+                if not char.isdigit(): manga_id = manga_id.replace(char, '')
         manga_info = self.connection_api.download_manga_cover(manga_name, manga_id)
         if not manga_info: return False
         tab_add = CTkToplevel()
@@ -165,28 +201,11 @@ class MangaYouKnowGUI:
                 text_fav.insert(1.0, 'O mangá já foi favoritado!')
                 text_fav.configure(state='disabled')
                 return False
-            chapters = self.connection_data.get_database()
-            card = CTkFrame(self.tab_favs, width=160, height=270)
-            if self.last_x in [0, 350]:
-                card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
-                card_space.pack(pady=10, anchor=W)
-                if self.last_x == 350: self.y += 290
-                self.last_x = 10
-                card.place(x=10, y=self.y)
-            else:
-                self.last_x += 170 
-                card.place(x=self.last_x, y=self.y)
-            capa = CTkImage(Image.open(chapters[-1][3]), size=(145, 220))
-            img = CTkLabel(card, text='', image=capa, width=140, height=150)
-            img.place(x=8, y=6)
-            button = CTkButton(card, text='Ver capítulos', width=107, command=lambda id=chapters[-1][0]: self.show_manga(id))
-            button.place(x=8, y=235)
-            button_edit = CTkButton(card, text=None, width=15, image=self.img_edit, fg_color='white', command=lambda id=chapters[-1][0]: print(id))
-            button_edit.place(x=123, y=235)
+            self.update_tab_favs()
         button_fav = CTkButton(frame, width=30, height=30, text=None, image=self.img_fav, command=lambda: favorite())
         button_fav.place(x=320, y=250)
         tab_add.grab_set()
-        def search_chapters(self:MangaYouKnowGUI, manga_id:str, manga_name:str):
+        def search_chapters():
             chapters = self.connection_api.get_manga_chapters(manga_id, manga_name)
             if not tab_add.winfo_exists(): return False
             manga_chapters.configure(state='normal')
@@ -194,7 +213,7 @@ class MangaYouKnowGUI:
             manga_chapters.insert(END, f'{len(chapters)} capítulos disponíveis')
             manga_chapters.configure(state='disabled')
             self.connection_data.add_data_chapters(manga_name, chapters)
-        chapters_search = Thread(target=lambda: search_chapters(self, manga_id, manga_name))
+        chapters_search = Thread(target=lambda: search_chapters())
         chapters_search.start()
         
     def show_manga(self, manga_id:str):
@@ -223,13 +242,13 @@ class MangaYouKnowGUI:
     def edit_manga(self, manga_id:str):
         manga = self.connection_data.get_manga(manga_id)
         window_edit = CTkToplevel()
-        window_edit.geometry('350x420+500+150')
+        window_edit.geometry('360x390+500+150')
         window_edit.resizable(False, False)
         window_edit.wm_title(manga[1])
-        frame = CTkFrame(window_edit, width=370, height=400)
+        frame = CTkFrame(window_edit, width=340, height=370)
         frame.pack(padx=10, pady=10)
-        entry = CTkEntry(frame, width=220, height=34)
-        entry.place(x=30, y=30)
+        entry = CTkEntry(frame, width=230, height=34)
+        entry.place(x=20, y=20)
         entry.insert(0, manga[1])
         entry.configure(state='disabled')
         def edit_name():
@@ -238,18 +257,18 @@ class MangaYouKnowGUI:
                 entry.configure(state='normal')
             else:
                 btn_edit.configure(text='Editar')
+                if len(entry.get()) != 0:
+                    self.connection_data.set_manga(manga[0], 1, entry.get())
+                    window_edit.wm_title(entry.get())
+                else: entry.insert(0, manga[1])
                 entry.configure(state='disabled')
-                self.connection_data.set_manga(manga[0], 1, entry.get())
-                window_edit.wm_title(entry.get())
-        btn_edit = CTkButton(frame, width=55, text='Editar', command=edit_name)
-        btn_edit.place(x=255, y=33)
+        btn_edit = CTkButton(frame, width=65, text='Editar', command=edit_name)
+        btn_edit.place(x=255, y=23)
         cover = CTkImage(Image.open(manga[3]), size=(172, 272.25))
         label = CTkLabel(frame, text=None, image=cover)
-        label.place(x=15,y=100)
-        text_delete = CTkTextbox(frame, width=60, height=50)
-        text_delete.place(x=195, y=312)
-
-
+        label.place(x=20,y=80)
+        frame_btn = CTkFrame(frame, width=120, height=273)
+        frame_btn.place(x=202, y=80)
         def select_folder():
             folder_path = filedialog.askopenfile(filetypes=[
                 ('JPEG', '*.jpg;*.jpeg'),
@@ -260,16 +279,41 @@ class MangaYouKnowGUI:
                 ('AVIF','*.avif'),
                 ('WEBP', '*.webp')
             ])
-            
             try:
                 label.configure(image=CTkImage(Image.open(folder_path.name), size=(172, 272.25)))
                 self.connection_data.set_manga(manga[0], 3, folder_path.name)
-                self.update_tab_favs()
+                self.update_tab_favs(manga_id)
             except:
                 print('nada selecionado')
-        select_button = CTkButton(frame, width=120, text='Trocar capa', command=select_folder)
-        select_button.place(x=200, y=200)
-            
+        select_button = CTkButton(frame_btn, width=100, text='Selecionar', command=select_folder)
+        select_button.place(x=10, y=10)
+        text_select_cover = CTkTextbox(frame_btn, width=100, height=80)
+        text_select_cover.place(x=10, y=50)
+        text_select_cover.insert(0.0, 'Selecione uma\nimagem para\nsubstituir\na capa')
+        text_select_cover.configure(state='disabled')
+        text_delete = CTkTextbox(frame_btn, width=60, height=30, fg_color='#fa4343')
+        text_delete.place(x=10, y=233)
+        text_delete.insert(0.0, 'Deletar')
+        text_delete.configure(state='disabled')
+        def delete():
+            window_sure = CTkToplevel()
+            window_sure.geometry('300x100+500+300')
+            window_sure.resizable(False, False)
+            window_sure.wm_title('Tem certeza?')
+            frame = CTkFrame(window_sure, width=280, height=80)
+            frame.pack(padx=10,pady=10)
+            def dell():
+                self.connection_data.delete_manga(manga_id)
+                window_sure.destroy()
+                window_edit.destroy()
+                self.update_tab_favs(manga_id)
+            btn_ok = CTkButton(frame, text='Sim, deletar', fg_color='#bd110b', hover_color='#fa4343', command=dell)
+            btn_ok.place(x=20,y=25)
+            btn_cancel = CTkButton(frame,width=80, text='Cancelar', fg_color='gray', hover_color='#c2b3b2', command=lambda: window_sure.destroy())
+            btn_cancel.place(x=180,y=25)
+            window_sure.grab_set()
+        btn_dell = CTkButton(frame_btn, width=25, height=25, image=self.img_trash, text=None, command=delete, fg_color='#bd110b', hover_color='#fa4343')
+        btn_dell.place(x=80, y=234)
         window_edit.grab_set()
 
 
