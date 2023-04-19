@@ -16,7 +16,7 @@ __version__ = '0.2b'
 class MangaYouKnowGUI:
     def __init__(self):
         set_appearance_mode('System')
-        set_default_color_theme('yellow')
+        set_default_color_theme('green')
         self.main_w = CTk()
         self.main_w.geometry('770x630+300+40')
         self.main_w.resizable(width=False, height=False)
@@ -31,10 +31,12 @@ class MangaYouKnowGUI:
         self.informative_text.place(x=20, y=20)
         self.informative_text.insert(1.0, 'Todos mangás\nem dia \nmeu consagrado!')
         self.informative_text.configure(state='disabled')
-        self.tab_to_read = CTkFrame(self.main_w, width=140, height=510)
+        self.tab_to_read = CTkFrame(self.main_w, width=140, height=400)
         self.tab_to_read.place(x=20, y=109)
-        self.sidebar = CTkScrollableFrame(self.tab_to_read, width=140, height=495)
+        self.sidebar = CTkScrollableFrame(self.tab_to_read, width=140, height=400)
         self.sidebar.pack()
+        self.reload_btn = CTkButton(self.main_w, width=160, height=80, text=None, command=lambda: Thread(target=lambda: self.update_sidebar()).start(), image=CTkImage(Image.open('assets/reload.ico'), size=(40, 40)))
+        self.reload_btn.place(x=20, y=531)
         self.search_entry = CTkEntry(self.main_w, placeholder_text='Nome do mangá (somente favoritos)', width=450)
         self.search_entry.place(x=210, y=20)
         self.search_ico = CTkImage(Image.open('assets/search.ico'))
@@ -93,6 +95,7 @@ class MangaYouKnowGUI:
                 for phrase in text:
                     for char in phrase:
                         if not self.main_w.winfo_exists(): return False
+                        if not card_welcome.winfo_exists(): return False
                         text_welcome.configure(state='normal')
                         text_welcome.insert(END, char)
                         text_welcome.configure(state='disabled')
@@ -127,6 +130,16 @@ class MangaYouKnowGUI:
             btn_edit.place(x=123, y=235)
                 
     def update_sidebar(self):
+        self.reload_btn.configure(state='disabled')
+        try: 
+            for card in self.cards_sidebar_destroy:
+                card.destroy()
+        except:
+            print('nothing')
+        global mangas_to_read
+        mangas_to_read = 0
+        self.cards_sidebar_destroy = []
+        self.cards_sidebar = {}
         database = self.connection_data.get_database()
         threads = ThreadManager()
         for data in database:
@@ -140,8 +153,17 @@ class MangaYouKnowGUI:
                     chapters_to_read.append(chapter)
                 if len(chapters_to_read) == 0: return False
                 if self.end: return False
+                if not self.connection_data.get_manga(data[0]): return False
+                global mangas_to_read
+                mangas_to_read += 1
+                self.informative_text.configure(state='normal')
+                self.informative_text.delete(1.0, END)
+                self.informative_text.insert(1.0, f'Você tem um total de {mangas_to_read} \nmanga(s) para ler!')
+                self.informative_text.configure(state='disabled')
                 card = CTkFrame(self.sidebar, width=130, height=50, fg_color='transparent')
                 card.pack(padx=10, pady=5)
+                self.cards_sidebar_destroy.append(card)
+                self.cards_sidebar[data[0]] = card
                 btn_title = CTkButton(card, width=120, height=30, text=(data[1])[:16], command=lambda id=data[0]: self.show_manga(id))
                 btn_title.pack()
                 chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
@@ -149,6 +171,8 @@ class MangaYouKnowGUI:
                 remaing_chapters = CTkLabel(chapters_frame, width=80, height=30, text=f'+{len(chapters_to_read)}')
                 remaing_chapters.pack(padx=2, pady=(0,2))
         threads.start()
+        threads.join()
+        self.reload_btn.configure(state='normal')
 
     def frame_change(self, frame:CTkFrame):
         if frame.winfo_exists(): frame.destroy()
@@ -307,6 +331,7 @@ class MangaYouKnowGUI:
                 window_sure.destroy()
                 window_edit.destroy()
                 self.update_tab_favs(manga_id)
+                if self.cards_sidebar.get(manga_id) != None: self.cards_sidebar[manga_id].destroy()
             btn_ok = CTkButton(frame, text='Sim, deletar', fg_color='#bd110b', hover_color='#fa4343', command=dell)
             btn_ok.place(x=20,y=25)
             btn_cancel = CTkButton(frame,width=80, text='Cancelar', fg_color='gray', hover_color='#c2b3b2', command=lambda: window_sure.destroy())
