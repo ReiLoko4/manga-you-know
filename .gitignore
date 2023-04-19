@@ -134,5 +134,6 @@ dmypy.json
 !myk_dl.py
 !myk_db.py
 !myk_thread.py
+!assets/
 !requirements.txt
 !README.md
