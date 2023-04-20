@@ -56,6 +56,7 @@ class MangaYouKnowGUI:
         self.btn_add.place(x=390, y=30)
         self.tab_config = CTkScrollableFrame(self.main_tabs.tab('Configurações'), width=515, height=20000)
         self.tab_config.pack()
+        self.frame_welcome = {}
         self.img_edit = CTkImage(Image.open('assets/edit.ico'), size=(15,15))
         self.img_search = CTkImage(Image.open('assets/search.ico'), size=(15,15))
         self.img_trash = CTkImage(Image.open('assets/trash.ico'), size=(15,20))
@@ -68,23 +69,25 @@ class MangaYouKnowGUI:
         Thread(target=lambda: self.update_sidebar()).start()
         self.main_w.mainloop()
 
-    def update_tab_favs(self, manga_id:str=None):
-        if manga_id != None: 
-            self.frames_fav[manga_id].destroy()
-            self.frames_fav['card_null'].pack_forget()
+    def update_tab_favs(self, delete:bool=None):
+        if delete != None: 
+
+            for children in self.tab_favs.winfo_children():
+                children.destroy()
+            # self.frames_fav[manga_id].destroy()
+            # self.frames_fav['card_null'].pack_forget()
         self.tab_favs.pack()
+        if self.frame_welcome.get('welcome') != None: self.frame_welcome['welcome'].destroy()
+        self.frame_welcome = {}
         data = self.connection_data.get_database()
         x = [10, 180, 350]
         self.y = 10
         self.last_x = 0
         offset = 0
-        try: 
-            if self.frames_fav.get('welcome') != None: self.frames_fav['welcome'].destroy()
-        except: self.frames_fav = {}
         if len(data) == 0:
             card_welcome = CTkFrame(self.tab_favs, width=495)
             card_welcome.pack(padx=10, pady=10, anchor=N)
-            self.frames_fav['welcome'] = card_welcome
+            self.frame_welcome['welcome'] = card_welcome
             text_welcome = CTkTextbox(card_welcome, width=380, height=180, font=('Times new Roman', 16))
             text_welcome.place(x=10,y=10)
             text_welcome.configure(state='disabled')
@@ -94,27 +97,25 @@ class MangaYouKnowGUI:
                 text = ['Seja bem vindo ao MangaYouKnow!', 'Atualmente você não possui nenhum manga favoritado...', 'Se desejar favoritar um manga, escolha entre as opções na \naba #Adicionar', 'Ou copie e cole o link da página do manga na url: \nhttps://mangalivre.net :)']
                 for phrase in text:
                     for char in phrase:
-                        if not self.main_w.winfo_exists(): return False
+                        if self.end: return False
                         if not card_welcome.winfo_exists(): return False
                         text_welcome.configure(state='normal')
                         text_welcome.insert(END, char)
                         text_welcome.configure(state='disabled')
                         sleep(0.07)
-                    if not self.main_w.winfo_exists(): return False
+                    if self.end: return False
+                    if not card_welcome.winfo_exists(): return False
                     text_welcome.configure(state='normal')
                     text_welcome.insert(END, '\n')
                     text_welcome.configure(state='disabled')
                     sleep(0.8)
             Thread(target=print_text).start()
-            # self.main_tabs.set('Adicionar')
             return False
         card_space = CTkFrame(self.tab_favs, width=160, height=270, fg_color='transparent')
         card_space.pack(pady=10, anchor=W)
-        self.frames_fav['card_null'] = card_space
         for manga in data:
             card = CTkFrame(self.tab_favs, width=160, height=270)
             card.place(x=x[offset], y=self.y)
-            self.frames_fav[manga[0]] = card
             self.last_x = x[offset]
             offset+=1
             if offset == 3 and manga[0] not in data[-1][0]:
@@ -218,6 +219,7 @@ class MangaYouKnowGUI:
         def favorite():
             if self.connection_data.add_manga([manga_id, manga_info[1], '', manga_info[0], manga_name]): 
                 tab_add.destroy()
+                self.fav_entry.delete(0, END)
                 self.main_w.grab_set()
             else:
                 text_fav.configure(state='normal')
@@ -242,7 +244,7 @@ class MangaYouKnowGUI:
         
     def show_manga(self, manga_id:str):
         manga = self.connection_data.get_manga(manga_id)
-        window_show = CTkToplevel(self.main_w)
+        window_show = CTkToplevel()
         window_show.geometry('390x440+500+150')
         window_show.resizable(False, False)
         window_show.wm_title(manga[1])
