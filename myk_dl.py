@@ -47,7 +47,7 @@ class MangaYouKnowDl:
                 if id_release not in [i[1] for i in chapters_list]:
                     chapters_list.append([chapter['number'], id_release])
             offset += 1
-        Thread(self.connection_data.add_data_chapters(manga_name, chapters_list)).start()
+        self.connection_data.add_data_chapters(manga_name, chapters_list)
         return chapters_list
     
     
