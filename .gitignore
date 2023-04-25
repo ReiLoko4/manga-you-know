@@ -128,7 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
+# Not ignore
 /*
 !myk_gui.py
 !myk_dl.py
