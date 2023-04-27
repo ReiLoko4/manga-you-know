@@ -15,7 +15,7 @@ __version__ = '0.2b'
 
 class MangaYouKnowGUI:
     def __init__(self):
-        set_appearance_mode('System')
+        set_appearance_mode('dark')
         set_default_color_theme('green')
         self.main_w = CTk()
         self.main_w.geometry('770x630+300+40')
@@ -35,7 +35,7 @@ class MangaYouKnowGUI:
         self.tab_to_read.place(x=20, y=109)
         self.sidebar = CTkScrollableFrame(self.tab_to_read, width=140, height=400)
         self.sidebar.pack()
-        self.reload_btn = CTkButton(self.main_w, width=160, height=80, text=None, command=lambda: Thread(target=lambda: self.update_sidebar(True)).start(), image=CTkImage(Image.open('assets/reload.ico'), size=(40, 40)))
+        self.reload_btn = CTkButton(self.main_w, width=160, height=80, text=None, command=lambda: Thread(target=lambda: self.update_sidebar(True)).start(), image=CTkImage(Image.open('assets/reload.ico'), size=(50, 50)))
         self.reload_btn.place(x=20, y=531)
         self.search_entry = CTkEntry(self.main_w, placeholder_text='Nome do mangá (somente favoritos)', width=450)
         self.search_entry.place(x=210, y=20)
@@ -180,8 +180,7 @@ class MangaYouKnowGUI:
         try:
             manga_name = self.fav_entry.get().split('/')[-2]
             manga_id = self.fav_entry.get().split('/')[-1]
-        except:
-            return False
+        except: return False
         if not str(manga_id).isdigit():
             for char in manga_id:
                 if not char.isdigit(): manga_id = manga_id.replace(char, '')
@@ -242,7 +241,7 @@ class MangaYouKnowGUI:
     def show_manga(self, manga_id:str):
         manga = self.connection_data.get_manga(manga_id)
         window_show = CTkToplevel()
-        window_show.geometry('390x440+500+150')
+        window_show.geometry('410x420+500+150')
         window_show.resizable(False, False)
         window_show.wm_title(manga[1])
         def destroy(window:CTk):
@@ -257,7 +256,9 @@ class MangaYouKnowGUI:
         img_label = CTkLabel(frame, text=None, image=img)
         img_label.place(x=20,y=20)
         window_show.grab_set()
-        tab_chapters = CTkTabview(frame, width=160, height=240)
+        next_chapter = CTkFrame(frame, width=190, height=50)
+        next_chapter.place(x=170, y=20)
+        tab_chapters = CTkTabview(frame, width=155, height=240)
         tab_chapters.place(x=170, y=70)
         def load_chapters():
             chapters = self.connection_data.get_data_chapters(manga[4])
@@ -265,14 +266,14 @@ class MangaYouKnowGUI:
             elif len(chapters) > 1400: cpt_per_frame = 600
             else: cpt_per_frame = 100
             tab_chapters.add('1')
-            scroll_chapters = CTkScrollableFrame(tab_chapters.tab('1'), width=160, height=240)
+            scroll_chapters = CTkScrollableFrame(tab_chapters.tab('1'), width=155, height=240)
             scroll_chapters.pack()
             offset = 1
             num_chapter = 0
             for chapter in chapters:
                 if self.end: return False
                 if not window_show.winfo_exists(): return False
-                try: frame_chapter = CTkFrame(scroll_chapters, width=150, height=30, fg_color='gray')
+                try: frame_chapter = CTkFrame(scroll_chapters, width=150, height=30, border_color='white' if self.main_w._get_appearance_mode() == 'dark' else 'black', border_width=1)
                 except: return False
                 frame_chapter.pack(padx=5, pady=3)
                 text = CTkLabel(frame_chapter, text=chapter[0])
@@ -282,9 +283,9 @@ class MangaYouKnowGUI:
                 num_chapter += 1
                 if num_chapter == cpt_per_frame:
                     offset += 1
-                    sleep(0.01)
+                    sleep(0.1)
                     tab_chapters.add(str(offset))
-                    scroll_chapters = CTkScrollableFrame(tab_chapters.tab(str(offset)), width=160, height=240)
+                    scroll_chapters = CTkScrollableFrame(tab_chapters.tab(str(offset)), width=155, height=240)
                     scroll_chapters.pack()
                     num_chapter = 0
         Thread(target=load_chapters).start()
