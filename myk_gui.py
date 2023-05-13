@@ -9,7 +9,7 @@ from myk_thread import ThreadManager
 
 
 
-__version__ = '0.2b'
+__version__ = '0.4b'
 
 
 
@@ -35,7 +35,7 @@ class MangaYouKnowGUI:
         self.tab_to_read.place(x=20, y=109)
         self.sidebar = CTkScrollableFrame(self.tab_to_read, width=140, height=400)
         self.sidebar.pack()
-        self.reload_btn = CTkButton(self.main_w, width=160, height=80, text=None, command=lambda: Thread(target=lambda: self.update_sidebar(True)).start(), image=CTkImage(Image.open('assets/reload.ico'), size=(50, 50)))
+        self.reload_btn = CTkButton(self.main_w, width=160, height=80, text=None, command=lambda: Thread(target=self.update_sidebar).start(), image=CTkImage(Image.open('assets/reload.ico'), size=(50, 50)))
         self.reload_btn.place(x=20, y=531)
         self.search_entry = CTkEntry(self.main_w, placeholder_text='Nome do mangá (somente favoritos)', width=450)
         self.search_entry.place(x=210, y=20)
@@ -56,11 +56,16 @@ class MangaYouKnowGUI:
         self.btn_add.place(x=390, y=30)
         self.tab_config = CTkScrollableFrame(self.main_tabs.tab('Configurações'), width=515, height=20000)
         self.tab_config.pack()
+        self.error = 0
+        self.mangas_to_read = 0
         self.frame_welcome = {}
+        self.cards_sidebar_destroy = {}
         self.img_view = CTkImage(Image.open('assets/view.ico'), size=(15,15))
         self.img_not_view = CTkImage(Image.open('assets/not_view.ico'), size=(15,15))
         self.img_edit = CTkImage(Image.open('assets/edit.ico'), size=(15,15))
         self.img_search = CTkImage(Image.open('assets/search.ico'), size=(15,15))
+        self.img_read = CTkImage(Image.open('assets/read.ico'), size=(15,15))
+        self.img_file = CTkImage(Image.open('assets/file.ico'), size=(15,15))
         self.img_trash = CTkImage(Image.open('assets/trash.ico'), size=(15,20))
         self.img_fav = CTkImage(Image.open('assets/fav.ico'), size=(25,25))
         self.connection_data = MangaYouKnowDB()
@@ -129,14 +134,10 @@ class MangaYouKnowGUI:
             btn_edit = CTkButton(master=card, text=None, width=15, image=self.img_edit, fg_color='white', command=lambda id=manga[0]: self.edit_manga(id))
             btn_edit.place(x=123, y=235)
                 
-    def update_sidebar(self, delete:bool=False):
+    def update_sidebar(self):
         self.reload_btn.configure(state='disabled')
-        if delete:
-            for card in self.cards_sidebar_destroy:
-                card.destroy()
-        global mangas_to_read
-        mangas_to_read = 0
-        self.cards_sidebar_destroy = []
+        self.error = 0
+        self.mangas_to_read = 0
         self.cards_sidebar = {}
         database = self.connection_data.get_database()
         threads = ThreadManager()
@@ -144,34 +145,51 @@ class MangaYouKnowGUI:
             t = Thread(target=lambda data=data: each_card(data))
             threads.add_thread(t)
             def each_card(data:list):
-                chapters = self.connection_api.get_manga_chapters(data[0], data[4])
-                chapters_to_read = []
-                for chapter in chapters:
-                    if chapter[0] == data[2]: break
-                    chapters_to_read.append(chapter)
-                if len(chapters_to_read) == 0: return False
-                if self.end: return False
-                if not self.connection_data.get_manga(data[0]): return False
-                global mangas_to_read
-                mangas_to_read += 1
-                self.informative_text.configure(state='normal')
-                self.informative_text.delete(1.0, END)
-                self.informative_text.insert(1.0, f'Você tem um total de {mangas_to_read} \nmanga(s) para ler!')
-                self.informative_text.configure(state='disabled')
-                card = CTkFrame(self.sidebar, width=130, height=50, fg_color='transparent')
-                card.pack(padx=10, pady=5)
-                self.cards_sidebar_destroy.append(card)
-                self.cards_sidebar[data[0]] = card
-                btn_title = CTkButton(card, width=120, height=30, text=(data[1])[:16], command=lambda id=data[0]: self.show_manga(id))
-                btn_title.pack()
-                self.cards_sidebar[f'{data[0]} title'] = btn_title
-                chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
-                chapters_frame.pack()
-                remaing_chapters = CTkLabel(chapters_frame, width=80, height=30, text=f'+{len(chapters_to_read)}')
-                remaing_chapters.pack(padx=2, pady=(0,2))
-                self.cards_sidebar[f'{data[0]} chapters'] = remaing_chapters
+                try:
+                    chapters = self.connection_api.get_manga_chapters(data[0], data[4])
+                    chapters_to_read = []
+                    data = self.connection_data.get_manga(data[0])
+                    if not data: return False
+                    for chapter in chapters:
+                        if chapter[0] == data[2]: break
+                        chapters_to_read.append(chapter)
+                    if len(chapters_to_read) == 0: return False
+                    if self.end: return False
+                    text_error = f'Erros: {self.error}' if self.error != 0 else ''
+                    if self.cards_sidebar_destroy.get(data[0]) != None:
+                        self.cards_sidebar_destroy[data[0]].destroy()
+                    else: 
+                        self.mangas_to_read += 1
+                    self.informative_text.configure(state='normal')
+                    self.informative_text.delete(1.0, END)
+                    self.informative_text.insert(1.0, f'Você tem um total de {self.mangas_to_read} \nmanga(s) para ler!\n{text_error}')
+                    self.informative_text.configure(state='disabled')
+                    card = CTkFrame(self.sidebar, width=130, height=50, fg_color='transparent')
+                    card.pack(padx=10, pady=5)
+                    self.cards_sidebar_destroy[data[0]] = card
+                    self.cards_sidebar[data[0]] = card
+                    btn_title = CTkButton(card, width=120, height=30, text=(data[1])[:16], command=lambda id=data[0]: self.show_manga(id))
+                    btn_title.pack()
+                    self.cards_sidebar[f'{data[0]} title'] = btn_title
+                    chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
+                    chapters_frame.pack()
+                    remaing_chapters = CTkLabel(chapters_frame, width=80, height=30, text=f'+{len(chapters_to_read)}')
+                    remaing_chapters.pack(padx=2, pady=(0,2))
+                    self.cards_sidebar[f'{data[0]} chapters'] = remaing_chapters
+                except:
+                    self.error += 1
+                    text_error = f'Erros: {self.error}'
+                    self.informative_text.configure(state='normal')
+                    self.informative_text.delete(1.0, END)
+                    self.informative_text.insert(1.0, f'Você tem um total de {self.mangas_to_read} \nmanga(s) para ler!\n{text_error}')
+                    self.informative_text.configure(state='disabled')
         threads.start()
         threads.join()
+        if self.mangas_to_read == 0:
+            self.informative_text.configure(state='normal')
+            self.informative_text.delete(1.0, END)
+            self.informative_text.insert(1.0, f'Você leu todos, LENDA!')
+            self.informative_text.configure(state='disabled')
         self.reload_btn.configure(state='normal')
 
     def frame_change(self, frame:CTkFrame):
@@ -242,6 +260,7 @@ class MangaYouKnowGUI:
         
     def show_manga(self, manga_id:str):
         manga = self.connection_data.get_manga(manga_id)
+        chapters = self.connection_data.get_data_chapters(manga[4])
         window_show = CTkToplevel()
         window_show.geometry('410x420+500+150')
         window_show.resizable(False, False)
@@ -252,18 +271,53 @@ class MangaYouKnowGUI:
                 except: continue
                 break
         window_show.protocol('WM_DELETE_WINDOW', lambda: destroy(window_show))
+        type_reader = self.connection_data.get_config()['config']['reader-type']
         frame = CTkFrame(window_show, width=390, height=470)
         frame.pack(padx=10, pady=10)
         img = CTkImage(Image.open(manga[3]), size=(129, 204.1875))
         img_label = CTkLabel(frame, text=None, image=img)
         img_label.place(x=20,y=20)
         window_show.grab_set()
-        next_chapter = CTkFrame(frame, width=190, height=50)
-        next_chapter.place(x=170, y=20)
+        next_chapter_frame = CTkFrame(frame, width=190, height=50)
+        next_chapter_frame.place(x=170, y=20)
+        next_chapter_place = CTkFrame(next_chapter_frame, width=160, height=30)
+        next_chapter_place.place(x=15,y=10)
+        def next_chapter(last_chapter:list) -> list:
+            if chapters[0] == last_chapter: 
+                return 'Todos lidos!'
+            next_ch = None
+            last_read = False
+            chapters.reverse()
+            for chapter in chapters:
+                if last_read:
+                    next_ch = chapter
+                    break
+                if chapter == last_chapter:
+                    last_read = True
+            chapters.reverse()
+            if next_ch == None: next_ch = chapters[-1]
+            return next_ch
+        def read_chapter(chapter):
+            self.connection_api.download_manga_chapter(chapter, manga[4])
+            self.Reader(f'mangas/{manga[4]}/{chapter}', type_reader)
+
+        next_ch = next_chapter([manga[2], self.connection_data.get_chapter_id(manga[4], manga[2])])
+        text_ch = CTkLabel(next_chapter_place, text=next_ch[0] if next_ch != 'Todos lidos!' else next_ch)
+        text_ch.place(x=10, y=3)
+        btn_to_set = {}
+        btn_set_readed = CTkButton(next_chapter_place, width=15, height=20,  text=None, image=self.img_view)
+        btn_set_readed.configure(command=lambda: edit_last_read(next_chapter([self.connection_data.get_manga(manga_id)[2], self.connection_data.get_chapter_id(manga[4], self.connection_data.get_manga(manga_id)[2])])))
+        btn_read = CTkButton(next_chapter_place, width=15, height=20,  text=None, image=self.img_read, command=lambda: read_chapter(self.connection_data.get_manga(manga_id)[2]))
+        btn_read.place(x=85, y=4)
+        btn_to_set['btn'] = btn_set_readed
+        if text_ch._text != 'Todos lidos!':    
+            btn_set_readed.place(x=120, y=4)
         tab_chapters = CTkTabview(frame, width=155, height=240)
         tab_chapters.place(x=170, y=70)
-        chapters = self.connection_data.get_data_chapters(manga[4])
         def load_chapters():
+            # match len(chapters):
+            #     case 700 | 1400:
+            #         cpt_per_frame = 200
             if len(chapters) > 700 and len(chapters) < 1400: cpt_per_frame = 200
             elif len(chapters) > 1400: cpt_per_frame = 600
             else: cpt_per_frame = 100
@@ -282,13 +336,16 @@ class MangaYouKnowGUI:
                 text = CTkLabel(frame_chapter, text=chapter[0])
                 text.place(x=5, y=1)
                 if not is_read:
-                    if chapter[0] != manga[2]: img_btn = self.img_view
+                    if chapter[0] != manga[2]: 
+                        img_btn = self.img_view
                     else: 
                         img_btn = self.img_not_view
                         is_read = True
                 btn_set_read = CTkButton(frame_chapter, width=15, height=20,  text=None, image=img_btn)
-                btn_set_read.configure(command=lambda number_ch=chapter[0], btn = btn_set_read: edit_last_read(number_ch, btn))
-                btn_set_read.place(x=70, y=4)
+                btn_set_read.configure(command=lambda number_ch=chapter, btn = btn_set_read: edit_last_read(number_ch, btn))
+                btn_set_read.place(x=110, y=4)
+                btn_read = CTkButton(frame_chapter, width=15, height=20,  text=None, image=self.img_read, command=lambda chapter=chapter[0]: read_chapter(chapter))
+                btn_read.place(x=75, y=4)
                 num_chapter += 1
                 if num_chapter == cpt_per_frame:
                     offset += 1
@@ -298,14 +355,12 @@ class MangaYouKnowGUI:
                     scroll_chapters.pack()
                     num_chapter = 0
         Thread(target=load_chapters).start()
-        # chapters = CTkScrollableFrame(frame, width=140)
-        # chapters.place(x=200, y=10)
-        def edit_last_read(chapter_read:str, btn:CTkButton):
-            self.connection_data.set_manga(manga_id, 2, chapter_read)
-            btn.configure(True, image=self.img_not_view)
+        def edit_last_read(chapter_read:list, btn:CTkButton=None):
+            self.connection_data.set_manga(manga_id, 2, chapter_read[0])
+            if btn != None: btn.configure(True, image=self.img_not_view)
             chapters_to_read = []
             for chapter in chapters:
-                    if chapter[0] == chapter_read: break
+                    if chapter == chapter_read: break
                     chapters_to_read.append(chapter)
             if self.cards_sidebar.get(manga_id) != None:
                 if len(chapters_to_read) != 0:
@@ -313,15 +368,46 @@ class MangaYouKnowGUI:
                 else:
                     self.cards_sidebar[manga_id].destroy()
                     del[self.cards_sidebar[manga_id]]
+                    self.mangas_to_read -= 1
+                    text_error = f'Erros: {self.error}' if self.error != 0 else ''
+                    self.informative_text.configure(state='normal')
+                    self.informative_text.delete(1.0, END)
+                    self.informative_text.insert(1.0, f'Você tem um total de {self.mangas_to_read} \nmanga(s) para ler!\n{text_error}')
+                    self.informative_text.configure(state='disabled')
             else:
                 if len(chapters_to_read) != 0:
-                    Thread(target=self.update_sidebar(True)).start()
-        # list_chapters = self.connection_data.get_data_chapters(manga[4])
-        # list_chapters.insert(0, 'Nenhum lido')
-        # chapters = CTkOptionMenu(frame, values=[i[0] for i in list_chapters], command=edit_last_read)
-        # chapters.set('Nenhum lido' if manga[2] == '' else manga[2])
-        # chapters.place(x=200, y=10)
-        
+                    card = CTkFrame(self.sidebar, width=130, height=50, fg_color='transparent')
+                    card.pack(padx=10, pady=5)
+                    self.cards_sidebar_destroy[manga[0]] = card
+                    self.cards_sidebar[manga[0]] = card
+                    btn_title = CTkButton(card, width=120, height=30, text=(manga[1])[:16], command=lambda id=manga[0]: self.show_manga(id))
+                    btn_title.pack()
+                    self.cards_sidebar[f'{manga[0]} title'] = btn_title
+                    chapters_frame = CTkFrame(card, width=80, height=30, border_width=1)
+                    chapters_frame.pack()
+                    remaing_chapters = CTkLabel(chapters_frame, width=80, height=30, text=f'+{len(chapters_to_read)}')
+                    remaing_chapters.pack(padx=2, pady=(0,2))
+                    self.cards_sidebar[f'{manga[0]} chapters'] = remaing_chapters
+                    self.mangas_to_read += 1
+                    text_error = f'Erros: {self.error}' if self.error != 0 else ''
+                    self.informative_text.configure(state='normal')
+                    self.informative_text.delete(1.0, END)
+                    self.informative_text.insert(1.0, f'Você tem um total de {self.mangas_to_read} \nmanga(s) para ler!\n{text_error}')
+                    self.informative_text.configure(state='disabled')
+            text_next = next_chapter(chapter_read)
+            text_ch.configure(text=text_next[0] if text_next != 'Todos lidos!' else text_next)
+            if text_ch._text == 'Todos lidos!':
+                if btn_to_set.get('btn') != None:
+                    if btn_to_set['btn'].winfo_exists():
+                        btn_to_set['btn'].destroy()
+            else:
+                if btn_to_set.get('btn') != None:
+                    if not btn_to_set['btn'].winfo_exists():
+                        btn_set = CTkButton(next_chapter_place, width=15, height=20,  text=None, image=self.img_view)
+                        btn_set.configure(command=lambda: edit_last_read(next_chapter([self.connection_data.get_manga(manga_id)[2], self.connection_data.get_chapter_id(manga[4], self.connection_data.get_manga(manga_id)[2])])))
+                        btn_set.place(x=60, y=4)
+                        btn_to_set['btn'] = btn_set
+            
     def edit_manga(self, manga_id:str):
         manga = self.connection_data.get_manga(manga_id)
         window_edit = CTkToplevel()
@@ -402,11 +488,18 @@ class MangaYouKnowGUI:
 
 
     class Reader:
-        def __init__(self, chapter_path:Path) -> None:
+        def __init__(self, chapter_path:Path, type_reader:str) -> None:
             self.chapter_path = chapter_path
+            self.type_reader = type_reader
+            self.open()
 
-        def open(self, chapter_path:Path):
-            pass
+        def open(self):
+            match self.type_reader:
+                case 'h-n':
+                    self.horizontal()
+                    return True
+                case _:
+                    return False
 
         def horizontal(self):
             pass
