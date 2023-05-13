@@ -1,4 +1,5 @@
 from threading import Thread
+from time import sleep
 
 
 class ThreadManager(Thread):
@@ -11,6 +12,11 @@ class ThreadManager(Thread):
     def start(self):
         for thread in self.threads:
             thread.start() 
+    
+    def start_with_sleep(self, secs:int=1):
+        for thread in self.threads:
+            thread.start()
+            sleep(secs)
     
     def join(self):
         for thread in self.threads:
