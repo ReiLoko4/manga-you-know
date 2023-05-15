@@ -9,7 +9,7 @@ from myk_thread import ThreadManager
 
 
 
-__version__ = '0.4b'
+__version__ = '0.8b'
 
 
 
@@ -488,7 +488,7 @@ class MangaYouKnowGUI:
 
 
     class Reader:
-        def __init__(self, chapter_path:Path, type_reader:str) -> None:
+        def __init__(self, chapter_path:Path, type_reader:str) -> CTkToplevel:
             self.chapter_path = chapter_path
             self.type_reader = type_reader
             self.open()
@@ -497,13 +497,24 @@ class MangaYouKnowGUI:
             match self.type_reader:
                 case 'h-n':
                     self.horizontal()
-                    return True
                 case _:
                     return False
 
         def horizontal(self):
-            pass
+            w_reader = CTkToplevel()
+            w_reader.state('zoomed')
+            w_reader.wm_title(str(self.chapter_path).split('/' if '/' in self.chapter_path else '\\')[-1])
+            def set_full():
+                w_reader.attributes('-fullscreen', True)
+                print(w_reader.__getattribute__('-fullscreen'))
+            w_reader.bind('<F11>', set_full)
+            
+            w_reader.grab_set()
 
+            def motion(event):
+                # print("Mouse position: (%s %s)" % (event.x, event.y))
+                return True
+            w_reader.bind('<Motion>', motion)
 
 
 gui = MangaYouKnowGUI()
