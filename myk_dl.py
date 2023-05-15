@@ -138,6 +138,7 @@ class MangaYouKnowDl:
             threads.add_thread(download)
         threads.start()
         threads.join()
+        print(f'capítulo {chapter} baixado! ')
         return True
     
     def download_all_manga_chapters(self, manga_name:str, simultaneous:int) -> bool:
