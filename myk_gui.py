@@ -504,10 +504,19 @@ class MangaYouKnowGUI:
             w_reader = CTkToplevel()
             w_reader.state('zoomed')
             w_reader.wm_title(str(self.chapter_path).split('/' if '/' in self.chapter_path else '\\')[-1])
-            def set_full():
-                w_reader.attributes('-fullscreen', True)
+            self.state = False
+            def toggle_fullscreen(event=None):
+                self.state = not self.state
+                w_reader.attributes('-fullscreen', self.state)
 
-            w_reader.bind('<F11>', set_full)
+            def end_fullscreen(event=None):
+                self.state = False
+                w_reader.attributes('-fullscreen', False)
+                w_reader.bind('<Configure>', resize)
+
+
+            w_reader.bind('<F11>', toggle_fullscreen)
+            w_reader.bind('<Escape>', end_fullscreen)
             self.chapter_path = Path(self.chapter_path)
             manga_pages = []
             for i in self.chapter_path.glob('*'):
@@ -518,7 +527,8 @@ class MangaYouKnowGUI:
                         '.tiff',
                         '.bmp',
                         '.gif',
-                        '.webp'
+                        '.webp',
+                        '.avif'
                 )):
                     width = Image.open(i).width
                     height = Image.open(i).height
@@ -529,30 +539,85 @@ class MangaYouKnowGUI:
                     manga_pages.append(CTkImage(Image.open(i), size=(100*quotient, 100)))
             width = manga_pages[0]._size[0]
             height = manga_pages[0]._size[1]
-            while width <= w_reader.winfo_width() and height <= w_reader.winfo_height():
+            while width < w_reader.winfo_width() and height < w_reader.winfo_height():
                 width *= 1.001
                 height *= 1.001
+            width = round(width, 0)
+            height = round(height, 0)
             manga_pages[0].configure(size=(width, height))
             frame_chapter = CTkLabel(w_reader, image=manga_pages[0], text=None)
             frame_chapter.pack()
             w_reader.grab_set()
-
             self.page = 0
 
-            def next_page(event):
+
+            def next_page(event=None):
                 self.page += 1
+                if self.page == len(manga_pages):
+                    self.page -= 1
+                    return False
                 width = manga_pages[self.page]._size[0]
                 height = manga_pages[self.page]._size[1]
-                while width <= w_reader.winfo_width() and height <= w_reader.winfo_height():
+                while width < w_reader.winfo_width() and height < w_reader.winfo_height():
                     width *= 1.001
                     height *= 1.001
+                width = round(width, 0)
+                height = round(height, 0)
                 manga_pages[self.page].configure(size=(width, height))
                 frame_chapter.configure(image=manga_pages[self.page])
-            
+
+
+
+
+            def previous_page(event=None):
+                self.page -= 1
+                if self.page < 0:
+                    self.page += 1
+                    return False
+                width = manga_pages[self.page]._size[0]
+                height = manga_pages[self.page]._size[1]
+                while width < w_reader.winfo_width() and height < w_reader.winfo_height():
+                    width *= 1.001
+                    height *= 1.001
+                width = round(width, 0)
+                height = round(height, 0)
+                manga_pages[self.page].configure(size=(width, height))
+                frame_chapter.configure(image=manga_pages[self.page])
+
+
+
+
             w_reader.bind('<Right>', next_page)
+            w_reader.bind('<Left>', previous_page)
+
 
             btn_next = CTkButton(w_reader, width=30, text='>', command=next_page)
             btn_next.place(x=0, y=w_reader.winfo_height()/2)
+
+
+            def resize(event):
+                width = manga_pages[self.page]._size[0]
+                height = manga_pages[self.page]._size[1]
+                if event != None:
+                    if event.width == width and event.height == height:
+                        return False
+                if width > w_reader.winfo_width() or height > w_reader.winfo_height():
+                    while width > w_reader.winfo_width() or height > w_reader.winfo_height():
+                        width /= 1.001
+                        height /= 1.001
+                    width = round(width, 0)
+                    height = round(height, 0)
+                else:
+                    while width < w_reader.winfo_width() and height < w_reader.winfo_height():
+                        width *= 1.001
+                        height *= 1.001
+                    width = round(width, 0)
+                    height = round(height, 0)
+                manga_pages[self.page].configure(size=(width, height))
+                frame_chapter.configure(image=manga_pages[self.page])
+
+
+            w_reader.bind('<Configure>', resize)
 
 
             def motion(event):
