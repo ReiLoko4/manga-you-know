@@ -126,7 +126,9 @@ class MangaYouKnowDl:
         id_release = self.connection_data.get_chapter_id(manga_name, chapter)
         manga_name = manga_name.replace(' ', '-').lower()
         response = self.session.get(f'https://mangalivre.net/leitor/pages/{id_release}.json', stream=True).json()['images']
-        if not response: return False
+        if not response:
+            print(f'capitulo {chapter} com erro!') 
+            return False
         threads = ThreadManager()
         chapter_path = Path(f'mangas/{manga_name}/chapters/{chapter}/')
         chapter_path.mkdir(parents=True, exist_ok=True)
@@ -143,13 +145,14 @@ class MangaYouKnowDl:
     
     def download_all_manga_chapters(self, manga_name:str, simultaneous:int) -> bool:
         chapters = self.connection_data.get_data_chapters(manga_name)
+        chapters.reverse()
         threads = ThreadManager()
         for chapter in chapters:
-            download_chapter = Thread(target=lambda chapter=chapter, name=manga_name: self.download_manga_chapter(chapter, name))
+            download_chapter = Thread(target=lambda chapter=chapter[0], name=manga_name: self.download_manga_chapter(chapter, name))
             threads.add_thread(download_chapter)
             if threads.get_len() == simultaneous:
                 threads.start()
                 threads.join()
                 threads.delete_all_threads()
         return True
-    
+        
