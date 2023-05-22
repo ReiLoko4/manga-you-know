@@ -9,7 +9,7 @@ from myk_thread import ThreadManager
 
 
 
-__version__ = '0.8b'
+__version__ = '0.6b'
 
 
 
@@ -282,6 +282,7 @@ class MangaYouKnowGUI:
         next_chapter_frame.place(x=170, y=20)
         next_chapter_place = CTkFrame(next_chapter_frame, width=160, height=30)
         next_chapter_place.place(x=15,y=10)
+
         def next_chapter(last_chapter:list) -> list:
             if chapters[0] == last_chapter: 
                 return 'Todos lidos!'
@@ -297,8 +298,13 @@ class MangaYouKnowGUI:
             chapters.reverse()
             if next_ch == None: next_ch = chapters[-1]
             return next_ch
-        def read_chapter(chapter):
-            self.connection_api.download_manga_chapter(chapter, manga[4])
+        
+        def read_chapter(chapter:str):
+            chapter_path = Path(f'mangas/{manga[4]}/chapters/{chapter}')
+            if not chapter_path.exists():
+                response = self.connection_api.download_manga_chapter(chapter, manga[4])
+                if not response:
+                    return False
             self.Reader(f'mangas/{manga[4]}/chapters/{chapter}', type_reader)
 
         next_ch = next_chapter([manga[2], self.connection_data.get_chapter_id(manga[4], manga[2])])
@@ -306,10 +312,11 @@ class MangaYouKnowGUI:
         text_ch.place(x=10, y=3)
         btn_to_set = {}
         btn_set_readed = CTkButton(next_chapter_place, width=15, height=20,  text=None, image=self.img_view)
-        btn_set_readed.configure(command=lambda: edit_last_read(next_chapter([self.connection_data.get_manga(manga_id)[2], self.connection_data.get_chapter_id(manga[4], self.connection_data.get_manga(manga_id)[2])])))
-        btn_read = CTkButton(next_chapter_place, width=15, height=20,  text=None, image=self.img_read, command=lambda: read_chapter(self.connection_data.get_manga(manga_id)[2]))
+        btn_set_readed.configure(command=lambda: edit_last_read(next_ch))
+        btn_read = CTkButton(next_chapter_place, width=15, height=20, text=None, image=self.img_read, command=lambda: read_chapter(next_ch[0]))
         btn_read.place(x=85, y=4)
         btn_to_set['btn'] = btn_set_readed
+        btn_to_set['btn-read'] = btn_read
         if text_ch._text != 'Todos lidos!':    
             btn_set_readed.place(x=120, y=4)
         tab_chapters = CTkTabview(frame, width=155, height=240)
@@ -355,6 +362,7 @@ class MangaYouKnowGUI:
                     scroll_chapters.pack()
                     num_chapter = 0
         Thread(target=load_chapters).start()
+
         def edit_last_read(chapter_read:list, btn:CTkButton=None):
             self.connection_data.set_manga(manga_id, 2, chapter_read[0])
             if btn != None: btn.configure(True, image=self.img_not_view)
@@ -400,13 +408,24 @@ class MangaYouKnowGUI:
                 if btn_to_set.get('btn') != None:
                     if btn_to_set['btn'].winfo_exists():
                         btn_to_set['btn'].destroy()
+                if btn_to_set.get('btn-read') != None:
+                    if btn_to_set['btn-read'].winfo_exists():
+                        btn_to_set['btn-read'].destroy()
             else:
                 if btn_to_set.get('btn') != None:
                     if not btn_to_set['btn'].winfo_exists():
                         btn_set = CTkButton(next_chapter_place, width=15, height=20,  text=None, image=self.img_view)
-                        btn_set.configure(command=lambda: edit_last_read(next_chapter([self.connection_data.get_manga(manga_id)[2], self.connection_data.get_chapter_id(manga[4], self.connection_data.get_manga(manga_id)[2])])))
+                        btn_set.configure(command=lambda: edit_last_read(text_next))
                         btn_set.place(x=60, y=4)
                         btn_to_set['btn'] = btn_set
+                    else:
+                         btn_to_set['btn'].configure(command=lambda: edit_last_read(text_next))
+                if btn_to_set.get('btn-read') != None:
+                    if not btn_to_set['btn-read'].winfo_exists():
+                        btn_read = CTkButton(next_chapter_place, width=15, height=20, text=None, image=self.img_read, command=lambda: read_chapter(text_next))
+                        btn_read.place(x=85, y=4)
+                    else:
+                         btn_to_set['btn-read'].configure(command=lambda: read_chapter(text_next[0]))
             
     def edit_manga(self, manga_id:str):
         manga = self.connection_data.get_manga(manga_id)
@@ -464,6 +483,7 @@ class MangaYouKnowGUI:
         text_delete.place(x=10, y=233)
         text_delete.insert(0.0, 'Deletar')
         text_delete.configure(state='disabled')
+
         def delete():
             window_sure = CTkToplevel()
             window_sure.geometry('300x100+500+300')
@@ -491,6 +511,8 @@ class MangaYouKnowGUI:
         def __init__(self, chapter_path:Path, type_reader:str) -> CTkToplevel:
             self.chapter_path = chapter_path
             self.type_reader = type_reader
+            self.img_next = CTkImage(Image.open('assets/next.ico'), size=(15, 30))
+            self.img_back = CTkImage(Image.open('assets/back.ico'), size=(15, 30))
             self.open()
 
         def open(self):
@@ -514,7 +536,6 @@ class MangaYouKnowGUI:
                 w_reader.attributes('-fullscreen', False)
                 w_reader.bind('<Configure>', resize)
 
-
             w_reader.bind('<F11>', toggle_fullscreen)
             w_reader.bind('<Escape>', end_fullscreen)
             self.chapter_path = Path(self.chapter_path)
@@ -530,12 +551,12 @@ class MangaYouKnowGUI:
                         '.webp',
                         '.avif'
                 )):
-                    width = Image.open(i).width
-                    height = Image.open(i).height
-                    if width != height:
-                        quotient = width / height
-                    else:
-                        quotient = 1
+                    try:
+                        width = Image.open(i).width
+                        height = Image.open(i).height
+                    except: continue
+                    if width != height: quotient = width / height
+                    else: quotient = 1
                     manga_pages.append(CTkImage(Image.open(i), size=(100*quotient, 100)))
             width = manga_pages[0]._size[0]
             height = manga_pages[0]._size[1]
@@ -549,7 +570,6 @@ class MangaYouKnowGUI:
             frame_chapter.pack()
             w_reader.grab_set()
             self.page = 0
-
 
             def next_page(event=None):
                 self.page += 1
@@ -566,9 +586,6 @@ class MangaYouKnowGUI:
                 manga_pages[self.page].configure(size=(width, height))
                 frame_chapter.configure(image=manga_pages[self.page])
 
-
-
-
             def previous_page(event=None):
                 self.page -= 1
                 if self.page < 0:
@@ -583,17 +600,12 @@ class MangaYouKnowGUI:
                 height = round(height, 0)
                 manga_pages[self.page].configure(size=(width, height))
                 frame_chapter.configure(image=manga_pages[self.page])
-
-
-
-
             w_reader.bind('<Right>', next_page)
             w_reader.bind('<Left>', previous_page)
-
-
-            btn_next = CTkButton(w_reader, width=30, text='>', command=next_page)
-            btn_next.place(x=0, y=w_reader.winfo_height()/2)
-
+            btn_next = CTkButton(w_reader, width=30, text=None, image=self.img_next,command=next_page)
+            btn_next.place(x=w_reader.winfo_width()-40, y=w_reader.winfo_height()/2)
+            btn_back = CTkButton(w_reader, width=30, text=None, image=self.img_back,command=previous_page)
+            btn_back.place(x=10, y=w_reader.winfo_height()/2)
 
             def resize(event):
                 width = manga_pages[self.page]._size[0]
@@ -615,10 +627,10 @@ class MangaYouKnowGUI:
                     height = round(height, 0)
                 manga_pages[self.page].configure(size=(width, height))
                 frame_chapter.configure(image=manga_pages[self.page])
-
+                btn_next.place(x=w_reader.winfo_width()-40, y=w_reader.winfo_height()/2)
+                btn_back.place(x=10, y=w_reader.winfo_height()/2)
 
             w_reader.bind('<Configure>', resize)
-
 
             def motion(event):
                 # print("Mouse position: (%s %s)" % (event.x, event.y))
