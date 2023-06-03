@@ -76,6 +76,7 @@ class MangaYouKnowGUI:
         Thread(target=lambda: self.update_sidebar()).start()
         self.main_w.mainloop()
 
+
     def update_tab_favs(self, delete:bool=False):
         if delete: 
             for children in self.tab_favs.winfo_children():
@@ -299,13 +300,32 @@ class MangaYouKnowGUI:
             if next_ch == None: next_ch = chapters[-1]
             return next_ch
         
+        class ReadChapter():
+            def __init__(self_2, chapter:str):
+                self_2.chapter = chapter
+                self_2.wait = CTkToplevel()
+                self_2.wait.geometry('200x200+500+150')
+                self_2.wait.resizable(False, False)
+                self_2.wait.wm_title('downloading...')
+                self_2.frame = CTkFrame(self_2.wait, width=300, height=300)
+                self_2.frame.place(x=0, y=0)
+                self_2.text = CTkLabel(self_2.frame, text='gay')
+                self_2.progress = CTkProgressBar(self_2.frame, mode='determinate')
+                self_2.progress.pack()
+                self_2.progress.set(0)
+                self_2.wait.grab_set()
+                self_2.open()
+                
+            def open(self_2):
+                chapter_path = Path(f'mangas/{manga[4]}/chapters/{self_2.chapter}')
+                if not chapter_path.exists():
+                    response = self.connection_api.download_manga_chapter(self_2.chapter, manga[4])
+                    if not response:
+                        return False
+                self_2.wait.destroy()
+                self.Reader(f'mangas/{manga[4]}/chapters/{self_2.chapter}', type_reader)
         def read_chapter(chapter:str):
-            chapter_path = Path(f'mangas/{manga[4]}/chapters/{chapter}')
-            if not chapter_path.exists():
-                response = self.connection_api.download_manga_chapter(chapter, manga[4])
-                if not response:
-                    return False
-            self.Reader(f'mangas/{manga[4]}/chapters/{chapter}', type_reader)
+            ReadChapter(chapter)
 
         next_ch = next_chapter([manga[2], self.connection_data.get_chapter_id(manga[4], manga[2])])
         text_ch = CTkLabel(next_chapter_place, text=next_ch[0] if next_ch != 'Todos lidos!' else next_ch)
@@ -425,7 +445,7 @@ class MangaYouKnowGUI:
                         btn_read = CTkButton(next_chapter_place, width=15, height=20, text=None, image=self.img_read, command=lambda: read_chapter(text_next))
                         btn_read.place(x=85, y=4)
                     else:
-                         btn_to_set['btn-read'].configure(command=lambda: read_chapter(text_next[0]))
+                         btn_to_set['btn-read'].configure(command=lambda: read_chapter(text_next[0], manga[4]))
             
     def edit_manga(self, manga_id:str):
         manga = self.connection_data.get_manga(manga_id)
@@ -566,7 +586,13 @@ class MangaYouKnowGUI:
             width = round(width, 0)
             height = round(height, 0)
             manga_pages[0].configure(size=(width, height))
-            frame_chapter = CTkLabel(w_reader, image=manga_pages[0], text=None)
+            index = 0
+            while True:
+                try:
+                    frame_chapter = CTkLabel(w_reader, image=manga_pages[index], text=None)
+                    break
+                except:
+                    continue
             frame_chapter.pack()
             w_reader.grab_set()
             self.page = 0
