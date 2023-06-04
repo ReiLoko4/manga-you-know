@@ -13,6 +13,11 @@ class ThreadManager(Thread):
         for thread in self.threads:
             thread.start() 
     
+    def start_and_join(self):
+        for thread in self.threads:
+            thread.start()
+            thread.join()
+
     def start_with_sleep(self, secs:int=1):
         for thread in self.threads:
             thread.start()
@@ -25,5 +30,8 @@ class ThreadManager(Thread):
     def get_len(self):
         return len(self.threads)
     
+    def get_list_threads(self):
+        return list(self.threads)
+
     def delete_all_threads(self):
         self.threads = []
