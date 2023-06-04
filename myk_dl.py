@@ -1,7 +1,7 @@
 # why you see this trash project? I believe you can do more.
 
 from pathlib import Path
-from customtkinter import CTkProgressBar
+from customtkinter import *
 from requests import Session
 from threading import Thread
 from bs4 import BeautifulSoup
@@ -62,7 +62,6 @@ class MangaYouKnowDl:
         self.connection_data.add_data_chapters(manga_name, chapters_list)
         return chapters_list
     
-    
     def get_manga_id_release(self, chapter:str, manga_id:str) -> str:
         offset = 0
         while True:
@@ -100,16 +99,14 @@ class MangaYouKnowDl:
         self.connection_data.add_manga(manga_bd)
         return True
     
-    def search_chapters(self, entry:str) -> list:
+    def search_mangas(self, entry:str) -> list:
         response = self.session.post(
             'https://mangalivre.net/lib/search/series.json',
             data={'search':entry},
             headers={'referer':'mangalivre.net'}
         )   
-        if not response:
-            return False
-        if not response.json()['series']:
-            return False
+        if not response: return False
+        if not response.json()['series']: return False
         return response.json()['series']
 
     def download_manga_cover(self, manga_name:str, manga_id:str) -> list:
@@ -148,7 +145,7 @@ class MangaYouKnowDl:
         manga_name_from_site = manga_name_from_site.replace('</h1>', '')
         return [Path(f'{manga_path}/{manga_name}.jpg'), manga_name_from_site]
 
-    def download_manga_chapter(self, chapter:str, manga_name:str, progress:CTkProgressBar=None) -> bool:
+    def download_manga_chapter(self, chapter:str, manga_name:str) -> bool:
         id_release = self.connection_data.get_chapter_id(manga_name, chapter)
         manga_name = manga_name.replace(' ', '-').lower()
         response = self.session.get(
@@ -167,12 +164,6 @@ class MangaYouKnowDl:
             with open(path, 'wb') as file:
                 for data in page_img.iter_content(1024):
                     file.write(data)
-            if progress != None:
-                self.pages_downloaded += 1 / len(response)
-                if self.pages_downloaded >= 1:
-                    self.pages_downloaded = 1
-                print(self.pages_downloaded)
-                progress.set(self.pages_downloaded)
 
         for i, img in enumerate(response):
             extension = (img['legacy'].split('/')[-1]).split('.')[-1]
@@ -185,6 +176,49 @@ class MangaYouKnowDl:
         print(f'capítulo {chapter} baixado! ')
         return True
     
+    def download_list_of_manga_chapters(self, manga_name, chapters_list:list, simultaneous:int):
+        threads = ThreadManager()
+        errors = 0
+        for chapter in chapters_list:
+            try:
+                threads.add_thread(Thread(target=lambda chapter=chapter: self.download_manga_chapter(chapter, manga_name)))
+                if threads.get_len() == simultaneous:
+                    threads.start()
+                    threads.join()
+                    threads.delete_all_threads()
+            except:
+                print(f'capitulo {chapter} não encontrado')
+                errors += 1
+        if errors == threads.get_len():
+            print('nenhum capitulo encontrado!')
+            return False
+        return True
+
+    def download_manga_chapters_in_range(self, manga_name, first_chapter, last_chapter, simultaneous:int) -> bool:
+        chapters = self.connection_data.get_data_chapters(manga_name)
+        if first_chapter not in [i[0] for i in chapters] or last_chapter not in [i[0] for i in chapters]:
+            return False
+        chapters.reverse()
+        list_chapters = []
+        in_range = False
+        for chapter in chapters:
+            if chapter[0] == first_chapter:
+                in_range = True
+                list_chapters.append(chapter)
+            if chapter[0] == last_chapter:
+                list_chapters.append(chapter)
+                break
+            elif in_range:
+                list_chapters.append(chapter)
+        threads = ThreadManager()
+        for chapter in chapters:
+            threads.add_thread(Thread(target=lambda chapter=chapter[0]: self.download_manga_chapter(chapter, manga_name)))
+            if threads.get_len() == simultaneous:
+                threads.start()
+                threads.join()
+                threads.delete_all_threads()
+        return True
+
     def download_all_manga_chapters(self, manga_name:str, simultaneous:int) -> bool:
         '''
         Download all chapters
@@ -196,7 +230,7 @@ class MangaYouKnowDl:
         chapters.reverse()
         threads = ThreadManager()
         for chapter in chapters:
-            download_chapter = Thread(target=lambda chapter=chapter[0], name=manga_name: self.download_manga_chapter(chapter, name))
+            download_chapter = Thread(target=lambda chapter=chapter[0]: self.download_manga_chapter(chapter, manga_name))
             threads.add_thread(download_chapter)
             if threads.get_len() == simultaneous:
                 threads.start()
