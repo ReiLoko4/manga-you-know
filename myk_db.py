@@ -47,7 +47,7 @@ class MangaYouKnowDB:
         self.create_config()
         with open(self.config, 'r', encoding='UTF-8') as file:
             config = json.load(file)
-        return config
+        return config['config']
 
     def add_manga(self, manga:list) -> bool:
         list_favs = self.get_database()
@@ -56,7 +56,7 @@ class MangaYouKnowDB:
             csv.writer(file, lineterminator='\n').writerow(manga)
         return True
     
-    def get_manga(self, manga_id:str) -> list or bool:
+    def get_manga(self, manga_id:str) -> list | bool:
         list_mangas = self.get_database()
         for manga in list_mangas:
             if manga[0] == manga_id: return manga
@@ -105,7 +105,7 @@ class MangaYouKnowDB:
             with open(data_file, 'a+', encoding='UTF-8') as file:
                 csv.writer(file, lineterminator='\n').writerow(chapter)
 
-    def get_data_chapters(self, manga_name:str) -> list or bool :
+    def get_data_chapters(self, manga_name:str) -> list | bool :
         manga_name = manga_name.replace(' ', '-').lower()
         manga_chapters = Path(f'mangas/{manga_name}/data/chapters.csv')
         if not manga_chapters.exists(): return False
