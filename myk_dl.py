@@ -10,7 +10,7 @@ from myk_thread import ThreadManager
 
 
 
-class MangaYouKnowDl:
+class MangaLivreDl:
     def __init__(self):
         self.connection_data = MangaYouKnowDB()
         self.session = Session()
@@ -99,14 +99,13 @@ class MangaYouKnowDl:
         self.connection_data.add_manga(manga_bd)
         return True
     
-    def search_mangas(self, entry:str) -> list:
+    def search_mangas(self, entry:str) -> dict:
         response = self.session.post(
             'https://mangalivre.net/lib/search/series.json',
             data={'search':entry},
             headers={'referer':'mangalivre.net'}
         )   
-        if not response: return False
-        if not response.json()['series']: return False
+        if not response or not response.json()['series']: return False
         return response.json()['series']
 
     def download_manga_cover(self, manga_name:str, manga_id:str) -> list:
@@ -237,3 +236,104 @@ class MangaYouKnowDl:
                 threads.join()
                 threads.delete_all_threads()
         return True
+
+class MangaDexDl:
+    def __init__(self):
+        self.session = Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0',
+            'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Referer': 'https://mangadex.org/',
+            'Origin': 'https://mangadex.org',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-site',
+        })
+    
+    def search_mangas(self, entry:str, limit='5') -> dict | bool:
+
+        # response = self.session.get(
+        #     f'https://api.mangadex.org/group?name={entry}&limit={limit}&includes[]=leader'
+        # )
+        response = self.session.get(
+            f'https://api.mangadex.org/manga?title={entry}&limit={limit}&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&includes[]=cover_art&order[relevance]=desc',
+        )
+        if not response or not response.json(): 
+            return False
+        return response.json()
+    
+    def search_author(self, entry:str, limit=5)-> dict | bool:
+        response = self.session.get(
+            'https://api.mangadex.org/author',
+            params={
+                'name': entry,
+                'limit': limit
+            }
+        )
+        if not response or not response.json():
+            return False
+        return response.json()
+    
+    def get_manga_chapters(self, manga_id, limit=96) -> dict | bool:
+        offset = 0
+        manga_list = []
+        while True:
+            response = self.session.get(
+                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&includes[]=scanlation_group&includes[]=user&order[volume]=desc&order[chapter]=desc&offset=0&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&contentRating[]=pornographic',
+                params={'offset':offset}
+            )
+            if not response:
+                break
+            for chapter in response.json()['data']:
+                manga_list.append([chapter['id'], chapter['attributes']['chapter'] ])
+            print(offset)
+            offset += 1
+        if len(manga_list) == 0: return False 
+        return manga_list
+    
+class GekkouDl:
+    def __init__(self):
+        self.session = Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Origin': 'https://gekkou.com.br',
+            'Alt-Used': 'gekkou.com.br',
+            'Connection': 'keep-alive',
+            'Referer': 'https://gekkou.com.br/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+
+        })
+
+    def search_mangas(self, entry):
+        response = self.session.get(
+            'https://gekkou.com.br/wp-admin/admin-ajax.php',
+            data = {
+                'action': 'wp-manga-search-manga',
+                'title': entry,
+            }
+        )
+        if not response:
+            return False
+        return response.json()
+
+    def get_chapters(self, manga_name):
+        response = self.session.post(f'https://gekkou.com.br/manga/{manga_name}/ajax/chapters/')
+        if not response:
+            return False
+        return response
+        # don't works
+
+class OpexDl:
+    def __init__(self):
+        pass
+
+print(GekkouDl().search_mangas('juju'))
