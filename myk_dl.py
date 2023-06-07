@@ -1,7 +1,6 @@
 # why you see this trash project? I believe you can do more.
 
 from pathlib import Path
-from customtkinter import *
 from requests import Session
 from threading import Thread
 from bs4 import BeautifulSoup
@@ -237,6 +236,7 @@ class MangaLivreDl:
                 threads.delete_all_threads()
         return True
 
+
 class MangaDexDl:
     def __init__(self):
         self.session = Session()
@@ -294,31 +294,32 @@ class MangaDexDl:
         if len(manga_list) == 0: return False 
         return manga_list
     
+
 class GekkouDl:
     def __init__(self):
         self.session = Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Origin': 'https://gekkou.com.br',
-            'Alt-Used': 'gekkou.com.br',
-            'Connection': 'keep-alive',
-            'Referer': 'https://gekkou.com.br/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
+            'accept': 'application/json, text/javascript, */*; q=0.01',
+            'accept-language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'x-requested-with': 'XMLHttpRequest',
+            'origin': 'https://gekkou.com.br',
+            'alt-used': 'gekkou.com.br',
+            'connection': 'keep-alive',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
 
         })
 
-    def search_mangas(self, entry):
+    def search_mangas(self, entry:str) -> dict | bool:
+        entry.replace(' ', '+')
         response = self.session.get(
             'https://gekkou.com.br/wp-admin/admin-ajax.php',
             data = {
                 'action': 'wp-manga-search-manga',
-                'title': entry,
+                'title': entry
             }
         )
         if not response:
@@ -332,8 +333,7 @@ class GekkouDl:
         return response
         # don't works
 
+
 class OpexDl:
     def __init__(self):
         pass
-
-print(GekkouDl().search_mangas('juju'))
