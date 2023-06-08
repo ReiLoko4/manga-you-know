@@ -7,7 +7,7 @@ from pathlib import Path
 class MangaYouKnowDB:
     def __init__(self):
         self.dir = Path('database')
-        self.database = Path('database/data.csv')
+        self.database = Path('database/data.json')
         self.config = Path('database/config.json')
 
     def create_database(self):
@@ -15,20 +15,14 @@ class MangaYouKnowDB:
             self.dir.mkdir(parents=True, exist_ok=True)
             self.database.touch()
             with open(self.database, mode='w') as file:
-                csv.writer(file, lineterminator='\n').writerow([
-                    'id_manga',
-                    'name_manga',
-                    'last_read',
-                    'cover_path',
-                    'name_with_hyphen'
-                ])
+                json.dump({
+                    'data': []
+                }, file)
 
-    def get_database(self) -> list:
+    def get_database(self) -> dict:
         self.create_database()
         with open(self.database, 'r', encoding='UTF-8') as file:
-            database = list(csv.reader(file))
-        del[database[0]]
-        return database
+            return json.load(file)
 
     def create_config(self):
         if not self.config.exists():
@@ -46,53 +40,40 @@ class MangaYouKnowDB:
     def get_config(self) -> dict:
         self.create_config()
         with open(self.config, 'r', encoding='UTF-8') as file:
-            config = json.load(file)
-        return config['config']
+            return json.load(file)['config']
 
-    def add_manga(self, manga:list) -> bool:
-        list_favs = self.get_database()
-        if manga[0] in [i[0] for i in list_favs]: return False
-        with open(self.database, 'a', encoding='UTF-8') as file:
-            csv.writer(file, lineterminator='\n').writerow(manga)
+    def add_manga(self, manga:dict) -> bool:
+        database = self.get_database()
+        if manga['id'] in [i['id'] for i in database]: return False
+        database['data'].append(manga)
+        with open(self.database, 'w', encoding='UTF-8') as file:
+            json.dump(database, file)
         return True
     
-    def get_manga(self, manga_id:str) -> list | bool:
-        list_mangas = self.get_database()
-        for manga in list_mangas:
-            if manga[0] == manga_id: return manga
+    def get_manga(self, manga_id:str) -> dict | bool:
+        database = self.get_database()
+        for manga in database['data']:
+            if manga['id'] == manga_id: return manga
         return False
 
-    def set_manga(self, manga_id:str, column:int, last_read:str) -> bool:
-        """
-        def set_manga
-        -------------
-        set a atributte of an manga on data.csv file
-
-        column=0: edit id (id is stattic, but its localizated in 0 column)
-        column=1: edit manga name
-        column=2: edit last chapter read
-        column=3: edit cover path
-        """
-
-
-        with open(self.database, 'r', encoding='UTF-8') as file:
-            database = list(csv.reader(file))
-        for line in database:
-            if line[0] == manga_id:
-                line[column] = last_read
+    def set_manga(self, manga_id:str, key:str, content:str):
+        database = self.get_database()
+        for manga in database['data']:
+            if manga['id'] == manga_id:
+                manga[key] = content
                 break
-        with open(self.database, 'w', encoding='UTF-8', newline='') as file:
-            csv.writer(file).writerows(database)
-        return True
+        with open(self.database, 'w', encoding='UTF-8') as file:
+            json.dump(database, file)
 
-    def delete_manga(self, manga_id:str):
-        manga_id = str(manga_id)
-        with open(self.database, 'r', encoding='UTF-8') as file:
-            lista_csv = list(csv.reader(file))
-        for line in lista_csv:
-            if manga_id in line: lista_csv.remove(line)
-        with open(self.database, 'w', encoding='UTF-8', newline='') as file:
-            csv.writer(file).writerows(lista_csv)
+    def delete_manga(self, manga_id:str) -> bool:
+        database = self.get_database()
+        len_data = len(database['data'])
+        for i, manga in enumerate(database['data']):
+            if manga['id'] == manga_id: database['data'].pop(i)
+        if len_data == len(database['data']):
+            return False
+        with open(self.database, 'w', encoding='UTF-8') as file:
+            json.dump(database, file)
         return True
 
     def add_data_chapters(self, manga_name:str, chapters_list:list):
