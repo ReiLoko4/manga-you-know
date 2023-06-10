@@ -159,6 +159,7 @@ class MangaLivreDl:
         self.pages_downloaded = 0
         def download_manga_page(url:str, path:Path):
             page_img = self.session.get(url)
+            if len(page_img.content) < 5000: return False
             with open(path, 'wb') as file:
                 for data in page_img.iter_content(1024):
                     file.write(data)
@@ -180,7 +181,7 @@ class MangaLivreDl:
         for chapter in chapters_list:
             try:
                 threads.add_thread(Thread(target=lambda chapter=chapter: self.download_manga_chapter(chapter, manga_name)))
-                if threads.get_len() == simultaneous:
+                if threads.get_len() == simultaneous or chapter == chapters_list[-1]:
                     threads.start()
                     threads.join()
                     threads.delete_all_threads()
@@ -203,15 +204,15 @@ class MangaLivreDl:
             if chapter[0] == first_chapter:
                 in_range = True
                 list_chapters.append(chapter)
-            if chapter[0] == last_chapter:
+            elif chapter[0] == last_chapter:
                 list_chapters.append(chapter)
                 break
             elif in_range:
                 list_chapters.append(chapter)
         threads = ThreadManager()
-        for chapter in chapters:
+        for chapter in list_chapters:
             threads.add_thread(Thread(target=lambda chapter=chapter[0]: self.download_manga_chapter(chapter, manga_name)))
-            if threads.get_len() == simultaneous:
+            if threads.get_len() == simultaneous or chapter == list_chapters[-1]:
                 threads.start()
                 threads.join()
                 threads.delete_all_threads()
@@ -230,7 +231,7 @@ class MangaLivreDl:
         for chapter in chapters:
             download_chapter = Thread(target=lambda chapter=chapter[0]: self.download_manga_chapter(chapter, manga_name))
             threads.add_thread(download_chapter)
-            if threads.get_len() == simultaneous:
+            if threads.get_len() == simultaneous or chapter == chapters[-1]:
                 threads.start()
                 threads.join()
                 threads.delete_all_threads()
