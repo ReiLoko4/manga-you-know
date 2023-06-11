@@ -44,7 +44,7 @@ class MangaYouKnowDB:
 
     def add_manga(self, manga:dict) -> bool:
         database = self.get_database()
-        if manga['id'] in [i['id'] for i in database]: return False
+        if manga['id'] in [i['id'] for i in database['data']]: return False
         database['data'].append(manga)
         with open(self.database, 'w', encoding='UTF-8') as file:
             json.dump(database, file)
@@ -98,3 +98,5 @@ class MangaYouKnowDB:
         for line in chapters: 
             if line[0] == chapter: return line[1]
         return False
+    
+
