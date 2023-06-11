@@ -1,8 +1,11 @@
 import flet as ft
+from time import sleep
 from pathlib import Path
 from threading import Thread
 from myk_db import MangaYouKnowDB
 from myk_dl import MangaLivreDl, MangaDexDl, GekkouDl, OpexDl
+
+
 
 
 __version__ = '0.7b'
@@ -58,7 +61,13 @@ class MangaYouKnowGUI:
                 results
             )
         )
-        def search_mangas(e):
+        def manga_view(e):
+            home_container.visible = False
+            manga_container.visible = True
+            manga_page_content.controls.append(ft.Text(f'manga é {e.control.key}'))
+            page.update()
+
+        def search_mangas(e:ft.ControlEvent):
             if len(e.control.value) == 0: 
                 results.controls.clear()
                 result_search.visible = False
@@ -72,26 +81,29 @@ class MangaYouKnowGUI:
                         ft.ListTile(
                             title=ft.Text('Nenhum mangá encontrado!'),
                             disabled=True,
-                            height=50
+                            height=40
                         )
                     )
-                result_search.height = len(results.controls) * 50
+                result_search.height = 60
                 page.update()
             else:
                 results.controls.clear()
                 for manga in search:
                     results.controls.append(
                         ft.ListTile(
+                            key=manga['name'],
                             title=ft.Text(manga['name']),
-                            height=50
+                            height=50,
+                            on_click=manga_view
                         )
                     )
-                result_search.height = len(results.controls) * 63
+                result_search.height = len(results.controls) * 61
                 page.update()
         
         search_entry.on_change = search_mangas
         search_entry.on_submit = search_mangas
         def out_search(e):
+            sleep(0.09)
             result_search.visible = False
             page.update()
         search_entry.on_blur = out_search
@@ -104,19 +116,34 @@ class MangaYouKnowGUI:
         home_container = ft.Container(
             content=ft.Row([
                 ft.Stack(
-                    [ft.Row([
+                    [ft.Column([
                         search_entry
                     ]),
                     ft.Column([
-                        ft.Divider(height=35),
-                        result_search
-                    ])]
+                        result_search,
+                    ],
+                    left=0,
+                    top=40,
+                    ),
+                    ]
+                ),
+                ft.Column(
+                    [
+                        ft.Text('nada')
+                    ],
                 )
                 
                 ], 
                 alignment=ft.CrossAxisAlignment.START,
-                scroll=ft.ScrollMode.AUTO
             )
+        )
+
+        manga_page_content = ft.Row([
+            ft.Text('thats the manga container'),
+        ])
+        manga_container = ft.Container(
+            content=manga_page_content,
+            visible=False
         )
         favorite_container = ft.Container(
             content=ft.Text("This is Tab 2"),
@@ -129,11 +156,11 @@ class MangaYouKnowGUI:
         stack = ft.Stack(
             [
                 ft.Row([home_container]),
+                ft.Row([manga_container]),
                 ft.Row([favorite_container]),
                 ft.Row([configs_container])
-             ],
-             height=page.height
-
+            ],
+            height=page.height
         )
         def change_tab(e):
             if e.control.selected_index == 0:
