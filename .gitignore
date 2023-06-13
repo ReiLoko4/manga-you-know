@@ -130,10 +130,14 @@ dmypy.json
 
 # Not ignore
 /*
-!myk_gui.py
-!myk_dl.py
-!myk_db.py
-!myk_thread.py
-!assets/
 !requirements.txt
 !README.md
+!MangaYouKnow/
+!favorites.py
+!configs.py
+!home.py
+!router_manager.py
+!user_control/
+!backend/
+
+
