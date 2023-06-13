@@ -4,7 +4,7 @@ from os import remove, path
 from pathlib import Path
 
 
-class MangaYouKnowDB:
+class DataBase:
     def __init__(self):
         self.dir = Path('database')
         self.database = Path('database/data.json')

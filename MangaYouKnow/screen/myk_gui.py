@@ -2,8 +2,8 @@ import flet as ft
 from time import sleep
 from pathlib import Path
 from threading import Thread
-from myk_db import MangaYouKnowDB
-from myk_dl import MangaLivreDl, MangaDexDl, GekkouDl, OpexDl
+from MangaYouKnow.database import DataBase
+from MangaYouKnow.downloader import MangaLivreDl, MangaDexDl, GekkouDl, OpexDl
 
 
 
@@ -13,7 +13,7 @@ __version__ = '0.7b'
 
 class MangaYouKnowGUI:
     def __init__(self) -> ft.Page:
-        self.connection_data = MangaYouKnowDB()
+        self.connection_data = DataBase()
         self.connection_ML = MangaLivreDl()
         self.connection_MD = MangaDexDl()
         self.connection_Gk = GekkouDl()
@@ -191,48 +191,6 @@ class MangaYouKnowGUI:
             )
         )
         page.update()
-
-        # def search(e):
-        #     container.visible = True
-        #     if len(self.search_entry.value) == 0: 
-        #         # list_search.controls.clear()
-        #         container.visible = False
-        #         page.update()
-        #         return False
-        #     search = self.connection_ML.search_mangas(self.search_entry.value)
-        #     if not search:
-        #         # list_search.controls.clear()
-        #         # list_search.controls.append(ft.Text('Nenhum mangá encontrado!', bgcolor='red'))
-        #         list_search.options = ['Nenhum mangá encontrado']
-        #         page.update()
-        #         return False
-        #     # list_search.controls.clear()
-        #     list_search.options = [ft.dropdown.Option(i['name']) for i in search]
-        #     # for manga in search:
-        #         # list_search.controls.append(ft.Text(manga['name'], bgcolor='red'))
-        #     page.update()
-            
-        # container = ft.Stack([list_search])
-        # container.visible = False
-        # self.search_entry.on_change = search
-        # self.btn_search = ft.IconButton(ft.icons.SEARCH_SHARP, on_click=search)
-
-        # page.add(
-        #     ft.Row([
-        #         self.search_entry,
-        #         self.btn_search
-        #     ],
-        #     alignment = ft.MainAxisAlignment.CENTER
-        #     ),
-        #     ft.ResponsiveRow([
-        #         ft.Column(col=6, controls=[container], alignment=ft.MainAxisAlignment.CENTER)
-        #     ],
-        #     alignment = ft.MainAxisAlignment.CENTER
-        #     )
-        # )
-        # page.update()
-        
-
 
 
 MangaYouKnowGUI()

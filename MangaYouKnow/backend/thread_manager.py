@@ -4,7 +4,7 @@ from time import sleep
 
 class ThreadManager(Thread):
     def __init__(self):
-        self.threads = []
+        self.threads = list([Thread])
 
     def add_thread(self, thread:Thread):
         self.threads.append(thread)
