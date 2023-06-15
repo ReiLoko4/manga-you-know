@@ -4,7 +4,7 @@ import flet as ft
 def Index(page: ft.Page):
     content = ft.Row(
         [
-            ft.Text('Home')
+            ft.Row([ft.TextField(label='Pesquisar mangás...')])
         ],
         alignment=ft.MainAxisAlignment.CENTER,
     )
