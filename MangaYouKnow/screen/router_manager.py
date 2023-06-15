@@ -1,4 +1,8 @@
 import flet as ft
+from screen.index import Index
+from screen.favorites import Favorites
+from screen.configs import Configs
+
 
 
 class Router:
@@ -6,12 +10,13 @@ class Router:
         self.page = page
         self.ft = ft
         self.routes = {
-            '/': '',
-            '/favorites': '',
-            '/settings': ''
+            '/': Index(page),
+            '/favorites': Favorites(page),
+            '/configs': Configs(page)
         }
         self.body = ft.Container(content=self.routes['/'])
 
     def route_change(self, route:ft.RouteChangeEvent):
-        self.body.content = self.routes([route.route])
+        self.body.content = self.routes[route.route]
         self.body.update()
+
