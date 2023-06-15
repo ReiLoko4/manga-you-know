@@ -6,14 +6,33 @@ from screen.router_manager import Router
 __version__ = '0.7b'
 
 
-def __main__(page: ft.Page):
+def __main__(page: ft.Page) -> ft.FletApp:
     page.title = f'MangaYouKnow {__version__}'
     page.theme_mode = 'dark'
-    page.appbar = NavBar(page)
+    page.window_min_width = 770
+    page.window_min_height = 600
+    page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     myRouter = Router(page)
     page.on_route_change = myRouter.route_change
+    page.add(
+        ft.ResponsiveRow([
+            ft.Column([
+                NavBar(page)
+            ],
+            col=2),
+            ft.Column([
+                myRouter.body
+            ],
+            col=10)
+        ])
+    )
+    page.go('/')
+    def resize(e:ft.ControlEvent):
+        page.update()
+    page.on_resize = resize
     page.update()
 
 
-ft.app(target=__main__)
+if __name__ == '__main__':
+    ft.app(target=__main__)
     
