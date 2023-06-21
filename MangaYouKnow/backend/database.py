@@ -99,4 +99,3 @@ class DataBase:
             if line[0] == chapter: return line[1]
         return False
     
-

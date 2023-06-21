@@ -4,8 +4,8 @@ from pathlib import Path
 from requests import Session
 from threading import Thread
 from bs4 import BeautifulSoup
-from MangaYouKnow.database import DataBase
-from MangaYouKnow.threads import ThreadManager
+from backend.database import DataBase
+from backend.thread_manager import ThreadManager
 
 
 
