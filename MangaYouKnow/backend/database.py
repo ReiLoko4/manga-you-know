@@ -1,6 +1,4 @@
-import csv
 import json
-from os import remove, path
 from pathlib import Path
 
 
@@ -76,26 +74,24 @@ class DataBase:
             json.dump(database, file)
         return True
 
-    def add_data_chapters(self, manga_name:str, chapters_list:list):
+    def add_data_chapters(self, manga_name:str, chapters:dict):
         manga_data_path = Path(f'mangas/{manga_name}/data/')
         manga_data_path.mkdir(parents=True, exist_ok=True)
-        data_file = Path(f'{manga_data_path}/chapters.csv')
-        if path.isfile(data_file): remove(data_file)
+        data_file = Path(f'{manga_data_path}/chapters.json')
         data_file.touch(exist_ok=True)
-        for chapter in chapters_list:
-            with open(data_file, 'a+', encoding='UTF-8') as file:
-                csv.writer(file, lineterminator='\n').writerow(chapter)
+        with open(data_file, 'w', encoding='UTF-8') as file:
+            json.dump(chapters,file)
 
     def get_data_chapters(self, manga_name:str) -> list | bool :
         manga_name = manga_name.replace(' ', '-').lower()
-        manga_chapters = Path(f'mangas/{manga_name}/data/chapters.csv')
+        manga_chapters = Path(f'mangas/{manga_name}/data/chapters.json')
         if not manga_chapters.exists(): return False
         with open(manga_chapters, mode='r', encoding='utf-8') as file:
-            return list(csv.reader(file))
+            return json.load(manga_chapters)
     
-    def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
-        chapters = self.get_data_chapters(manga_name)
-        for line in chapters: 
-            if line[0] == chapter: return line[1]
-        return False
+    # def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
+    #     chapters = self.get_data_chapters(manga_name)
+    #     for line in chapters: 
+    #         if line[0] == chapter: return line[1]
+    #     return False
     
