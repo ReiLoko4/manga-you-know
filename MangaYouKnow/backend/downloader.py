@@ -29,36 +29,27 @@ class MangaLivreDl:
             'x-requested-with': 'XMLHttpRequest'
         })
 
-    def get_manga_chapters(self, manga_id:str, manga_name:str) -> list:
-        manga_name = manga_name.replace(' ', '-').lower()
-        especial = ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '.']
-        if [i for i in manga_name] in [i for i in especial]:
-            for _ in manga_name:
-                manga_name = manga_name.replace([i for i in especial], '')
+    def get_manga_chapters(self, manga_id:str, write_data:bool=False) -> list:
         chapters_list = []
+        self.end = False
+        def get_offset_json(this_offset):
+            response = self.session.get(
+                f'https://mangalivre.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
+            )
+            if not response.json()['chapters'] or not response:
+                self.end = True
+                return
+            chapters_list.insert(offset, response.json()['chapters'])
         offset = 0
+        threads = ThreadManager()
         while True:
-            try: 
-                response = self.session.get(
-                    f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}',
-                    headers={'referer': f'https://mangalivre.net/manga/{manga_name}/{manga_id}'}
-                ).json()['chapters']
-            except:
-                response = self.session.get(
-                    f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}',
-                    headers={'referer': f'https://mangalivre.net/manga/{manga_name}/{manga_id}'}
-                ).json()
-                response = response['chapters']
-            if not response: break
-            for chapter in response:
-                key_scan = list(chapter['releases'].keys())[0]
-                id_release = chapter['releases'][key_scan]['id_release']
-                if chapter['number'] not in [i[0] for i in chapters_list]:
-                    chapters_list.append([chapter['number'], id_release])
-                # if id_release not in [i[1] for i in chapters_list]:
-                #     chapters_list.append([chapter['number'], id_release])
+            threads.add_thread(Thread(target=lambda offset=offset: get_offset_json(offset)))
+            if offset % 10 == 0:
+                threads.start()
+                threads.join()
+                threads.delete_all_threads()
+                if self.end: break
             offset += 1
-        self.connection_data.add_data_chapters(manga_name, chapters_list)
         return chapters_list
     
     def get_manga_id_release(self, chapter:str, manga_id:str) -> str:
