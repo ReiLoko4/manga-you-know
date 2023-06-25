@@ -50,6 +50,22 @@ class MangaLivreDl:
                 threads.delete_all_threads()
                 if self.end: break
             offset += 1
+        to_out_list = []
+        for i in chapters_list:
+            for chapter in i:
+                to_out_list.append(chapter)
+        chapters_list = to_out_list
+        final_list = []
+        for i, chapter in enumerate(chapters_list):
+            if i == 0:
+                final_list.append(chapter)
+            elif chapter['id_chapter'] not in [y['id_chapter'] for y in final_list]:
+                final_list.append(chapter)
+        chapters_list = final_list
+        def to_sort(e):
+            return int(e['number'])
+        chapters_list.sort(key=to_sort, reverse=True)
+        if write_data: self.connection_data.add_data_chapters('aleatorio', chapters_list)
         return chapters_list
     
     def get_manga_id_release(self, chapter:str, manga_id:str) -> str:
@@ -64,6 +80,13 @@ class MangaLivreDl:
                     key_scan = list(chapter['releases'].keys())[0]
                     return chapter['releases'][key_scan]['id_release']
             offset +=1
+
+    def get_manga_chapter_url(self, id_release) -> dict | bool:
+        response = self.session.get(
+            f'https://mangalivre.net/leitor/pages/{id_release}.json'
+        ).json()['images']
+        if not response: return False
+        return response
 
     def save_manga_info(self, manga_name:str, manga_id:str, last_read:str) -> bool:
         manga_name = manga_name.replace(' ', '-').lower()
@@ -137,11 +160,8 @@ class MangaLivreDl:
     def download_manga_chapter(self, chapter:str, manga_name:str) -> bool:
         id_release = self.connection_data.get_chapter_id(manga_name, chapter)
         manga_name = manga_name.replace(' ', '-').lower()
-        response = self.session.get(
-            f'https://mangalivre.net/leitor/pages/{id_release}.json',
-            headers={'referer': f'https://mangalivre.net/ler/{manga_name}/online/{id_release}/{chapter}'}
-        ).json()['images']
-        if not response:
+        urls = self.get_manga_chapter_url(id_release)
+        if not urls:
             print(f'capitulo {chapter} com erro!') 
             return False
         threads = ThreadManager()
@@ -155,7 +175,7 @@ class MangaLivreDl:
                 for data in page_img.iter_content(1024):
                     file.write(data)
 
-        for i, img in enumerate(response):
+        for i, img in enumerate(urls):
             extension = (img['legacy'].split('/')[-1]).split('.')[-1]
             page_num = f'{i:04d}'
             page_path = Path(f'{chapter_path}/{page_num}.{extension}')
