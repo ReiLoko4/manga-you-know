@@ -63,9 +63,9 @@ class MangaLivreDl:
                 final_list.append(chapter)
         chapters_list = final_list
         def to_sort(e):
-            return int(e['number'])
+            return float(e['number'])
         chapters_list.sort(key=to_sort, reverse=True)
-        if write_data: self.connection_data.add_data_chapters('aleatorio', chapters_list)
+        if write_data: self.connection_data.add_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'], chapters_list)
         return chapters_list
     
     def get_manga_id_release(self, chapter:str, manga_id:str) -> str:
@@ -157,15 +157,15 @@ class MangaLivreDl:
         manga_name_from_site = manga_name_from_site.replace('</h1>', '')
         return [Path(f'{manga_path}/{manga_name}.jpg'), manga_name_from_site]
 
-    def download_manga_chapter(self, chapter:str, manga_name:str) -> bool:
-        id_release = self.connection_data.get_chapter_id(manga_name, chapter)
-        manga_name = manga_name.replace(' ', '-').lower()
+    def download_manga_chapter(self, manga_id:str, id_release:str) -> bool:
+        manga_info = self.connection_data.get_manga_info(manga_id)
         urls = self.get_manga_chapter_url(id_release)
+        chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
         if not urls:
-            print(f'capitulo {chapter} com erro!') 
+            print(f'capitulo {chapter_info["number"]} com erro!') 
             return False
         threads = ThreadManager()
-        chapter_path = Path(f'mangas/{manga_name}/chapters/{chapter}/')
+        chapter_path = Path(f'mangas/{manga_info["folder_name"]}/chapters/{chapter_info["number"]}/')
         chapter_path.mkdir(parents=True, exist_ok=True)
         self.pages_downloaded = 0
         def download_manga_page(url:str, path:Path):
@@ -183,7 +183,7 @@ class MangaLivreDl:
             threads.add_thread(download)
         threads.start()
         threads.join()
-        print(f'capítulo {chapter} baixado! ')
+        print(f'capítulo {chapter_info["number"]} baixado! ')
         return True
     
     def download_list_of_manga_chapters(self, manga_name, chapters_list:list, simultaneous:int):
@@ -229,18 +229,18 @@ class MangaLivreDl:
                 threads.delete_all_threads()
         return True
 
-    def download_all_manga_chapters(self, manga_name:str, simultaneous:int) -> bool:
+    def download_all_manga_chapters(self, manga_id:str, simultaneous:int=5) -> bool:
         '''
         Download all chapters
 
         manga_name: manga to download
         simultaneous: how many chapters to download in the same time
         '''
-        chapters = self.connection_data.get_data_chapters(manga_name)
+        chapters = self.connection_data.get_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'])
         chapters.reverse()
         threads = ThreadManager()
         for chapter in chapters:
-            download_chapter = Thread(target=lambda chapter=chapter[0]: self.download_manga_chapter(chapter, manga_name))
+            download_chapter = Thread(target=lambda id_chapter=chapter['id_chapter']: self.download_manga_chapter(manga_id, id_chapter))
             threads.add_thread(download_chapter)
             if threads.get_len() == simultaneous or chapter == chapters[-1]:
                 threads.start()
