@@ -186,19 +186,25 @@ class MangaLivreDl:
         print(f'capítulo {chapter_info["number"]} baixado! ')
         return True
     
-    def download_list_of_manga_chapters(self, manga_name, chapters_list:list, simultaneous:int):
+    def download_list_of_manga_chapters(self, manga_id, chapters_list:list, simultaneous:int=5):
+        manga_info = self.connection_data.get_manga_info(manga_id)
+        chapters = self.connection_data.get_data_chapters(manga_info['folder_name'])
         threads = ThreadManager()
         errors = 0
-        for chapter in chapters_list:
-            try:
-                threads.add_thread(Thread(target=lambda chapter=chapter: self.download_manga_chapter(chapter, manga_name)))
-                if threads.get_len() == simultaneous or chapter == chapters_list[-1]:
-                    threads.start()
-                    threads.join()
-                    threads.delete_all_threads()
-            except:
-                print(f'capitulo {chapter} não encontrado')
+        for number in chapters_list:
+            if number in [i['number'] for i in chapters]:
+                id_release = ''
+                for chapter in chapters:
+                    if number == chapter['number']:
+                        id_release = chapter['releases'][list(chapter['releases'].keys())[0]]['id_release']
+                threads.add_thread(Thread(target=lambda chapter=id_release: self.download_manga_chapter(manga_id, chapter)))
+            else:
                 errors += 1
+                print(f'capitulo {number} não encontrado')
+            if threads.get_len() == simultaneous or number == chapters_list[-1]:
+                threads.start()
+                threads.join()
+                threads.delete_all_threads()
         if errors == threads.get_len():
             print('nenhum capitulo encontrado!')
             return False
@@ -240,7 +246,7 @@ class MangaLivreDl:
         chapters.reverse()
         threads = ThreadManager()
         for chapter in chapters:
-            download_chapter = Thread(target=lambda id_chapter=chapter['id_chapter']: self.download_manga_chapter(manga_id, id_chapter))
+            download_chapter = Thread(target=lambda id_chapter=chapter['releases'][list(chapter['releases'].keys())[0]]['id_release']: self.download_manga_chapter(manga_id, id_chapter))
             threads.add_thread(download_chapter)
             if threads.get_len() == simultaneous or chapter == chapters[-1]:
                 threads.start()
