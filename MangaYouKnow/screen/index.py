@@ -5,28 +5,24 @@ from backend.database import DataBase
 
 
 def Index(page: ft.Page):
-
-    database = DataBase()
+    database = DataBase()   
     results = ft.Column(width=500, spacing=0.7)
     card = ft.Card(ft.Container(results), color='gray', visible=False)
     search = ft.TextField(
-        label='Pesquisar mangás...', 
-        width=500, 
-        border_radius=20, 
+        label='Pesquisar Mangás...', 
+        width=500,
+        border_radius=20,
         border_color=ft.colors.GREY_700,
         focused_border_color= ft.colors.BLUE_300
     )
     downloader = MangaLivreDl()
-
-    index = ft.Stack(width=1000, height=1000)
+    index = ft.Stack(width=1300, height=1000)
     manga = ft.Row(visible=False)
     def back_index(e):
         manga.visible = False
         index.visible = True
         page.update()
     
-    
-
     def manga_page(info_manga):
         index.visible = False
         manga.controls.clear()
@@ -64,7 +60,6 @@ def Index(page: ft.Page):
         page.update()
         container_img.content = ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT)
         page.update()
-        print(info_manga)
 
     def search_mangas(e:ft.ControlEvent):
         if len(e.control.value) == 0: 
@@ -114,13 +109,18 @@ def Index(page: ft.Page):
     search.on_focus = focus_search
 
     index.controls.append(
-        ft.Row([ft.Container(search, padding=10)])
+        ft.ResponsiveRow([
+            ft.Column([ft.Container(bgcolor='white',width=300)],  col=3),
+            ft.Column([search], col=6),
+            ft.Column([ft.Container(bgcolor='white', width=300)],col=3),
+            ], alignment=ft.MainAxisAlignment.SPACE_AROUND, columns=12
+        )
     )
     index.controls.append(
         ft.Row([ft.Text('filler', color='black')], top=100)
     )
     index.controls.append(
-        ft.Row([card], top=65, left=5)
+        ft.Row([card], top=65, left=245)
     )
     
     content = ft.Row(
