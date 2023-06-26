@@ -82,16 +82,30 @@ class DataBase:
         with open(data_file, 'w', encoding='UTF-8') as file:
             json.dump(chapters,file)
 
-    def get_data_chapters(self, manga_name:str) -> list | bool :
+    def get_data_chapters(self, manga_name:str) -> list | bool:
         manga_name = manga_name.replace(' ', '-').lower()
         manga_chapters = Path(f'mangas/{manga_name}/data/chapters.json')
         if not manga_chapters.exists(): return False
         with open(manga_chapters, mode='r', encoding='utf-8') as file:
-            return json.load(manga_chapters)
+            return json.load(file)
+    
+    def get_manga_info(self, manga_id) -> dict | bool:
+        data = self.get_database()
+        for manga in data['data']:
+            if manga['id'] == manga_id:
+                return manga
+        return False
     
     # def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
     #     chapters = self.get_data_chapters(manga_name)
     #     for line in chapters: 
     #         if line[0] == chapter: return line[1]
     #     return False
+    
+    def get_chapter_info(self, manga_id, id_release) -> dict | bool:
+        chapters = self.get_data_chapters(self.get_manga(manga_id)['folder_name'])
+        for chapter in chapters:
+            if chapter['id_chapter'] == id_release:
+                return chapter
+        return False
     
