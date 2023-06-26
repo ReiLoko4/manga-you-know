@@ -3,11 +3,11 @@ from time import sleep
 
 
 class ThreadManager(Thread):
-    def __init__(self):
-        self.threads = []
-
-    def __init__(self, threads:list):
-        self.threads = threads
+    def __init__(self, threads:list=None):
+        if threads == None:
+            self.threads = []
+        else:
+            self.threads = threads
 
     def add_thread(self, thread:Thread):
         self.threads.append(thread)
