@@ -368,4 +368,3 @@ class OpexDl:
     def __init__(self):
         pass
 
-MangaLivreDl().download_all_manga_chapters(2)
