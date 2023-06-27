@@ -4,8 +4,12 @@ from pathlib import Path
 from requests import Session
 from threading import Thread
 from bs4 import BeautifulSoup
-from backend.database import DataBase
-from backend.thread_manager import ThreadManager
+if __name__ == '__main__':
+    from database import DataBase
+    from thread_manager import ThreadManager
+else:
+    from backend.database import DataBase
+    from backend.thread_manager import ThreadManager
 
 
 
@@ -157,10 +161,15 @@ class MangaLivreDl:
         manga_name_from_site = manga_name_from_site.replace('</h1>', '')
         return [Path(f'{manga_path}/{manga_name}.jpg'), manga_name_from_site]
 
-    def download_manga_chapter(self, manga_id:str, id_release:str) -> bool:
+    def download_manga_chapter(self, manga_id:str, id_release:str | dict) -> bool:
         manga_info = self.connection_data.get_manga_info(manga_id)
-        urls = self.get_manga_chapter_url(id_release)
-        chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
+        
+        if type(id_release) == str:
+            chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
+            urls = self.get_manga_chapter_url(id_release)
+        else:
+            chapter_info = id_release
+            urls = self.get_manga_chapter_url(id_release['releases'][list(id_release['releases'].keys())[0]]['id_release'])
         if not urls:
             print(f'capitulo {chapter_info["number"]} com erro!') 
             return False
@@ -235,18 +244,21 @@ class MangaLivreDl:
                 threads.delete_all_threads()
         return True
 
-    def download_all_manga_chapters(self, manga_id:str, simultaneous:int=5) -> bool:
+    def download_all_manga_chapters(self, manga_id:str, use_local_data:bool = False, simultaneous:int=5) -> bool:
         '''
         Download all chapters
 
         manga_name: manga to download
         simultaneous: how many chapters to download in the same time
         '''
-        chapters = self.connection_data.get_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'])
+        if use_local_data:
+            chapters = self.connection_data.get_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'])
+        else:
+            chapters = self.get_manga_chapters(manga_id)
         chapters.reverse()
         threads = ThreadManager()
         for chapter in chapters:
-            download_chapter = Thread(target=lambda id_chapter=chapter['releases'][list(chapter['releases'].keys())[0]]['id_release']: self.download_manga_chapter(manga_id, id_chapter))
+            download_chapter = Thread(target=lambda chapter_in=chapter: self.download_manga_chapter(manga_id, chapter_in))
             threads.add_thread(download_chapter)
             if threads.get_len() == simultaneous or chapter == chapters[-1]:
                 threads.start()
@@ -355,3 +367,5 @@ class GekkouDl:
 class OpexDl:
     def __init__(self):
         pass
+
+MangaLivreDl().download_all_manga_chapters(2)
