@@ -42,8 +42,12 @@ class DataBase:
 
     def add_manga(self, manga:dict) -> bool:
         database = self.get_database()
-        if manga['id'] in [i['id'] for i in database['data']]: return False
-        database['data'].append(manga)
+        if manga['id_serie'] in [i['id'] for i in database['data']]: return False
+        database['data'].append({
+                'id': manga['id_serie'],
+                'name': manga['name'],
+                'folder_name': manga['link'].split('/')[-2]
+            })
         with open(self.database, 'w', encoding='UTF-8') as file:
             json.dump(database, file)
         return True
@@ -73,6 +77,13 @@ class DataBase:
         with open(self.database, 'w', encoding='UTF-8') as file:
             json.dump(database, file)
         return True
+    
+    def is_favorite(self, manga:dict) -> bool:
+        database = self.get_database()['data']
+        for favorite in database:
+            if manga['id_serie'] == favorite['id']:
+                return True
+        return False
 
     def add_data_chapters(self, manga_name:str, chapters:dict):
         manga_data_path = Path(f'mangas/{manga_name}/data/')
