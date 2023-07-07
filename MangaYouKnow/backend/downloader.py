@@ -67,7 +67,9 @@ class MangaLivreDl:
                 final_list.append(chapter)
         chapters_list = final_list
         def to_sort(e):
-            return float(e['number'])
+            number = str(e['number'])
+            number = number.replace(',', '.')
+            return float(number)
         chapters_list.sort(key=to_sort, reverse=True)
         if write_data: self.connection_data.add_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'], chapters_list)
         return chapters_list
