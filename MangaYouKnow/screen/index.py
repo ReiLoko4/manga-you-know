@@ -5,7 +5,7 @@ from backend.database import DataBase
 
 
 def Index(page: ft.Page):
-    database = DataBase()   
+    connection_data = DataBase()   
     results = ft.Column(width=500, spacing=0.7)
     card = ft.Card(ft.Container(results), color='gray', visible=False)
     search = ft.TextField(
@@ -27,12 +27,7 @@ def Index(page: ft.Page):
         index.visible = False
         manga.controls.clear()
         def favorite_manga(e):
-            database.add_manga({
-                'id':info_manga['id_serie'],
-                'name':info_manga['name'],
-                'folder_name': info_manga['link'].split('/')[-2]
-            })
-
+            connection_data.add_manga(info_manga)
         container_img = ft.Container(padding=20, bgcolor=ft.colors.GREY_900)
         manga.controls.append(ft.Container(
             ft.Column([
@@ -61,13 +56,26 @@ def Index(page: ft.Page):
         container_img.content = ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT)
         page.update()
 
-    def search_mangas(e:ft.ControlEvent):
+    def togle_favorite(manga:dict, button:ft.IconButton):
+        if connection_data.is_favorite(manga):
+            connection_data.delete_manga(manga['id_serie'])
+            button.icon = ft.icons.BOOKMARK_OUTLINE
+        else:
+            connection_data.add_manga(manga)
+            button.icon = ft.icons.BOOKMARK_ROUNDED
+        sleep(0.05)
+        search.focus()
+        page.update()
+
+    def search_mangas(e:ft.ControlEvent=None):
         if len(e.control.value) == 0: 
             results.controls.clear()
             card.visible = False
             page.update()
             return False
         response = downloader.search_mangas(e.control.value)
+        favorites = connection_data.get_database()['data']
+        list_favorites_id = [i['id'] for i in favorites]    
         card.visible = True
         results.controls.clear()
         if e.control.value != search.value:
@@ -83,11 +91,18 @@ def Index(page: ft.Page):
             )
         else:
             for manga in response:
+                button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga['id_serie'] in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
+                button_favorite.on_click = lambda e, manga=manga, button=button_favorite:togle_favorite(manga, button)
                 results.controls.append(
                     ft.ListTile(
                         key='manga',
-                        title=ft.Text(manga['name']),
-                        height=45 if len(manga['name']) < 60 else 55,
+                        title=ft.Row(
+                            [
+                            ft.Text(f'{manga["name"][0:47]}...' if len(manga['name']) > 50 else manga['name'][0:50], tooltip=manga['name']), 
+                            button_favorite
+                            ], 
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        height=45,
                         on_click=lambda e, info=manga: manga_page(info)
                     )
                 )
