@@ -1,7 +1,7 @@
 # why you see this trash project? I believe you can do more.
 
 from pathlib import Path
-from requests import Session
+import requests
 from threading import Thread
 from bs4 import BeautifulSoup
 if __name__ == '__main__':
@@ -16,7 +16,7 @@ else:
 class MangaLivreDl:
     def __init__(self):
         self.connection_data = DataBase()
-        self.session = Session()
+        self.session = requests.Session()
         self.session.headers.update({
             'authority': 'mangalivre.net',
             'alt-Used': 'mangalivre.net',
@@ -47,7 +47,9 @@ class MangaLivreDl:
         offset = 0
         threads = ThreadManager()
         while True:
-            threads.add_thread(Thread(target=lambda offset=offset: get_offset_json(offset)))
+            threads.add_thread(
+                Thread(target=lambda offset=offset: get_offset_json(offset))
+            )
             if offset % 10 == 0:
                 threads.start()
                 threads.join()
@@ -119,11 +121,26 @@ class MangaLivreDl:
         return True
     
     def search_mangas(self, entry:str) -> dict:
-        response = self.session.post(
-            'https://mangalivre.net/lib/search/series.json',
-            data={'search':entry},
-            headers={'referer':'mangalivre.net'}
-        )   
+        try: response = self.session.post(
+                'https://mangalivre.net/lib/search/series.json',
+                timeout=3.5,
+                data={'search':entry},
+                headers={'referer':'mangalivre.net'}
+            )
+        except requests.exceptions.Timeout:
+            print('would not?')
+            response = self.session.post(
+                'https://leitor.net/lib/search/series.json',
+                data={'search':entry},
+                headers={
+                    'referer':'leitor.net',
+                    'authority': 'leitor.net',
+                    'alt-Used': 'leitor.net'
+                }
+            )
+        # leitor.net is a mirror of mangalivre.net
+        # if the api from mangalivre.net don't response in 3.5 seconds
+        # the api from leitor.net will be used.
         if not response or not response.json()['series']: return False
         return response.json()['series']
 
@@ -271,34 +288,22 @@ class MangaLivreDl:
 
 class MangaDexDl:
     def __init__(self):
-        self.session = Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0',
-            'Accept': '*/*',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Referer': 'https://mangadex.org/',
-            'Origin': 'https://mangadex.org',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
-        })
+        self.connection_data = DataBase()
     
     def search_mangas(self, entry:str, limit='5') -> dict | bool:
-
-        # response = self.session.get(
-        #     f'https://api.mangadex.org/group?name={entry}&limit={limit}&includes[]=leader'
-        # )
-        response = self.session.get(
-            f'https://api.mangadex.org/manga?title={entry}&limit={limit}&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&includes[]=cover_art&order[relevance]=desc',
+        response = requests.get(
+            f'https://api.mangadex.org/manga',
+            params={
+                'title': entry,
+                'limit': limit    
+            }
         )
         if not response or not response.json(): 
             return False
         return response.json()
     
     def search_author(self, entry:str, limit=5)-> dict | bool:
-        response = self.session.get(
+        response = requests.get(
             'https://api.mangadex.org/author',
             params={
                 'name': entry,
@@ -309,45 +314,87 @@ class MangaDexDl:
             return False
         return response.json()
     
-    def get_manga_chapters(self, manga_id, limit=96) -> dict | bool:
+    def get_manga_chapters(self, manga_id, limit=500) -> dict | bool:
         offset = 0
         manga_list = []
         while True:
-            response = self.session.get(
-                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&includes[]=scanlation_group&includes[]=user&order[volume]=desc&order[chapter]=desc&offset=0&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica&contentRating[]=pornographic',
+            response = requests.get(
+                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]=pt-br',
                 params={'offset':offset}
             )
             if not response:
                 break
+            if not response.json()['data'] or len(response.json()['data']) == 0:
+                break
+            if len(manga_list) >= response.json()['total']:
+                break
             for chapter in response.json()['data']:
-                manga_list.append([chapter['id'], chapter['attributes']['chapter'] ])
+                manga_list.append(chapter)
             print(offset)
+            print(response.json()['total'])
+            if len(response.json()['data']) < limit:
+                break
             offset += 1
-        if len(manga_list) == 0: return False 
-        return manga_list
+        
+        def sort(e):
+            return float(e['attributes']['chapter'])
+        manga_list.sort(key=sort, reverse=True)
+        final_list = []
+        for chapter in manga_list:
+            if chapter not in final_list:
+                final_list.append(chapter)
+        print(len(manga_list))
+        print(len(final_list))
+        self.connection_data.add_data_chapters('one piece', final_list)
+        return final_list
     
+    def get_chapters_image_urls(self, chapter_id) -> list | bool:
+        response = requests.get(
+            f'https://api.mangadex.org/at-home/server/{chapter_id}?forcePort443=false',
+        )
+        if not response: return False
+        return response.json()['chapter']
+    
+    def download_chapter(self, chapter_id) -> bool:
+        urls = self.get_chapters_image_urls(chapter_id)
+        if not urls: return False
+        chapter_info = self.session.get(
+            f'https://api.mangadex.org/chapter/{chapter_id}?includes[]=scanlation_group&includes[]=manga&includes[]=user'
+        )
+        if not chapter_info: return False
+        chapter_path = Path(f'MangaDex/{chapter_info.json()["data"]["attributes"]["chapter"]}/')
+        chapter_path.mkdir(parents=True, exist_ok=True)
+        hash = urls['hash']
+        for i, image in enumerate(urls['data']):
+            response = self.session.get(f'https://uploads.mangadex.org/data/{hash}/{image}')
+            if not image: return False
+            with open(f'{chapter_path}/{i:04d}.png', 'wb') as file:
+                for data in response.iter_content(1024):
+                    file.write(data)
+        return True
+
+
 
 class GekkouDl:
     def __init__(self):
-        self.session = Session()
+        self.session = requests.Session()
         self.session.headers.update({
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0',
-            'accept': 'application/json, text/javascript, */*; q=0.01',
-            'accept-language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'x-requested-with': 'XMLHttpRequest',
-            'origin': 'https://gekkou.com.br',
-            'alt-used': 'gekkou.com.br',
-            'connection': 'keep-alive',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Origin': 'https://gekkou.com.br',
+            'Alt-Used': 'gekkou.com.br',
+            'Connection': 'keep-alive',
+            'Referer': 'https://gekkou.com.br/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
         })
 
-    def search_mangas(self, entry:str) -> dict | bool:
-        entry.replace(' ', '+')
-        response = self.session.get(
+    def search_mangas(self, entry:str) -> list | bool:
+        response = self.session.post(
             'https://gekkou.com.br/wp-admin/admin-ajax.php',
             data = {
                 'action': 'wp-manga-search-manga',
@@ -356,17 +403,138 @@ class GekkouDl:
         )
         if not response:
             return False
-        return response.json()
+        if not response.json()['success']:
+            return False
+        return response.json()['data']
 
-    def get_chapters(self, manga_name):
-        response = self.session.post(f'https://gekkou.com.br/manga/{manga_name}/ajax/chapters/')
+    def get_chapters(self, manga_name) -> list | bool:
+        response = self.session.post(f'https://gekkou.com.br/manga/{manga_name.replace(" ", "-")}/ajax/chapters/')
         if not response:
             return False
-        return response
-        # don't works
+        soup = BeautifulSoup(response.text, 'html.parser')
+        list_chapters = []
+        for chapter in soup.find_all('a'):
+            if chapter['href'] == '#': 
+                continue
+            list_chapters.append(chapter['href'])
+        return [i.split('/')[-2] for i in list_chapters]
+        # works w
+
+    def get_chapters_url(self, manga_name) -> list | bool:
+        response = self.session.post(f'https://gekkou.com.br/manga/{manga_name.replace(" ", "-")}/ajax/chapters/')
+        if not response:
+            return False
+        soup = BeautifulSoup(response.text, 'html.parser')
+        list_chapters = []
+        for chapter in soup.find_all('a'):
+            if chapter['href'] == '#': 
+                continue
+            list_chapters.append(chapter['href'])
+        return list_chapters
+    
+    def get_chapter_images_url(self, manga_name, chapter_num) -> list | bool:
+        response = self.session.get(
+            f'https://gekkou.com.br/manga/{manga_name.replace(" ", "-")}/{chapter_num}/',
+            params={'style': 'list'}
+        )
+        if not response:
+            return False
+        list_chapters = []
+        soup = BeautifulSoup(response.text, 'html.parser')
+        for div in soup.find_all('div'):
+            if div.get('class') != None:
+                if 'page-break' in div['class']:
+                    list_chapters.append(div.find('img')['data-src'].replace('\t\t\t\n\t\t\t', ''))
+        return list_chapters
 
 
 class OpexDl:
     def __init__(self):
         pass
 
+class AoAshiDl:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            'authority': 'ao-ashimanga.com',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'referer': 'https://www.google.com/',
+            'sec-ch-ua': '"Opera GX";v="99", "Chromium";v="113", "Not-A.Brand";v="24"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'cross-site',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 OPR/99.0.0.0',
+        })
+
+
+    def get_chapters(self) -> list:
+        response = self.session.get('https://ao-ashimanga.com/')
+        if not response:
+            return False
+        soup = BeautifulSoup(response.text, 'html.parser')
+        list_chapters = []
+        for iten in soup.find_all('div'):
+            if len(iten) == 0: continue
+            if 'comic-thumb-title' in iten.get('class'):
+                chapter = iten.find('a')['href'].split('/')[-2]
+                chapter = chapter.replace('ao-ashi-chapter-', '')
+                chapter = chapter.replace('-', '.')
+                list_chapters.append(chapter)
+        def sorter(e):
+            return float(e)
+        list_chapters.sort(key=sorter, reverse=True)
+        return list_chapters
+
+
+    def get_chapters_urls(self) -> list:
+        response = self.session.get('https://ao-ashimanga.com/')
+        if not response:
+            return False
+        soup = BeautifulSoup(response.text, 'html.parser')
+        list_chapters_urls = []
+        for iten in soup.find_all('div'):
+            if len(iten) == 0: continue
+            if 'comic-thumb-title' in iten.get('class'):
+                list_chapters_urls.append(iten.find('a')['href'])
+        def sorter(e):
+            num = str(e).split('/')[-2]
+            num = num.replace('ao-ashi-chapter-', '')
+            num = num.replace('-', '.')
+            return float(num)
+        list_chapters_urls.sort(key=sorter, reverse=True)
+        return list_chapters_urls
+   
+    def get_chapter_images_url(self, chapter_or_url) -> list:
+        if '/' in chapter_or_url:
+            url = chapter_or_url
+        else:
+            url = f'https://ao-ashimanga.com/manga/ao-ashi-chapter-{chapter_or_url}'
+        response = self.session.get(url)
+        if not response:
+            return False
+        soup = BeautifulSoup(response.text, 'html.parser')
+        list_images = []
+        for item in soup.find_all('img'):
+            list_images.append(item['src'])
+        return list_images
+           
+    def download_manga_chapter(self, chapter_or_url) -> bool:
+        list_images = self.get_chapter_images_url(chapter_or_url)
+        if not list_images:
+            return False
+        for i, image in enumerate(list_images):
+            page = self.session.get(image)
+            if not page: continue
+            chapter_local = Path(f'ao-ashi/{chapter_or_url}')
+            chapter_local.mkdir(parents=True, exist_ok=True)
+            with open(f'{chapter_local}/{i:04d}.jpg', 'wb') as file:
+                for data in page.iter_content(1024):
+                    file.write(data)
+        return True
+    
+MangaDexDl().get_manga_chapters('a1c7c817-4e59-43b7-9365-09675a149a6f')
