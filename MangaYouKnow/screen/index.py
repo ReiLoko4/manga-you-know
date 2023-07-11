@@ -1,6 +1,6 @@
 import flet as ft
 from time import sleep
-from backend.downloader import MangaLivreDl
+from backend.downloader.mangalivre import MangaLivreDl
 from backend.database import DataBase
 
 
