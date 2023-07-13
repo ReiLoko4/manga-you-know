@@ -260,7 +260,8 @@ class MangaLivreDl:
         '''
         Download all chapters
 
-        manga_name: manga to download
+        manga_id: manga to download
+        use_local_data: download the chapters from the already writed json with chapters
         simultaneous: how many chapters to download in the same time
         '''
         if use_local_data:
