@@ -39,7 +39,7 @@ class MangaDexDl:
         manga_list = []
         while True:
             response = requests.get(
-                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]=pt-br',
+                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]=pt-br&order[chapter]=desc&order[volume]=desc',
                 params={'offset':offset}
             )
             if not response:
@@ -50,23 +50,11 @@ class MangaDexDl:
                 break
             for chapter in response.json()['data']:
                 manga_list.append(chapter)
-            print(offset)
-            print(response.json()['total'])
-            if len(response.json()['data']) < limit:
+            if len(manga_list) >= response.json()['total']:
                 break
-            offset += 1
-        
-        def sort(e):
-            return float(e['attributes']['chapter'])
-        manga_list.sort(key=sort, reverse=True)
-        final_list = []
-        for chapter in manga_list:
-            if chapter not in final_list:
-                final_list.append(chapter)
-        print(len(manga_list))
-        print(len(final_list))
-        self.connection_data.add_data_chapters('one piece', final_list)
-        return final_list
+            offset += limit
+        self.connection_data.add_data_chapters('one piece', manga_list)
+        return manga_list
     
     def get_chapters_image_urls(self, chapter_id) -> list | bool:
         response = requests.get(
@@ -92,3 +80,4 @@ class MangaDexDl:
                 for data in response.iter_content(1024):
                     file.write(data)
         return True
+    
