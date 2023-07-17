@@ -10,20 +10,43 @@ def Favorites(page: ft.Page):
         border_color=ft.colors.GREY_700,
         focused_border_color= ft.colors.BLUE_300
     ) 
-
-    card = ft.Card()
-
-
+    favorites = database.get_database()['data']
+    row_mangas = ft.Row([
+        ft.Card(ft.Column([
+            ft.Text(i['name']),
+            ft.IconButton(ft.icons.READ_MORE)
+        ],
+            alignment=ft.CrossAxisAlignment.CENTER
+        ),
+            height=350,
+            width=230,
+        )
+        for i in favorites
+    ],
+        wrap=True,
+        width=page.width - 100,
+        top=100,
+        scroll=ft.ScrollMode.ALWAYS
+    )
+    def resize(e:ft.ControlEvent):
+        row_mangas.width = float(e.control.width) - 100
+        row_mangas.update()
+        stack.width = float(e.control.width) - 100
+        stack.update()
+    page.on_resize = resize
+    stack = ft.Stack([
+        ft.Row([ft.Container(search, padding=10)], alignment=ft.MainAxisAlignment.CENTER),
+        ft.Divider(height=170, color='white'),
+        row_mangas
+    ],
+        width=page.width - 100,
+        height=1500
+    )
     content = ft.Row(
         [   
-            ft.Stack([
-                ft.Row([ft.Container(search, padding=10)], alignment=ft.MainAxisAlignment.CENTER),
-                ft.Divider(height=170, color='white'),
-                ft.Row([card])
-            ],
-            width=1000,
-            height=1000)
+            stack
         ],
+        scroll=ft.ScrollMode.ALWAYS
     )
 
     return content
