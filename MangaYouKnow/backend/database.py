@@ -17,7 +17,7 @@ class DataBase:
                     'data': []
                 }, file)
 
-    def get_database(self) -> dict:
+    def get_database(self) -> list[dict]:
         self.create_database()
         with open(self.database, 'r', encoding='UTF-8') as file:
             return json.load(file)
