@@ -17,7 +17,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.add(
         ft.ResponsiveRow([
             ft.Column([
-                NavBar(page)
+                NavBar(page),
             ],
             col=1),
             ft.Column([
@@ -27,9 +27,9 @@ def __main__(page: ft.Page) -> ft.FletApp:
         ])
     )
     page.go('/')
-    def resize(e:ft.ControlEvent):
-        page.update()
-    page.on_resize = resize
+    # def resize(e:ft.ControlEvent):
+    #     page.update()
+    # page.on_resize = resize
     page.update()
 
 
