@@ -37,6 +37,8 @@ class OpexDl:
             if 'online' in a.get('class') and not 'colorido' in a.get('class'):
                 if a['href'].split('/')[-3] == 'sbs':
                     continue
+                if a['href'].split('/')[-1] == '?v=jump':
+                    continue
                 if a['href'].split('/')[-1] == '22' and not next:
                     next = True
                     continue
@@ -116,17 +118,4 @@ class OpexDl:
                     url_img
                 )
         return url_list
-
-
-print(OpexDl().get_sbs_chapters())
-
-
-
-
-
-
-
- 
-
-
 
