@@ -14,16 +14,20 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     router = Router(page)
     page.on_route_change = router.route_change
+    # page.appbar = NavBar(page)
+    page.banner = NavBar(page)
+    # page.scroll = ft.ScrollMode.ALWAYS
     page.add(
         ft.ResponsiveRow([
             ft.Column([
-                NavBar(page),
+                ft.Container(width=90)
             ],
             col=1),
             ft.Column([
                 router.body
             ],
-            col=11)
+            col=11,
+            )
         ])
     )
     page.go('/')
