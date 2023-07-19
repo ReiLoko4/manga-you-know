@@ -20,8 +20,13 @@ class DataBase:
     def get_database(self) -> list[dict]:
         self.create_database()
         with open(self.database, 'r', encoding='UTF-8') as file:
+            return json.load(file)['data']
+    
+    def _get_database(self) -> dict:
+        self.create_database()
+        with open(self.database, 'r', encoding='UTF-8') as file:
             return json.load(file)
-
+    
     def create_config(self):
         if not self.config.exists():
             self.dir.mkdir(parents=True, exist_ok=True)
@@ -41,7 +46,7 @@ class DataBase:
             return json.load(file)['config']
 
     def add_manga(self, manga:dict) -> bool:
-        database = self.get_database()
+        database = self._get_database()
         if manga['id_serie'] in [i['id'] for i in database['data']]: return False
         database['data'].append({
                 'id': manga['id_serie'],
@@ -53,13 +58,13 @@ class DataBase:
         return True
     
     def get_manga(self, manga_id:str) -> dict | bool:
-        database = self.get_database()
+        database = self._get_database()
         for manga in database['data']:
             if manga['id'] == manga_id: return manga
         return False
 
     def set_manga(self, manga_id:str, key:str, content:str):
-        database = self.get_database()
+        database = self._get_database()
         for manga in database['data']:
             if manga['id'] == manga_id:
                 manga[key] = content
@@ -68,7 +73,7 @@ class DataBase:
             json.dump(database, file)
 
     def delete_manga(self, manga_id:str) -> bool:
-        database = self.get_database()
+        database = self._get_database()
         len_data = len(database['data'])
         for i, manga in enumerate(database['data']):
             if manga['id'] == manga_id: database['data'].pop(i)
@@ -79,7 +84,7 @@ class DataBase:
         return True
     
     def is_favorite(self, manga:dict) -> bool:
-        database = self.get_database()['data']
+        database = self._get_database()['data']
         for favorite in database:
             if manga['id_serie'] == favorite['id']:
                 return True
@@ -101,7 +106,7 @@ class DataBase:
             return json.load(file)
     
     def get_manga_info(self, manga_id) -> dict | bool:
-        data = self.get_database()
+        data = self._get_database()
         for manga in data['data']:
             if manga['id'] == manga_id:
                 return manga
