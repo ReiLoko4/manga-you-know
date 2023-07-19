@@ -1,11 +1,13 @@
 import flet as ft
 from time import sleep
 from backend.downloader.mangalivre import MangaLivreDl
+from backend.downloader.mangadex import MangaDexDl
 from backend.database import DataBase
 
 
 def Index(page: ft.Page):
-    connection_data = DataBase()   
+    connection_data = DataBase()
+    connection_manga = MangaDexDl()
     results = ft.Column(width=500, spacing=0.7)
     card = ft.Card(ft.Container(results), color='gray', visible=False)
     search = ft.TextField(
@@ -74,7 +76,7 @@ def Index(page: ft.Page):
             page.update()
             return False
         response = downloader.search_mangas(e.control.value)
-        favorites = connection_data.get_database()['data']
+        favorites = connection_data.get_database()
         list_favorites_id = [i['id'] for i in favorites]    
         card.visible = True
         results.controls.clear()
