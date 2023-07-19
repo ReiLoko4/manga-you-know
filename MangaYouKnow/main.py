@@ -16,17 +16,14 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.on_route_change = router.route_change
     # page.appbar = NavBar(page)
     page.banner = NavBar(page)
-    # page.scroll = ft.ScrollMode.ALWAYS
+    page.scroll = ft.ScrollMode.ALWAYS
     page.add(
-        ft.ResponsiveRow([
-            ft.Column([
-                ft.Container(width=90)
-            ],
-            col=1),
+        ft.Stack([
             ft.Column([
                 router.body
             ],
-            col=11,
+            left=90,
+            top=0
             )
         ])
     )

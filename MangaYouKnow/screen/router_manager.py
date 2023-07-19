@@ -9,14 +9,24 @@ class Router:
     def __init__(self, page:ft.Page):
         self.page = page
         self.ft = ft
+        index = Index(page)
+        favorites = Favorites(page)
+        configs = Configs(page)
         self.routes = {
-            '/': Index(page),
-            '/favorites': Favorites(page),
-            '/configs': Configs(page)
+            '/': index,
+            '/favorites': favorites,
+            '/configs': configs
         }
         self.body = ft.Container(content=self.routes['/'])
+        self.update = {
+            '/': index,
+            '/favorites': favorites.data,
+            '/configs': configs
+        }
 
     def route_change(self, route:ft.RouteChangeEvent):
         self.body.content = self.routes[route.route]
+        if route.route == '/favorites':
+            self.update[route.route](self.page.width-90)
         self.body.update()
 

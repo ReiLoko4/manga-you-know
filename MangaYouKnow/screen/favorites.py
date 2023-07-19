@@ -34,6 +34,7 @@ def Favorites(page: ft.Page):
     #     stack.width = float(e.control.width) - 100
     #     stack.update()
     # page.on_resize = resize
+    
     stack = ft.Stack([
         ft.Row([ft.Container(search, padding=10)], alignment=ft.MainAxisAlignment.CENTER),
         ft.Divider(height=170, color='white'),
@@ -42,10 +43,16 @@ def Favorites(page: ft.Page):
         width=page.width - 90,
         height=1500
     )
+    def update(e):
+        row_mangas.width = e
+        stack.width = e
+        page.update()
+
     content = ft.Row(
         [   
             stack
         ],
     )
 
+    content.data = update
     return content
