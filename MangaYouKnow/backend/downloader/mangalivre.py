@@ -116,7 +116,7 @@ class MangaLivreDl:
     def search_mangas(self, entry:str) -> dict:
         try: response = self.session.post(
                 'https://mangalivre.net/lib/search/series.json',
-                timeout=3.5,
+                timeout=3,
                 data={'search':entry},
                 headers={'referer':'mangalivre.net'}
             )
