@@ -7,9 +7,9 @@ def NavBar(page: ft.Page) -> ft.NavigationRail:
         selected_index=0,
         label_type=ft.NavigationRailLabelType.SELECTED,
         min_width=90,
-        bgcolor=ft.colors.GREY_900,
         width=90,
         height=1200,
+        bgcolor=ft.colors.GREY_900,
         group_alignment=-0.9,
         destinations=[
             ft.NavigationRailDestination(
