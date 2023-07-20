@@ -16,7 +16,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.on_route_change = router.route_change
     # page.appbar = NavBar(page)
     page.banner = NavBar(page)
-    page.scroll = ft.ScrollMode.ALWAYS
+    page.scroll = ft.ScrollMode.ADAPTIVE
     page.add(
         ft.Stack([
             ft.Column([
