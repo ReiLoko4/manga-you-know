@@ -118,4 +118,18 @@ class OpexDl:
                     url_img
                 )
         return url_list
+    
+    def download_manga_chapter(self, chapter) -> bool:
+        response = self.get_chapter_images_url(chapter)
+        if not response:
+            return False
+        path = Path(f'opex/{chapter}')
+        path.mkdir(parents=True, exist_ok=True)
+        for i, img in enumerate(response):
+            page_img = self.session.get(img)
+            page_path = Path(f'{path}/{i:04d}.jpg')
+            with open(page_path, 'wb') as file:
+                for data in page_img.iter_content(1024):
+                    file.write(data)
+        return True
 
