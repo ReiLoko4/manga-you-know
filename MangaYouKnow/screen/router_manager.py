@@ -23,10 +23,21 @@ class Router:
             '/favorites': favorites.data,
             '/configs': configs
         }
+        self.update = {
+           '/': index,
+           '/favorites': favorites.data[0],
+           '/configs': configs
+        }
+        self.resize = {
+            '/': index,
+            '/favorites': favorites.data[1],
+            '/configs': configs
+        }
 
     def route_change(self, route:ft.RouteChangeEvent):
         self.body.content = self.routes[route.route]
-        if route.route == '/favorites':
-            self.update[route.route](self.page.width-90)
         self.body.update()
+        if route.route == '/favorites':
+           self.update[route.route](self.page.width-90)
+           self.page.on_resize = self.resize[route.route]
 
