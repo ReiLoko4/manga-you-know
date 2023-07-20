@@ -26,7 +26,7 @@ def Favorites(page: ft.Page):
         wrap=True,
         width=page.width - 90,
         top=100,
-        scroll=ft.ScrollMode.ALWAYS
+        alignment=ft.MainAxisAlignment.CENTER
     )
     # def resize(e:ft.ControlEvent):
     #     row_mangas.width = float(e.control.width) - 100
@@ -41,18 +41,37 @@ def Favorites(page: ft.Page):
         row_mangas
     ],
         width=page.width - 90,
-        height=1500
+        height=2000
     )
     def update(e):
-        row_mangas.width = e
-        stack.width = e
+       row_mangas.width = e
+       stack.width = e
+       favorites = database.get_database()
+       row_mangas.controls = [
+           ft.Card(ft.Column([
+               ft.Text(i['name']),
+               ft.IconButton(ft.icons.READ_MORE)
+           ],
+               alignment=ft.CrossAxisAlignment.CENTER
+           ),
+               height=350,
+               width=210,
+           )
+           for i in favorites
+       ]
+       page.update()
+
+    def resize(e):
+        row_mangas.width = float(e.control.width) - 90
+        stack.width = float(e.control.width) - 90
         page.update()
 
     content = ft.Row(
-        [   
+        [  
             stack
         ],
     )
 
-    content.data = update
+    content.data = [update, resize]
     return content
+
