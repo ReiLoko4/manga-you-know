@@ -1,12 +1,12 @@
 <h1 align="center">Manga You Know<h1>
 
-#### 
-[- English version here -](here)
+####
+[- English version here -](https://github.com/ReiLoko4/manga-you-know/blob/main/README-EN.md)
 <br>
 
 # Resumo
 
-Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos cápitulos pra seus mangás favoritos, usando de diversas fontes, além de não possuir nenhum anúncio em suas dependencias. Através de uma interface agrádavel e de fácil uso.
+Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos cápitulos pra seus mangás favoritos, usando de diversas fontes, além de não possuir nenhum anúncio em suas dependencias. Isso tudo través de uma interface agrádavel e de fácil uso.
 <br>
 <br>
 
@@ -32,7 +32,7 @@ Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos
 <br>
 <br>
 
-# Técnologias utilizadas
+# Tecnologias usadas
 - [Python](https://python.org)
   - [Flet](https://flet.dev)
   - [Requests](https://pypi.org/project/requests/)
