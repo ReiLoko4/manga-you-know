@@ -6,7 +6,7 @@
 
 # Resumo
 
-Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos cápitulos pra seus mangás favoritos, usando de diversas fontes, além de não possuir nenhum anúncio em suas dependencias. Isso tudo través de uma interface agrádavel e de fácil uso.
+Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos capítulos pra seus mangás favoritos, usando de diversas fontes, além de não possuir nenhum anúncio em suas dependencias. Isso tudo través de uma interface agrádavel e de fácil uso.
 <br>
 
 # Sumário
