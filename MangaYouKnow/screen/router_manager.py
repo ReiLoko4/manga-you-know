@@ -9,8 +9,8 @@ class Router:
     def __init__(self, page:ft.Page):
         self.page = page
         self.ft = ft
-        index = Index(page)
-        favorites = Favorites(page)
+        index = Index(page).return_content()
+        favorites = Favorites(page).return_content()
         configs = Configs(page)
         self.routes = {
             '/': index,
