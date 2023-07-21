@@ -8,7 +8,6 @@
 
 Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos cápitulos pra seus mangás favoritos, usando de diversas fontes, além de não possuir nenhum anúncio em suas dependencias. Isso tudo través de uma interface agrádavel e de fácil uso.
 <br>
-<br>
 
 # Sumário
 
@@ -16,7 +15,6 @@ Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos
 - [Fontes](#fontes)
 - [Técnologias utilizadas](#técnologias-utilizadas)
 - [Modo de uso](#modo-de-uso)
-<br>
 <br>
 
 # Fontes
@@ -30,7 +28,6 @@ Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos
 - [Ao Ashi Manga Online](https://ao-ashimanga.com/)
 
 <br>
-<br>
 
 # Tecnologias usadas
 - [Python](https://python.org)
@@ -39,7 +36,6 @@ Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos
   - [bs4](https://pypi.org/project/beautifulsoup4/)
 
 
-<br>
 <br>
 
 # Modo de uso

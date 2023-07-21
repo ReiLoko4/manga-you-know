@@ -8,7 +8,6 @@
 
 Project with the aim of offering a reader, a search engine and a checker for new chapters of your favorite manga, using different sources for this, in addition to not having ads. For that, it uses a pleasant and easy-to-use interface.
 <br>
-<br>
 
 # Summary
 
@@ -16,7 +15,6 @@ Project with the aim of offering a reader, a search engine and a checker for new
 - [Sources](#sources)
 - [Used technologies](#used-technologies)
 - [Use mode](#use-mode)
-<br>
 <br>
 
 # Sources
@@ -30,7 +28,6 @@ Project with the aim of offering a reader, a search engine and a checker for new
 - [Ao Ashi Manga Online](https://ao-ashimanga.com/)
 
 <br>
-<br>
 
 # Used technologies
 - [Python](https://python.org)
@@ -39,7 +36,6 @@ Project with the aim of offering a reader, a search engine and a checker for new
   - [bs4](https://pypi.org/project/beautifulsoup4/)
 
 
-<br>
 <br>
 
 # Use mode
