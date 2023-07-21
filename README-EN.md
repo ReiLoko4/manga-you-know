@@ -26,7 +26,6 @@ Project with the aim of offering a reader, a search engine and a checker for new
 - [TCB Scans](https://tcbscans.com/)
 - [OPSCANS](https://opscans.com/)
 - [Ao Ashi Manga Online](https://ao-ashimanga.com/)
-
 <br>
 
 # Used technologies
@@ -34,8 +33,6 @@ Project with the aim of offering a reader, a search engine and a checker for new
   - [Flet](https://flet.dev)
   - [Requests](https://pypi.org/project/requests/)
   - [bs4](https://pypi.org/project/beautifulsoup4/)
-
-
 <br>
 
 # Use mode
