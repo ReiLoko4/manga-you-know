@@ -82,7 +82,7 @@ class MangaLivreDl:
                     return chapter['releases'][key_scan]['id_release']
             offset +=1
 
-    def get_manga_chapter_url(self, id_release) -> dict | bool:
+    def get_manga_chapter_imgs(self, id_release) -> dict | bool:
         response = self.session.get(
             f'https://mangalivre.net/leitor/pages/{id_release}.json'
         ).json()['images']
@@ -178,10 +178,10 @@ class MangaLivreDl:
         
         if type(id_release) == str:
             chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
-            urls = self.get_manga_chapter_url(id_release)
+            urls = self.get_manga_chapter_imgs(id_release)
         else:
             chapter_info = id_release
-            urls = self.get_manga_chapter_url(id_release['releases'][list(id_release['releases'].keys())[0]]['id_release'])
+            urls = self.get_manga_chapter_imgs(id_release['releases'][list(id_release['releases'].keys())[0]]['id_release'])
         if not urls:
             print(f'capitulo {chapter_info["number"]} com erro!') 
             return False
