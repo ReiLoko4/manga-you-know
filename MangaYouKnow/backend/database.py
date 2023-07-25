@@ -51,6 +51,7 @@ class DataBase:
         database['data'].append({
                 'id': manga['id_serie'],
                 'name': manga['name'],
+                'cover': manga['cover'],
                 'folder_name': manga['link'].split('/')[-2]
             })
         with open(self.database, 'w', encoding='UTF-8') as file:
