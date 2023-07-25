@@ -28,41 +28,8 @@ class Index:
             index.visible = True
             page.update()
         
-        def manga_page(info_manga):
-            index.visible = False
-            manga.controls.clear()
-            def favorite_manga(e):
-                connection_data.add_manga(info_manga)
-            container_img = ft.Container(padding=20, bgcolor=ft.colors.GREY_900)
-            manga.controls.append(ft.Container(
-                ft.Column([
-                    ft.Row([
-                        ft.Container(
-                        ft.Row([
-                            ft.Container(
-                                ft.IconButton(ft.icons.ARROW_BACK_IOS_ROUNDED, on_click=back_index, width=50, height=50),
-                                padding=5,
-                            ),
-                            ft.Container(
-                                ft.Text(info_manga['name'], size=23),
-                                padding=10,
-                                width=1200,
-                                height=60
-                            )
-                        ], alignment=ft.CrossAxisAlignment.CENTER
-                        ), bgcolor=ft.colors.GREY_900)
-                    ]),
-                    ft.Row([
-                        container_img,
-                        ft.TextButton('Favoritar mangá', on_click=favorite_manga)
-            ])])))
-            manga.visible = True
-            page.update()
-            container_img.content = ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT)
-            page.update()
-
-        def togle_favorite(manga:dict, button:ft.IconButton):
-            self.is_clicked = True
+        
+        def togle_favorite(manga:dict, button:ft.IconButton, is_on_search:bool=False):
             if connection_data.is_favorite(manga):
                 connection_data.delete_manga(manga['id_serie'])
                 button.icon = ft.icons.BOOKMARK_OUTLINE
@@ -70,9 +37,58 @@ class Index:
                 connection_data.add_manga(manga)
                 button.icon = ft.icons.BOOKMARK_ROUNDED
             page.update()
-            sleep(1)
-            self.is_clicked = False
-            search.focus()
+            if is_on_search:
+                self.is_clicked = True
+                sleep(1)
+                self.is_clicked = False
+                search.focus()
+
+        def manga_page(info_manga):
+            button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite(info_manga) else ft.icons.BOOKMARK_OUTLINE, height=30)
+            button_favorite.on_click = lambda e, info=info_manga, button=button_favorite: togle_favorite(info, button)
+            manga_dialog = ft.AlertDialog(
+                title=ft.Text(info_manga['name'][0:30], tooltip=info_manga['name']),
+                content=ft.Row([
+                    ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT, animate_size=300, border_radius=ft.border_radius.all(30)),
+                    ft.Column([
+                        button_favorite
+                    ])
+                ])
+            )
+            manga_dialog.open = True
+            page.dialog = manga_dialog
+            # index.visible = False
+            # manga.controls.clear()
+            # def favorite_manga(e):
+            #     connection_data.add_manga(info_manga)
+            # container_img = ft.Container(padding=20, bgcolor=ft.colors.GREY_900)
+            # manga.controls.append(ft.Container(
+            #     ft.Column([
+            #         ft.Row([
+            #             ft.Container(
+            #             ft.Row([
+            #                 ft.Container(
+            #                     ft.IconButton(ft.icons.ARROW_BACK_IOS_ROUNDED, on_click=back_index, width=50, height=50),
+            #                     padding=5,
+            #                 ),
+            #                 ft.Container(
+            #                     ft.Text(info_manga['name'], size=23),
+            #                     padding=10,
+            #                     width=1200,
+            #                     height=60
+            #                 )
+            #             ], alignment=ft.CrossAxisAlignment.CENTER
+            #             ), bgcolor=ft.colors.GREY_900)
+            #         ]),
+            #         ft.Row([
+            #             container_img,
+            #             ft.TextButton('Favoritar mangá', on_click=favorite_manga)
+            # ])])))
+            # manga.visible = True
+            # page.update()
+            # container_img.content = ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT)
+            # page.update()
+
 
         def search_mangas(e:ft.ControlEvent=None):
             if len(e.control.value) == 0:
@@ -110,7 +126,7 @@ class Index:
             else:
                 for manga in response:
                     button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga['id_serie'] in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
-                    button_favorite.on_click = lambda e, manga=manga, button=button_favorite:togle_favorite(manga, button)
+                    button_favorite.on_click = lambda e, manga=manga, button=button_favorite:togle_favorite(manga, button, True)
                     results.controls.append(
                         ft.ListTile(
                             key='manga',
@@ -146,16 +162,16 @@ class Index:
         index.controls.append(
             ft.ResponsiveRow([
                 ft.Column([ft.Container(bgcolor='white',width=300)],  col=3),
-                ft.Column([search], col=6),
+                ft.Column([ft.Container(search, padding=10)], col=6),
                 ft.Column([ft.Container(bgcolor='white', width=300)],col=3),
-                ], alignment=ft.MainAxisAlignment.SPACE_AROUND, columns=12
+                ], alignment=ft.MainAxisAlignment.CENTER, columns=12
             )
         )
         index.controls.append(
             ft.Row([ft.Text('filler', color='black')], top=100)
         )
         index.controls.append(
-            ft.Row([card], top=65, left=245)
+            ft.Row([card], top=70, left=245)
         )
         
         self.content = ft.Row(
