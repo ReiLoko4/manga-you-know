@@ -20,6 +20,7 @@ Project with the aim of offering a reader, a search engine and a checker for new
 # Sources
 - [MangaLivre](https://mangalivre.net)
 - [MangaDex](https://mangadex.org)
+- [MangaFire](https://mangafire.to)
 - [Gekkou scan](https://gekkou.com.br)
 - [One Piece Ex](https://onepieceex.net)
 - [Tao Sect Scanlator](https://taosect.com/)
