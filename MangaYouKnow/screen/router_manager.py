@@ -2,6 +2,7 @@ import flet as ft
 from screen.index import Index
 from screen.favorites import Favorites
 from screen.configs import Configs
+from screen.reader import MangaReader
 
 
 
@@ -33,8 +34,22 @@ class Router:
             '/favorites': favorites.data[1],
             '/configs': configs
         }
+        self.reader = ft.Container()
+        self.reader.visible = False
 
     def route_change(self, route:ft.RouteChangeEvent):
+        if route.route == '/reader':
+            self.page.dialog.open = False
+            self.page.scroll = False
+            reader = MangaReader(self.page).return_content()
+            self.reader.content = reader
+            self.body.visible = False
+            self.reader.visible = True
+            return
+        if self.reader.visible:
+            self.reader.visible = False
+            self.body.visible = True
+            self.page.banner.visible = True
         self.body.content = self.routes[route.route]
         self.body.update()
         if route.route == '/favorites':
