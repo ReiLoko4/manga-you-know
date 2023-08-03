@@ -11,6 +11,7 @@ def NavBar(page: ft.Page) -> ft.NavigationRail:
         height=1200,
         bgcolor=ft.colors.GREY_900,
         group_alignment=-0.9,
+        animate_size=300,
         destinations=[
             ft.NavigationRailDestination(
                 icon=ft.icons.HOME_OUTLINED,
