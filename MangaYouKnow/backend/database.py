@@ -91,13 +91,14 @@ class DataBase:
                 return True
         return False
 
-    def add_data_chapters(self, manga_name:str, chapters:dict):
+    def add_data_chapters(self, manga_name:str, chapters:list[dict]):
         manga_data_path = Path(f'mangas/{manga_name}/data/')
         manga_data_path.mkdir(parents=True, exist_ok=True)
         data_file = Path(f'{manga_data_path}/chapters.json')
         data_file.touch(exist_ok=True)
         with open(data_file, 'w', encoding='UTF-8') as file:
             json.dump(chapters,file)
+        return True
 
     def get_data_chapters(self, manga_name:str) -> list | bool:
         manga_name = manga_name.replace(' ', '-').lower()
@@ -109,7 +110,7 @@ class DataBase:
     def get_manga_info(self, manga_id) -> dict | bool:
         data = self._get_database()
         for manga in data['data']:
-            if manga['id'] == manga_id:
+            if str(manga['id']) == str(manga_id):
                 return manga
         return False
     
