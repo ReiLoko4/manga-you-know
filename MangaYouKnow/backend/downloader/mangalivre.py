@@ -12,26 +12,29 @@ class MangaLivreDl:
         self.session = requests.Session()
         self.session.headers.update({
             'authority': 'mangalivre.net',
-            'alt-Used': 'mangalivre.net',
-            'connection': 'keep-alive',
             'accept': 'application/json, text/javascript, */*; q=0.01',
             'accept-language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-            'sec-ch-ua': '"Not=A?Brand";v="8", "Chromium";v="110", "Opera GX";v="96"',
+            'referer': 'https://mangalivre.net',
+            'sec-ch-ua': '"Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36 OPR/96.0.0.0',
-            'x-requested-with': 'XMLHttpRequest'
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+            'x-requested-with': 'XMLHttpRequest',
         })
 
     def get_manga_chapters(self, manga_id:str, write_data:bool=False) -> list:
+        print(f'procurando capitulos {manga_id}')
         chapters_list = []
         self.end = False
         def get_offset_json(this_offset):
+            # response = self.session.get(
+            #     f'https://mangalivre.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
+            # )
             response = self.session.get(
-                f'https://mangalivre.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
+                f'https://leitor.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
             )
             if not response.json()['chapters'] or not response:
                 self.end = True
@@ -66,7 +69,8 @@ class MangaLivreDl:
             number = number.replace(',', '.')
             return float(number)
         chapters_list.sort(key=to_sort, reverse=True)
-        if write_data: self.connection_data.add_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'], chapters_list)
+        if write_data: 
+            print(self.connection_data.add_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'], chapters_list))
         return chapters_list
     
     def get_manga_id_release(self, chapter:str, manga_id:str) -> str:
@@ -233,28 +237,30 @@ class MangaLivreDl:
 
     def download_manga_chapters_in_range(self, manga_name, first_chapter, last_chapter, simultaneous:int) -> bool:
         chapters = self.connection_data.get_data_chapters(manga_name)
-        if first_chapter not in [i[0] for i in chapters] or last_chapter not in [i[0] for i in chapters]:
+        if first_chapter not in [i['number'] for i in chapters] or last_chapter not in [i['number'] for i in chapters]:
             return False
         chapters.reverse()
         list_chapters = []
         in_range = False
         for chapter in chapters:
-            if chapter[0] == first_chapter:
+            if chapter['number'] == first_chapter:
                 in_range = True
                 list_chapters.append(chapter)
-            elif chapter[0] == last_chapter:
+            elif chapter['number'] == last_chapter:
                 list_chapters.append(chapter)
                 break
             elif in_range:
                 list_chapters.append(chapter)
         threads = ThreadManager()
         for chapter in list_chapters:
-            threads.add_thread(Thread(target=lambda chapter=chapter[0]: self.download_manga_chapter(chapter, manga_name)))
+            threads.add_thread(Thread(target=lambda chapter=chapter['id']: self.download_manga_chapter(chapter, manga_name)))
             if threads.get_len() == simultaneous or chapter == list_chapters[-1]:
                 threads.start()
                 threads.join()
                 threads.delete_all_threads()
         return True
+        # NEED A FIX
+    
 
     def download_all_manga_chapters(self, manga_id:str, use_local_data:bool = False, simultaneous:int=5) -> bool:
         '''
@@ -278,3 +284,4 @@ class MangaLivreDl:
                 threads.join()
                 threads.delete_all_threads()
         return True
+    
