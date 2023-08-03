@@ -24,21 +24,22 @@ def __main__(page: ft.Page) -> ft.FletApp:
             ],
             left=90,
             top=0
-            )
+            ),
+            router.reader
         ])
     )
     page.data = {}
-    def on_key(e: ft.KeyboardEvent):
-        if e.key == 'Arrow Right':
-            print(e.key)
-        if e.key == 'F11':
-            if page.window_full_screen:
-                page.window_full_screen = False
-            else:
-                page.window_full_screen = True
-        page.update()
-    page.on_keyboard_event = on_key
-    page.data['key_manager'] = on_key
+    # def on_key(e: ft.KeyboardEvent):
+    #     if e.key == 'Arrow Right':
+    #         print(e.key)
+    #     if e.key == 'F11':
+    #         if page.window_full_screen:
+    #             page.window_full_screen = False
+    #         else:
+    #             page.window_full_screen = True
+    #     page.update()
+    # page.on_keyboard_event = on_key
+    # page.data['key_manager'] = on_key
     page.go('/')
     # def resize(e:ft.ControlEvent):
     #     page.update()
