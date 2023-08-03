@@ -1,9 +1,11 @@
 import flet as ft
 from backend.database import DataBase
+from backend.downloader.mangalivre import MangaLivreDl
 
 
 class Favorites:
-    def __init__(self, page: ft.Page) :
+    def __init__(self, page: ft.Page):
+        dl = MangaLivreDl()
         database = DataBase()
         search = ft.TextField(
             label='Pesquisar Favoritos...', 
@@ -11,10 +13,33 @@ class Favorites:
             border_radius=20, 
             border_color=ft.colors.GREY_700,
             focused_border_color= ft.colors.BLUE_300
-        ) 
+        )
+        def read(id_release):
+            print(f'capitulooo {id_release}')
+            page.data['chapter_images'] = dl.get_manga_chapter_imgs(id_release)
+            page.go('/reader')
         def open(info):
-            print(info['name'])
-            alert = ft.AlertDialog(title=ft.Text("Hello, you!", height=3000))
+            chapters = database.get_data_chapters(info['folder_name'])
+            if not chapters:
+                chapters = dl.get_manga_chapters(info['id'], True)
+            alert = ft.AlertDialog(
+                title=ft.Text(info['name']), 
+                content=ft.Column([
+                    ft.Card(
+                    ft.Row([
+                        ft.Text(i['number']),
+                        ft.IconButton(
+                            ft.icons.READ_MORE_OUTLINED, 
+                            on_click=lambda e, id_release=i['releases'][list(i['releases'].keys())[0]]['id_release']: read(id_release)
+                        )
+                    ]))
+                    for i in chapters
+                ], 
+                height=3000,
+                scroll='always'
+                )                       
+                
+            )
             page.dialog = alert
             alert.open = True
             page.update()
