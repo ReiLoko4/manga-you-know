@@ -30,6 +30,7 @@ class MangaReader:
                     if len(self.images) > i+1:
                         img.visible = False
                         self.images[i+1].visible = True
+                        self.images[i+1].height = self.page.height
                     break
             page.update()
         def back(e=None):
@@ -52,6 +53,14 @@ class MangaReader:
                     page.window_full_screen = True
             page.update()
         page.on_keyboard_event = on_key
+        def resize(e):
+            for i in self.images:
+                if i.visible:
+                    i.height = float(e.control.height)
+            page.update()
+        self.content.data = {
+            'resize': resize
+        }
         
     def return_content(self):
         return self.content

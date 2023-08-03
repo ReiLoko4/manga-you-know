@@ -43,6 +43,7 @@ class Router:
             self.page.scroll = False
             reader = MangaReader(self.page).return_content()
             self.reader.content = reader
+            self.page.on_resize = reader.data['resize']
             self.body.visible = False
             self.reader.visible = True
             return
