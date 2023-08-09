@@ -14,8 +14,13 @@ class Favorites:
             border_color=ft.colors.GREY_700,
             focused_border_color= ft.colors.BLUE_300
         )
-        def read(id_release):
+        def read(id_release, id_chapter, info:dict, chapters:list[dict]):
             print(f'capitulooo {id_release}')
+            page.data['id'] = info['id']
+            page.data['name'] = info['name']
+            page.data['folder_name'] = info['folder_name']
+            page.data['manga_chapters'] = chapters
+            page.data['id_chapter'] = id_chapter
             page.data['chapter_images'] = dl.get_manga_chapter_imgs(id_release)
             page.go('/reader')
         def open(info):
@@ -30,7 +35,7 @@ class Favorites:
                         ft.Text(i['number']),
                         ft.IconButton(
                             ft.icons.READ_MORE_OUTLINED, 
-                            on_click=lambda e, id_release=i['releases'][list(i['releases'].keys())[0]]['id_release']: read(id_release)
+                            on_click=lambda e, id_release=i['releases'][list(i['releases'].keys())[0]]['id_release'], id_chapter=i['id_chapter']: read(id_release, id_chapter, info, chapters)
                         )
                     ]))
                     for i in chapters

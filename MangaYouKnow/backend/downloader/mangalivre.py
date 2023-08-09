@@ -285,3 +285,5 @@ class MangaLivreDl:
                 threads.delete_all_threads()
         return True
     
+
+# MangaLivreDl().download_all_manga_chapters('14733')

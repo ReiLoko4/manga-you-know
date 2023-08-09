@@ -100,7 +100,7 @@ class DataBase:
             json.dump(chapters,file)
         return True
 
-    def get_data_chapters(self, manga_name:str) -> list | bool:
+    def get_data_chapters(self, manga_name:str) -> list[dict] | bool:
         manga_name = manga_name.replace(' ', '-').lower()
         manga_chapters = Path(f'mangas/{manga_name}/data/chapters.json')
         if not manga_chapters.exists(): return False

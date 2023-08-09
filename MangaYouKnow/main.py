@@ -29,6 +29,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
         ])
     )
     page.data = {}
+    page.data['reader_container'] = router.reader
     # def on_key(e: ft.KeyboardEvent):
     #     if e.key == 'Arrow Right':
     #         print(e.key)

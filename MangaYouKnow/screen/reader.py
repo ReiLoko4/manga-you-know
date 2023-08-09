@@ -3,19 +3,24 @@ import base64
 import requests
 from threading import Thread
 from backend.thread_manager import ThreadManager
-# from backend.downloader.mangalivre import MangaLivreDl
+from backend.downloader.mangalivre import MangaLivreDl
 
 
 
 class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.pages = page.data['chapter_images']
-        self.images_b64 = []
+        self.dl = MangaLivreDl()
+        self.content = None
+        self.create_content()
 
+    def create_content(self):
+        self.chapters = self.page.data['manga_chapters']
+        self.pages = self.page.data['chapter_images']
+        self.images_b64 = []
         def get_base_64_image(url, index:int):
             response = requests.get(url)
-            self.images_b64.insert(index, base64.b64encode(response.content).decode('utf-8'))
+            self.images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
         threads = ThreadManager()
         for i, image in enumerate(self.pages):
             threads.add_thread(
@@ -25,19 +30,30 @@ class MangaReader:
             )
         threads.start()
         threads.join()
+        def to_sort(e):
+            return e[1]
+        self.images_b64.sort(key=to_sort)
+        self.page.window_full_screen = True
         self.currently_page = ft.Text(f' 1/{len(self.images_b64)}')
-        self.images = [ft.Image(src_base64=i, fit=ft.ImageFit.FIT_HEIGHT, height=page.height) for i in self.images_b64]
+        self.images = [ft.Image(src_base64=i[0], fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height) for i in self.images_b64]
+        self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
+        self.btn_next_chapter.visible = False
+        is_second_time = False
+        if self.content != None:
+            is_second_time = True
         self.content = ft.Stack([
             ft.Row(
                 self.images, 
                 alignment=ft.MainAxisAlignment.CENTER
             ),
             ft.Row(
-                [ft.Card(ft.Row([self.currently_page], alignment=ft.MainAxisAlignment.CENTER), height=30, width=50, opacity=0.5), ft.Container(width=10)],
+                [
+                    self.btn_next_chapter,
+                    ft.Card(ft.Row([self.currently_page], alignment=ft.MainAxisAlignment.CENTER), height=30, width=50, opacity=0.5), ft.Container(width=10)],
                 alignment=ft.MainAxisAlignment.END,
             )
         ])
-        page.banner.visible = False
+        self.page.banner.visible = False
         for i, img in enumerate(self.images):
             if i != 0:
                 img.visible = False
@@ -46,11 +62,15 @@ class MangaReader:
                 if img.visible:
                     if len(self.images) > i+1:
                         img.visible = False
+                        print(i+2)
                         self.images[i+1].visible = True
                         self.images[i+1].height = self.page.height
                         self.currently_page.value = f'{i+2}/{len(self.images)}'
+                        if len(self.images) == i+2:
+                            if not self.chapters[0]['id_chapter'] == self.page.data['id_chapter']:
+                                self.btn_next_chapter.visible = True
                     break
-            page.update()
+            self.page.update()
         def back(e=None):
             for i, img in enumerate(self.images):
                 if img.visible:
@@ -59,30 +79,62 @@ class MangaReader:
                         self.images[i-1].visible = True
                         self.currently_page.value = f'{i}/{len(self.images)}'
                     break
-            page.update()
+            self.page.update()
         def on_key(e: ft.KeyboardEvent):
             if e.key == 'Arrow Right':
                 next()
             if e.key == 'Arrow Left':
                 back()
             if e.key == 'F11':
-                if page.window_full_screen:
-                    page.window_full_screen = False
+                if self.page.window_full_screen:
+                    self.page.window_full_screen = False
                 else:
-                    page.window_full_screen = True
-            page.update()
-        page.on_keyboard_event = on_key
+                    self.page.window_full_screen = True
+            if e.key == 'Escape':
+                if self.page.window_full_screen:
+                    self.page.window_full_screen = False
+            self.page.update()
+        self.page.on_keyboard_event = on_key
         def resize(e):
             for i in self.images:
                 if i.visible:
                     i.height = float(e.control.height)
-            page.update()
+            self.page.update()
+        
         self.content.data = {
             'resize': resize
         }
-        
+        if is_second_time:
+            self.page.data['reader_container'].content = self.content
+
+
     def return_content(self):
         return self.content
+    
+    def next_chapter(self, _=None):
+        self.chapters.reverse()
+        chapter = None
+        for i, chapter in enumerate(self.chapters):
+            if str(chapter['id_chapter']) == str(self.page.data['id_chapter']):
+                if len(self.chapters) == i+1:
+                    print('no more chapters')
+                    return False
+                self.page.data['id_chapter'] = self.chapters[i+1]['id_chapter']
+                chapter = self.chapters[i+1]
+                break
+        if chapter == None:
+            print('sem mais capitulos')
+            return False
+        manga_pages = self.dl.get_manga_chapter_imgs(chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'])
+        if not manga_pages:
+            print('errokkkkk')
+            return False
+        self.page.data['chapter_images'] = manga_pages
+        self.chapters.reverse()
+        self.create_content()
+        self.page.update()
+
+        
 
 
                 
