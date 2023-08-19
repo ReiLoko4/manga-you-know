@@ -10,14 +10,14 @@ class Index:
     def __init__(self, page: ft.Page):
         connection_data = DataBase()
         connection_manga = MangaDexDl()
-        results = ft.Column(width=500, spacing=0.7)
+        results = ft.Column(width=470, spacing=0.7)
         card = ft.Card(ft.Container(results), color='gray', visible=False)
         search = ft.TextField(
             label='Pesquisar Mangás...', 
             width=500,
             border_radius=20,
             border_color=ft.colors.GREY_700,
-            focused_border_color= ft.colors.BLUE_300
+            focused_border_color= ft.colors.BLUE_300,
         )
         downloader = MangaLivreDl()
         index = ft.Stack(width=1300, height=1000)
@@ -132,7 +132,7 @@ class Index:
                             key='manga',
                             title=ft.Row(
                                 [
-                                ft.Text(f'{manga["name"][0:47]}...' if len(manga['name']) > 50 else manga['name'][0:50], tooltip=manga['name']),
+                                ft.Text(f'{manga["name"][0:44]}...' if len(manga['name']) > 50 else manga['name'][0:50], tooltip=manga['name']),
                                 button_favorite
                                 ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
@@ -171,7 +171,7 @@ class Index:
             ft.Row([ft.Text('filler', color='black')], top=100)
         )
         index.controls.append(
-            ft.Row([card], top=70, left=245)
+            ft.Row([card], top=70, left=260)
         )
         
         self.content = ft.Row(

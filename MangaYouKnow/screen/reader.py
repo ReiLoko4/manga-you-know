@@ -4,6 +4,7 @@ import requests
 from threading import Thread
 from backend.thread_manager import ThreadManager
 from backend.downloader.mangalivre import MangaLivreDl
+from backend.database import DataBase
 
 
 
@@ -11,12 +12,14 @@ class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
         self.dl = MangaLivreDl()
+        self.db = DataBase()
         self.content = None
         self.create_content()
 
     def create_content(self):
         self.chapters = self.page.data['manga_chapters']
         self.pages = self.page.data['chapter_images']
+        
         self.images_b64 = []
         def get_base_64_image(url, index:int):
             response = requests.get(url)
@@ -62,11 +65,11 @@ class MangaReader:
                 if img.visible:
                     if len(self.images) > i+1:
                         img.visible = False
-                        print(i+2)
                         self.images[i+1].visible = True
                         self.images[i+1].height = self.page.height
                         self.currently_page.value = f'{i+2}/{len(self.images)}'
                         if len(self.images) == i+2:
+                            self.db.set_manga(self.page.data['id'], 'id_last_readed', self.page.data['id_chapter'])
                             if not self.chapters[0]['id_chapter'] == self.page.data['id_chapter']:
                                 self.btn_next_chapter.visible = True
                     break
@@ -93,8 +96,12 @@ class MangaReader:
             if e.key == 'Escape':
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
+            if e.key == 'F4':
+                self.page.go('/favorites')
+                self.page.scroll = ft.ScrollMode.ADAPTIVE
+                self.page.window_full_screen = False
             self.page.update()
-        self.page.on_keyboard_event = on_key
+        
         def resize(e):
             for i in self.images:
                 if i.visible:
@@ -106,6 +113,8 @@ class MangaReader:
         }
         if is_second_time:
             self.page.data['reader_container'].content = self.content
+        else:
+            self.page.on_keyboard_event = on_key
 
 
     def return_content(self):

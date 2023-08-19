@@ -37,7 +37,7 @@ class Favorites:
                             ft.icons.READ_MORE_OUTLINED, 
                             on_click=lambda e, id_release=i['releases'][list(i['releases'].keys())[0]]['id_release'], id_chapter=i['id_chapter']: read(id_release, id_chapter, info, chapters)
                         )
-                    ]))
+                    ], alignment=ft.MainAxisAlignment.SPACE_EVENLY))
                     for i in chapters
                 ], 
                 height=3000,
@@ -70,7 +70,7 @@ class Favorites:
             wrap=True,
             width=page.width - 90,
             top=100,
-            alignment=ft.MainAxisAlignment.CENTER
+            alignment=ft.MainAxisAlignment.START
         )
         # def resize(e:ft.ControlEvent):
         #     row_mangas.width = float(e.control.width) - 100
