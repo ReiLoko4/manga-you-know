@@ -24,43 +24,54 @@ class Favorites:
             page.data['chapter_images'] = dl.get_manga_chapter_imgs(id_release)
             page.go('/reader')
         def open(info):
-            chapters = database.get_data_chapters(info['folder_name'])
-            if not chapters:
-                chapters = dl.get_manga_chapters(info['id'], True)
             alert = ft.AlertDialog(
                 title=ft.Text(info['name']), 
-                content=ft.Column([
-                    ft.Card(
-                    ft.Row([
-                        ft.Text(i['number']),
-                        ft.IconButton(
-                            ft.icons.READ_MORE_OUTLINED, 
-                            on_click=lambda e, id_release=i['releases'][list(i['releases'].keys())[0]]['id_release'], id_chapter=i['id_chapter']: read(id_release, id_chapter, info, chapters)
-                        )
-                    ], alignment=ft.MainAxisAlignment.SPACE_EVENLY))
-                    for i in chapters
-                ], 
-                height=3000,
-                scroll='always'
-                )                       
-                
+                content=ft.Container(ft.ProgressRing(), height=200)             
             )
             page.dialog = alert
             alert.open = True
             page.update()
-        
+            # chapters = database.get_data_chapters(info['folder_name'])
+            # if not chapters:
+            chapters = dl.get_manga_chapters(info['id'], True)
+            page.dialog.content = ft.Column([
+                ft.Card(
+                    ft.Row([
+                        ft.Text(i['number']),
+                        ft.IconButton(
+                            ft.icons.BOOK, 
+                            on_click=lambda e, id_release=i['releases'][list(i['releases'].keys())[0]]['id_release'], id_chapter=i['id_chapter']: read(id_release, id_chapter, info, chapters)
+                        )
+                    ], alignment=ft.MainAxisAlignment.SPACE_EVENLY))
+                for i in chapters
+            ], 
+            height=3000,
+            scroll='always'
+            )
+            page.update()
+
+        def remove_manga(manga_id):
+            if database.delete_manga(manga_id):
+                row_mangas.controls = load_mangas()
+                page.update()
+
         def load_mangas() -> list[ft.Card]:
             favorites = database.get_database()
             return [
-                ft.Card(ft.Column([
-                    ft.Text(i['name']),
-                    ft.Image(i['cover'], height=200, fit=ft.ImageFit.FIT_HEIGHT),
-                    ft.IconButton(ft.icons.READ_MORE, on_click=lambda e, info=i:open(info))
-                ],
-                    alignment=ft.CrossAxisAlignment.CENTER
-                ),
-                    height=350,
-                    width=210,
+                ft.Card(
+                    ft.Row([
+                        ft.Column([
+                        ft.Text(i['name']),
+                        ft.Image(i['cover'], height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10),
+                        ft.Row([
+                            ft.IconButton(ft.icons.MENU_BOOK, on_click=lambda e, info=i:open(info)),
+                            ft.IconButton(ft.icons.HIGHLIGHT_REMOVE, on_click=lambda e, info=i:remove_manga(info['id']))
+                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+                    ], alignment=ft.CrossAxisAlignment.STRETCH)
+                    ], alignment=ft.MainAxisAlignment.CENTER)
+                    ,
+                    height=340,
+                    width=190,
                 )
                 for i in favorites
             ]
