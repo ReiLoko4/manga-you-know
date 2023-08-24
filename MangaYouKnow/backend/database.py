@@ -121,9 +121,9 @@ class DataBase:
     #     return False
     
     def get_chapter_info(self, manga_id, id_release) -> dict | bool:
-        chapters = self.get_data_chapters(self.get_manga(manga_id)['folder_name'])
+        chapters = self.get_data_chapters(self.get_manga_info(manga_id)['folder_name'])
         for chapter in chapters:
-            if chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'] == id_release:
+            if str(chapter['releases'][list(chapter['releases'].keys())[0]]['id_release']) == str(id_release):
                 return chapter
         return False
     

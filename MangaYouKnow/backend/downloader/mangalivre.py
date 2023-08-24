@@ -286,5 +286,4 @@ class MangaLivreDl:
         return True
     
 
-# MangaLivreDl().download_all_manga_chapters('17305')
-# MangaLivreDl().download_all_manga_chapters('612')
+MangaLivreDl().download_manga_chapter('1377', '59692')
