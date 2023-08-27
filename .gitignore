@@ -131,6 +131,7 @@ dmypy.json
 # Not ignore
 /*
 !requirements.txt
+!LICENSE.md
 !README.md
 !README.en.md
 !MangaYouKnow/
