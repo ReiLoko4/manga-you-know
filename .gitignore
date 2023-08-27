@@ -128,12 +128,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-MangaYouKnow/myk_gui.py
-
 # Not ignore
 /*
 !requirements.txt
 !README.md
+!README.en.md
 !MangaYouKnow/
 !favorites.py
 !configs.py

@@ -39,13 +39,14 @@ Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos
   - [Flet](https://flet.dev)
   - [Requests](https://pypi.org/project/requests/)
   - [bs4](https://pypi.org/project/beautifulsoup4/)
+  - [pyclip](https://pypi.org/project/pyclip/)
 
 
 <br>
 
 # Modo de uso
 
-tenta usar ai kkkkkk
+Primeiro baixe o app [aqui](https://github.com/ReiLoko4/manga-you-know/releases/download/0.7b/MangaYouKnow-0.7b.exe). Por enquanto não tenho tempo pra escrever uma documentação melhor... mas você pode perguntar algo ou dar feedback no meu [X](https://twitter.com/ReiLokoFn).
 
 
 
