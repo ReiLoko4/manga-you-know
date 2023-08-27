@@ -1,7 +1,11 @@
 <h1 align="center">Manga You Know<h1>
 
+<div align='center'><img src='https://github.com/ReiLoko4/manga-you-know/assets/103978193/d0d4ff85-2308-4baa-b56a-0e99a9faa7dc' height=250px></div>
+
+
+
 ####
-[- English version here -](https://github.com/ReiLoko4/manga-you-know/blob/main/README-EN.md)
+[- English version here -](https://github.com/ReiLoko4/manga-you-know/blob/main/README.en.md)
 <br>
 
 # Resumo

@@ -3,6 +3,7 @@ from screen.index import Index
 from screen.favorites import Favorites
 from screen.configs import Configs
 from screen.reader import MangaReader
+from screen.about import About
 
 
 
@@ -12,11 +13,13 @@ class Router:
         self.ft = ft
         index = Index(page).return_content()
         favorites = Favorites(page).return_content()
-        configs = Configs(page)
+        configs = Configs(page).return_content()
+        about = About(page).return_content()
         self.routes = {
             '/': index,
             '/favorites': favorites,
-            '/configs': configs
+            '/configs': configs,
+            '/about': about
         }
         self.body = ft.Container(content=self.routes['/'])
         self.update = {
@@ -38,6 +41,7 @@ class Router:
         self.reader.visible = False
 
     def route_change(self, route:ft.RouteChangeEvent):
+        self.page.scroll_to(delta=0)
         if route.route == '/reader':
             self.page.dialog.open = False
             self.page.scroll = False

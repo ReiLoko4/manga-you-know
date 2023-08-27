@@ -28,7 +28,6 @@ class Index:
             index.visible = True
             page.update()
         
-        
         def togle_favorite(manga:dict, button:ft.IconButton, is_on_search:bool=False):
             if connection_data.is_favorite(manga):
                 connection_data.delete_manga(manga['id_serie'])
@@ -50,45 +49,11 @@ class Index:
                 title=ft.Text(info_manga['name'][0:30], tooltip=info_manga['name']),
                 content=ft.Row([
                     ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT, animate_size=300, border_radius=ft.border_radius.all(30)),
-                    ft.Column([
-                        button_favorite
-                    ])
-                ])
+                ]),
+                actions=[button_favorite]
             )
             manga_dialog.open = True
             page.dialog = manga_dialog
-            # index.visible = False
-            # manga.controls.clear()
-            # def favorite_manga(e):
-            #     connection_data.add_manga(info_manga)
-            # container_img = ft.Container(padding=20, bgcolor=ft.colors.GREY_900)
-            # manga.controls.append(ft.Container(
-            #     ft.Column([
-            #         ft.Row([
-            #             ft.Container(
-            #             ft.Row([
-            #                 ft.Container(
-            #                     ft.IconButton(ft.icons.ARROW_BACK_IOS_ROUNDED, on_click=back_index, width=50, height=50),
-            #                     padding=5,
-            #                 ),
-            #                 ft.Container(
-            #                     ft.Text(info_manga['name'], size=23),
-            #                     padding=10,
-            #                     width=1200,
-            #                     height=60
-            #                 )
-            #             ], alignment=ft.CrossAxisAlignment.CENTER
-            #             ), bgcolor=ft.colors.GREY_900)
-            #         ]),
-            #         ft.Row([
-            #             container_img,
-            #             ft.TextButton('Favoritar mangá', on_click=favorite_manga)
-            # ])])))
-            # manga.visible = True
-            # page.update()
-            # container_img.content = ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT)
-            # page.update()
-
 
         def search_mangas(e:ft.ControlEvent=None):
             if len(e.control.value) == 0:
@@ -132,7 +97,7 @@ class Index:
                             key='manga',
                             title=ft.Row(
                                 [
-                                ft.Text(f'{manga["name"][0:44]}...' if len(manga['name']) > 50 else manga['name'][0:50], tooltip=manga['name']),
+                                ft.Text(f'{manga["name"][0:42]}...' if len(manga['name']) > 45 else manga['name'][0:50], tooltip=manga['name']),
                                 button_favorite
                                 ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
@@ -168,13 +133,13 @@ class Index:
             )
         )
         index.controls.append(
-            ft.Row([ft.Text('filler', color='black')], top=100)
+            ft.Row([], top=100)
         )
         index.controls.append(
             ft.Row([card], top=70, left=260)
         )
         
-        self.content = ft.Row(
+        self.content = ft.Column(
             [   
                 ft.Stack([
                     index,
@@ -182,6 +147,6 @@ class Index:
                 ], width=1000, height=1000)
             ],
         )
-
+        
     def return_content(self) -> ft.Row:
         return self.content

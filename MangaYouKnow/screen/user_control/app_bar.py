@@ -27,17 +27,26 @@ def NavBar(page: ft.Page) -> ft.NavigationRail:
                 icon=ft.icons.SETTINGS_OUTLINED,
                 selected_icon=ft.icons.SETTINGS_ROUNDED,
                 label='Configs'
+            ),
+            ft.NavigationRailDestination(
+                icon=ft.icons.CONTACTS_OUTLINED,
+                selected_icon=ft.icons.CONTACTS_ROUNDED,
+                label='About'
             )
         ]
     )
 
     def change_route(e):
-        if e.control.selected_index == 0:
-            page.go('/')
-        if e.control.selected_index == 1:
-            page.go('/favorites')
-        if e.control.selected_index == 2:
-            page.go('/configs')
+        match e.control.selected_index:
+            case 0:
+                page.go('/')
+            case 1:
+                page.go('/favorites')
+            case 2:
+                page.go('/configs')
+            case 3:
+                page.go('/about')
+        
 
     NavBar.on_change = change_route
 

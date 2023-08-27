@@ -36,7 +36,13 @@ class DataBase:
                     'config': {
                     'theme-mode':'dark',
                     'theme-color':'blue',
-                    'reader-type':'h-n'
+                    'reader-type':'h-n',
+                    'keybinds': {
+                        'full-screen': 'F11',
+                        'return-home': 'F4',
+                        'next-page': 'Arrow Right',
+                        'previous-page': 'Arrow Left',
+                    }
                     }
                 }, file)
 
@@ -44,6 +50,11 @@ class DataBase:
         self.create_config()
         with open(self.config, 'r', encoding='UTF-8') as file:
             return json.load(file)['config']
+        
+    def _get_config(self) -> dict:
+        self.create_config()
+        with open(self.config, 'r', encoding='UTF-8') as file:
+            return json.load(file)
 
     def add_manga(self, manga:dict) -> bool:
         database = self._get_database()

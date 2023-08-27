@@ -74,7 +74,7 @@ class MangaReader:
                                 self.btn_next_chapter.visible = True
                     break
             self.page.update()
-        def back(e=None):
+        def previous(e=None):
             for i, img in enumerate(self.images):
                 if img.visible:
                     if i != 0:
@@ -83,12 +83,14 @@ class MangaReader:
                         self.currently_page.value = f'{i}/{len(self.images)}'
                     break
             self.page.update()
+
+        keybinds = self.db.get_config()['keybinds']
         def on_key(e: ft.KeyboardEvent):
-            if e.key == 'Arrow Right':
+            if e.key == keybinds['next-page']:
                 next()
-            if e.key == 'Arrow Left':
-                back()
-            if e.key == 'F11':
+            if e.key ==  keybinds['previous-page']:
+                previous()
+            if e.key ==  keybinds['full-screen']:
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
                 else:
@@ -96,7 +98,7 @@ class MangaReader:
             if e.key == 'Escape':
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
-            if e.key == 'F4':
+            if e.key ==  keybinds['return-home']:
                 self.page.go('/favorites')
                 self.page.scroll = ft.ScrollMode.ADAPTIVE
                 self.page.window_full_screen = False

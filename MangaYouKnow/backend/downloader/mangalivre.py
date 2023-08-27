@@ -50,7 +50,7 @@ class MangaLivreDl:
                 threads.start()
                 threads.join()
                 threads.delete_all_threads()
-                if self.end: break
+                if self.end: break 
             offset += 1
         to_out_list = []
         for i in chapters_list:
@@ -70,8 +70,18 @@ class MangaLivreDl:
             return float(number)
         chapters_list.sort(key=to_sort, reverse=True)
         if write_data: 
-            print(self.connection_data.add_data_chapters(self.connection_data.get_manga_info(manga_id)['folder_name'], chapters_list))
+            self.connection_data.add_data_chapters(self.connection_data.get_manga_info(manga_id['folder_name'], chapters_list))
         return chapters_list
+    
+    def get_manga_desc(self, manga_id) -> str | bool:
+        response = self.session.get(f'https://mangalivre.net/manga/naoimportante/{manga_id}')
+        if not response:
+            return False
+        soup = BeautifulSoup(response.text, 'html.parser')
+        desc = soup.select_one('.series-desc span')
+        if desc == None:
+            return False
+        return desc.text
     
     def get_manga_id_release(self, chapter:str, manga_id:str) -> str:
         offset = 0
@@ -108,7 +118,8 @@ class MangaLivreDl:
         nome = nome.replace('<h1>', '')
         nome = nome.replace('</h1>', '')
         manga_path = Path(f'mangas/{manga_name}/cover/{manga_name}.jpg')
-        if not manga_path.exists(): return False
+        if not manga_path.exists(): 
+            return False
         manga_bd = []
         manga_bd.append(manga_id)
         manga_bd.append(nome)
@@ -285,5 +296,3 @@ class MangaLivreDl:
                 threads.delete_all_threads()
         return True
     
-
-MangaLivreDl().download_manga_chapter('1377', '59692')
