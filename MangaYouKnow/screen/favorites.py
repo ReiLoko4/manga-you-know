@@ -136,14 +136,14 @@ class Favorites:
             row_mangas
         ],
             width=page.width - 90,
-            height=len(favorites) * 360
+            height=len(favorites) * 470
         )
         def update(e=None):
             if not e == None:
                 row_mangas.width = e
                 stack.width = e
             favorites = database.get_database()
-            stack.height = len(favorites) * 400
+            stack.height = len(favorites) * 470
             row_mangas.controls = load_mangas()
             page.update()
 
