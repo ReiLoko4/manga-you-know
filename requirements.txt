@@ -3,3 +3,5 @@ flet
 requests
 pyclip
 pyperclip
+httpx
+asyncio

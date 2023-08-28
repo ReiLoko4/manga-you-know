@@ -6,7 +6,7 @@ from backend.thread_manager import ThreadManager
 from backend.downloader.mangalivre import MangaLivreDl
 from backend.database import DataBase
 
-
+import trio
 
 class MangaReader:
     def __init__(self, page: ft.Page):
@@ -136,7 +136,7 @@ class MangaReader:
         if chapter == None:
             print('sem mais capitulos')
             return False
-        manga_pages = self.dl.get_manga_chapter_imgs(chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'])
+        manga_pages = trio.run(self.dl.get_manga_chapter_imgs, chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'])
         if not manga_pages:
             print('errokkkkk')
             return False
