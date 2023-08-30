@@ -84,17 +84,16 @@ class MangaLivreDl:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
         desc = soup.select_one('.series-desc span')
-        if desc == None:
-            return False
-        return desc.text
+        return desc.text if desc is not None else False
 
-    def get_manga_id_release(self, chapter: str, manga_id: str) -> str:
+    def get_manga_id_release(self, chapter: str, manga_id: str) -> str | bool:
         offset = 0
         while True:
             response = self.session.get(
                 f'https://mangalivre.net/series/chapters_list.json?page={offset}&id_serie={manga_id}',
             ).json()['chapters']
-            if not response: return False
+            if not response:
+                return False
             for chapter in response:
                 if chapter == chapter['number']:
                     key_scan = list(chapter['releases'].keys())[0]
@@ -105,8 +104,7 @@ class MangaLivreDl:
         response = self.session.get(
             f'https://mangalivre.net/leitor/pages/{id_release}.json'
         ).json()['images']
-        if not response: return False
-        return response
+        return response if response else False
 
     def save_manga_info(self, manga_name: str, manga_id: str, last_read: str) -> bool:
         manga_name = manga_name.replace(' ', '-').lower()
@@ -155,10 +153,9 @@ class MangaLivreDl:
         # leitor.net is a mirror of mangalivre.net
         # if the api from mangalivre.net don't response in 3.5 seconds
         # the api from leitor.net will be used.
-        if not response or not response.json()['series']: return False
-        return response.json()['series']
+        return response.json()['series'] if response and response.json()['series'] else {}
 
-    def download_manga_cover(self, manga_name: str, manga_id: str) -> list:
+    def download_manga_cover(self, manga_name: str, manga_id: str) -> list | bool:
         """
         tu é idiota
         """
@@ -168,7 +165,8 @@ class MangaLivreDl:
             f'https://mangalivre.net/manga/{manga_name}/{manga_id}',
             headers={'referer': f'https://mangalivre.net/manga/{manga_name}/{manga_id}'}
         )
-        if not response: return False
+        if not response:
+            return False
         # create a list to send to data.csv all manga if covers is downloaded
         soup = BeautifulSoup(response.text, 'html.parser')
         tags_img = soup.find_all('img')
@@ -182,7 +180,8 @@ class MangaLivreDl:
             cover_url,
             headers={'referer': f'https://mangalivre.net/manga/{manga_name}/{manga_id}'}
         )
-        if not cover: return False
+        if not cover:
+            return False
         manga_path = Path(f'mangas/{manga_name}/cover')
         manga_path.mkdir(parents=True, exist_ok=True)
         with open(f'{manga_path}/{manga_name}.jpg', 'wb') as file:
@@ -210,7 +209,8 @@ class MangaLivreDl:
         threads = ThreadManager()
         chapter_path = Path(f'mangas/{manga_info["folder_name"]}/chapters/{chapter_info["number"]}/')
         chapter_path.mkdir(parents=True, exist_ok=True)
-        self.pages_downloaded = 0
+
+        # self.pages_downloaded = 0 | Vou comentar, pois não sei se vai querer usar no futuro
 
         def download_manga_page(url: str, path: Path):
             page_img = self.session.get(url)
@@ -250,10 +250,7 @@ class MangaLivreDl:
                 threads.start()
                 threads.join()
                 threads.delete_all_threads()
-        if errors == threads.get_len():
-            print('nenhum capitulo encontrado!')
-            return False
-        return True
+        return not errors == threads.get_len()
 
     def download_manga_chapters_in_range(self, manga_name, first_chapter, last_chapter, simultaneous: int) -> bool:
         chapters = self.connection_data.get_data_chapters(manga_name)
