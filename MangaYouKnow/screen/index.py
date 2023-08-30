@@ -9,9 +9,6 @@ from backend.database import DataBase
 
 import flet_core.margin as margin
 
-import tracemalloc
-import trio
-
 
 class Index:
     def __init__(self, page: ft.Page):
@@ -87,15 +84,7 @@ class Index:
             )
             card.visible = True
             page.update()
-
-            def get_response():
-                tracemalloc.start()
-                result = trio.run(downloader.search_mangas, e.control.value)
-                tracemalloc.stop()
-                return result
-
-            response = get_response()
-
+            response = downloader.search_mangas(e.control.value)
             favorites = connection_data.get_database()
             list_favorites_id = [i['id'] for i in favorites]
             card.visible = True
