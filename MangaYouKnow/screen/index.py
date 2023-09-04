@@ -6,7 +6,6 @@ from time import time
 from backend.downloader.mangalivre import MangaLivreDl
 from backend.downloader.mangadex import MangaDexDl
 from backend.database import DataBase
-
 import flet_core.margin as margin
 
 
@@ -102,24 +101,14 @@ class Index:
                 )
             else:
                 for manga in response:
-                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED
-                                      if manga['id_serie'] in list_favorites_id else ft.icons.BOOKMARK_OUTLINE,
-                                      height=30)
-                    button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga,
-                                                                                                             button,
-                                                                                                             True)
+                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga['id_serie'] in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
+                    button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga, button, True)
                     results.controls.append(
                         ft.ListTile(
                             key='manga',
-                            title=ft.Row(
-                                [
-                                    ft.Text(
-                                        f'{manga["name"][0:42]}...' if len(manga['name']) > 45 else manga['name'][0:50],
-                                        tooltip=manga['name']),
-                                    button_favorite
-                                ],
-                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                            title=ft.Text(f'{manga["name"][0:42]}...' if len(manga['name']) > 45 else manga['name'][0:50], tooltip=manga['name']),
                             height=45,
+                            trailing=button_favorite,
                             on_click=lambda e, info=manga: manga_page(info)
                         )
                     )

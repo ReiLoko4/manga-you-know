@@ -28,7 +28,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
             router.reader
         ])
     )
-    page.data = {}
+    page.data = {} 
     page.data['reader_container'] = router.reader
     page.go('/')
     

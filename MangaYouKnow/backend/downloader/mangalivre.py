@@ -31,16 +31,13 @@ class MangaLivreDl:
         self.end = False
 
         def get_offset_json(this_offset):
-            # response = self.session.get(
-            #     f'https://mangalivre.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
-            # )
             response = self.session.get(
-                f'https://leitor.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
+                f'https://mangalivre.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
             )
             if not response.json()['chapters'] or not response:
                 self.end = True
                 return
-            chapters_list.insert(offset, response.json()['chapters'])
+            chapters_list.append([response.json()['chapters'], this_offset])
 
         offset = 0
         threads = ThreadManager()
@@ -54,30 +51,22 @@ class MangaLivreDl:
                 threads.delete_all_threads()
                 if self.end: break
             offset += 1
+        def to_sort(e):
+            return e[1]
+        chapters_list.sort(key=to_sort)
         to_out_list = []
         for i in chapters_list:
-            for chapter in i:
-                to_out_list.append(chapter)
+            for chapter in i[0]:
+                if i[0] == chapters_list[0]:
+                    to_out_list.append(chapter)
+                elif chapter['id_chapter'] not in [y['id_chapter'] for y in to_out_list]:
+                    to_out_list.append(chapter)
         chapters_list = to_out_list
-        final_list = []
-        for i, chapter in enumerate(chapters_list):
-            if i == 0:
-                final_list.append(chapter)
-            elif chapter['id_chapter'] not in [y['id_chapter'] for y in final_list]:
-                final_list.append(chapter)
-        chapters_list = final_list
-
-        def to_sort(e):
-            number = str(e['number'])
-            number = number.replace(',', '.')
-            return float(number)
-
-        chapters_list.sort(key=to_sort, reverse=True)
         if write_data:
             self.connection_data.add_data_chapters(
                 self.connection_data.get_manga_info(manga_id['folder_name'], chapters_list))
         return chapters_list
-
+    
     def get_manga_desc(self, manga_id) -> str | bool:
         response = self.session.get(f'https://mangalivre.net/manga/naoimportante/{manga_id}')
         if not response:
