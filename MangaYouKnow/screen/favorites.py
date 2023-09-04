@@ -29,8 +29,7 @@ class Favorites:
 
         def open(info):
             alert = ft.AlertDialog(
-                title=ft.Text(info['name'] if len(info['name']) < 23 else f'{info["name"][0:20]}...',
-                              tooltip=info['name']),
+                title=ft.Text(info['name'] if len(info['name']) < 23 else f'{info["name"][0:20]}...', tooltip=info['name']),
                 content=ft.Container(ft.ProgressRing(), height=200)
             )
             page.dialog = alert
@@ -52,17 +51,10 @@ class Favorites:
                 if is_readed:
                     icon = ft.icons.CHECK
                 list_cards.append(
-                    ft.Card(
-                        ft.Row([
-                            ft.Text(chapter['number']),
-                            ft.IconButton(icon, disabled=True),
-                            ft.IconButton(
-                                ft.icons.BOOK,
-                                on_click=lambda e, id_release=chapter['releases'][list(chapter['releases'].keys())[0]][
-                                    'id_release'], id_chapter=chapter['id_chapter']: read(id_release, id_chapter, info,
-                                                                                          chapters)
-                            )
-                        ], alignment=ft.MainAxisAlignment.SPACE_EVENLY)
+                    ft.ListTile(
+                        title=ft.Text(chapter['number']),
+                        trailing=ft.IconButton(icon, disabled=True),
+                        on_click=lambda e, id_release=chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'], id_chapter=chapter['id_chapter']: read(id_release, id_chapter, info, chapters)                    
                     )
                 )
             page.dialog.content.controls = list_cards
