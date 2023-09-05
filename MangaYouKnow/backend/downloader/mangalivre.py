@@ -4,6 +4,7 @@ from threading import Thread
 from bs4 import BeautifulSoup
 from backend.database import DataBase
 from backend.thread_manager import ThreadManager
+import flet as ft
 
 
 class MangaLivreDl:
@@ -182,9 +183,8 @@ class MangaLivreDl:
         manga_name_from_site = manga_name_from_site.replace('</h1>', '')
         return [Path(f'{manga_path}/{manga_name}.jpg'), manga_name_from_site]
 
-    def download_manga_chapter(self, manga_id: str, id_release: str | dict) -> bool:
+    def download_manga_chapter(self, manga_id: str, id_release: str | dict, progress_bar: ft.ProgressBar = None) -> bool:
         manga_info = self.connection_data.get_manga_info(manga_id)
-
         if type(id_release) == str:
             chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
             urls = self.get_manga_chapter_imgs(id_release)
@@ -198,9 +198,7 @@ class MangaLivreDl:
         threads = ThreadManager()
         chapter_path = Path(f'mangas/{manga_info["folder_name"]}/chapters/{chapter_info["number"]}/')
         chapter_path.mkdir(parents=True, exist_ok=True)
-
         # self.pages_downloaded = 0 | Vou comentar, pois não sei se vai querer usar no futuro
-
         def download_manga_page(url: str, path: Path):
             page_img = self.session.get(url)
             if len(page_img.content) < 5000: return False
@@ -216,6 +214,9 @@ class MangaLivreDl:
             threads.add_thread(download)
         threads.start()
         threads.join()
+        if not progress_bar == None:
+            progress_bar.value += float(progress_bar.data)
+            progress_bar.update()
         print(f'capítulo {chapter_info["number"]} baixado! ')
         return True
 
@@ -268,7 +269,7 @@ class MangaLivreDl:
         return True
         # NEED A FIX
 
-    def download_all_manga_chapters(self, manga_id: str, use_local_data: bool = False, simultaneous: int = 5) -> bool:
+    def download_all_manga_chapters(self, manga_id: str, use_local_data: bool = False, progress_bar: ft.ProgressBar = None, simultaneous: int = 5) -> bool:
         '''
         Download all chapters
 
@@ -282,10 +283,13 @@ class MangaLivreDl:
         else:
             chapters = self.get_manga_chapters(manga_id)
         chapters.reverse()
+        if not progress_bar == None:
+            progress_bar.data = 1 / len(chapters)
         threads = ThreadManager()
         for chapter in chapters:
             download_chapter = Thread(
-                target=lambda chapter_in=chapter: self.download_manga_chapter(manga_id, chapter_in))
+                target=lambda chapter_in=chapter: self.download_manga_chapter(manga_id, chapter_in) if progress_bar == None else self.download_manga_chapter(manga_id, chapter_in, progress_bar)
+            )
             threads.add_thread(download_chapter)
             if threads.get_len() == simultaneous or chapter == chapters[-1]:
                 threads.start()

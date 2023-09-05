@@ -58,6 +58,8 @@ class Favorites:
                     )
                 )
             page.dialog.content.controls = list_cards
+            progress_download_all = ft.ProgressBar(value=0.0)
+            page.dialog.actions = [ft.TextButton('Baixar todos capítulos', on_click=lambda e: dl.download_all_manga_chapters(info['id'], progress_bar=progress_download_all)), progress_download_all]
             page.update()
 
         def remove_manga(manga_id):
