@@ -269,7 +269,7 @@ class MangaLivreDl:
         return True
         # NEED A FIX
 
-    def download_all_manga_chapters(self, manga_id: str, use_local_data: bool = False, progress_bar: ft.ProgressBar = None, simultaneous: int = 5) -> bool:
+    def download_all_manga_chapters(self, manga_id: str, chapters: dict = None, use_local_data: bool = False, progress_bar: ft.ProgressBar = None, simultaneous: int = 5) -> bool:
         '''
         Download all chapters
 
@@ -280,7 +280,7 @@ class MangaLivreDl:
         if use_local_data:
             chapters = self.connection_data.get_data_chapters(
                 self.connection_data.get_manga_info(manga_id)['folder_name'])
-        else:
+        elif chapters == None:
             chapters = self.get_manga_chapters(manga_id)
         chapters.reverse()
         if not progress_bar == None:
