@@ -65,7 +65,7 @@ class MangaLivreDl:
         chapters_list = to_out_list
         if write_data:
             self.connection_data.add_data_chapters(
-                self.connection_data.get_manga_info(manga_id['folder_name'], chapters_list))
+                self.connection_data.get_manga_info_by_key(manga_id['folder_name'], chapters_list))
         return chapters_list
     
     def get_manga_desc(self, manga_id) -> str | bool:
@@ -184,7 +184,7 @@ class MangaLivreDl:
         return [Path(f'{manga_path}/{manga_name}.jpg'), manga_name_from_site]
 
     def download_manga_chapter(self, manga_id: str, id_release: str | dict, progress_bar: ft.ProgressBar = None) -> bool:
-        manga_info = self.connection_data.get_manga_info(manga_id)
+        manga_info = self.connection_data.get_manga_info_by_key('ml_id', manga_id)
         if type(id_release) == str:
             chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
             urls = self.get_manga_chapter_imgs(id_release)
@@ -221,7 +221,7 @@ class MangaLivreDl:
         return True
 
     def download_list_of_manga_chapters(self, manga_id, chapters_list: list, simultaneous: int = 5):
-        manga_info = self.connection_data.get_manga_info(manga_id)
+        manga_info = self.connection_data.get_manga_info_by_key(manga_id)
         chapters = self.connection_data.get_data_chapters(manga_info['folder_name'])
         threads = ThreadManager()
         errors = 0
@@ -279,7 +279,7 @@ class MangaLivreDl:
         '''
         if use_local_data:
             chapters = self.connection_data.get_data_chapters(
-                self.connection_data.get_manga_info(manga_id)['folder_name'])
+                self.connection_data.get_manga_info_by_key('ml_id', manga_id)['folder_name'])
         elif chapters == None:
             chapters = self.get_manga_chapters(manga_id)
         chapters.reverse()

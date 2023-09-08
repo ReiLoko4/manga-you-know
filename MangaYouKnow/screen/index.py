@@ -36,11 +36,11 @@ class Index:
             page.update()
 
         def togle_favorite(manga: dict, button: ft.IconButton, is_on_search: bool = False):
-            if connection_data.is_favorite(manga):
-                connection_data.delete_manga(manga['id_serie'])
+            if connection_data.is_favorite('ml_id', manga['id_serie']):
+                connection_data.delete_manga_by_id_key('ml_id', manga['id_serie'])
                 button.icon = ft.icons.BOOKMARK_OUTLINE
             else:
-                connection_data.add_manga(manga)
+                connection_data.add_manga(manga['name'], manga['link'].split('/')[-2], manga['cover'], ml_id=manga['id_serie'])
                 button.icon = ft.icons.BOOKMARK_ROUNDED
             page.update()
             if is_on_search:
@@ -51,7 +51,7 @@ class Index:
 
         def manga_page(info_manga):
             button_favorite = ft.IconButton(
-                ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite(info_manga) else ft.icons.BOOKMARK_OUTLINE,
+                ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite('ml_id', info_manga['id_serie']) else ft.icons.BOOKMARK_OUTLINE,
                 height=30)
             button_favorite.on_click = lambda e, info=info_manga, button=button_favorite: togle_favorite(info, button)
             manga_dialog = ft.AlertDialog(
@@ -85,7 +85,7 @@ class Index:
             page.update()
             response = downloader.search_mangas(e.control.value)
             favorites = connection_data.get_database()
-            list_favorites_id = [i['id'] for i in favorites]
+            list_favorites_ml_id = [i['ml_id'] for i in favorites]
             card.visible = True
             results.controls.clear()
             if e.control.value != search.value:
@@ -101,7 +101,7 @@ class Index:
                 )
             else:
                 for manga in response:
-                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga['id_serie'] in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
+                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga['id_serie'] in list_favorites_ml_id else ft.icons.BOOKMARK_OUTLINE, height=30)
                     button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga, button, True)
                     results.controls.append(
                         ft.ListTile(

@@ -37,7 +37,7 @@ class Favorites:
             page.update()
             # chapters = database.get_data_chapters(info['folder_name'])
             # if not chapters:
-            chapters = dl.get_manga_chapters(info['id'])
+            chapters = dl.get_manga_chapters(info['ml_id'])
             page.dialog.content = ft.Column(height=3000, scroll='always')
             is_readed = False
             last_readed = info.get('id_last_readed')
@@ -59,12 +59,12 @@ class Favorites:
                 )
             page.dialog.content.controls = list_cards
             progress_download_all = ft.ProgressBar(value=0.0)
-            page.dialog.actions = [ft.TextButton('Baixar todos capítulos', on_click=lambda e: dl.download_all_manga_chapters(info['id'], chapters, progress_bar=progress_download_all)), progress_download_all]
+            page.dialog.actions = [ft.TextButton('Baixar todos capítulos', on_click=lambda e: dl.download_all_manga_chapters(info['ml_id'], chapters, progress_bar=progress_download_all)), progress_download_all]
             page.update()
 
         def remove_manga(manga_id):
             def delete(_=None):
-                if database.delete_manga(manga_id):
+                if database.delete_manga(int(manga_id)):
                     row_mangas.controls = load_mangas()
                     confirmation.open = False
                     page.update()

@@ -39,7 +39,7 @@ class MangaDexDl:
         manga_list = []
         while True:
             response = requests.get(
-                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]=pt-br&order[chapter]=desc&order[volume]=desc',
+                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]=en&order[chapter]=desc&order[volume]=desc',
                 params={'offset':offset}
             )
             if not response:
@@ -66,18 +66,24 @@ class MangaDexDl:
     def download_chapter(self, chapter_id) -> bool:
         urls = self.get_chapters_image_urls(chapter_id)
         if not urls: return False
-        chapter_info = self.session.get(
+        chapter_info = requests.get(
             f'https://api.mangadex.org/chapter/{chapter_id}?includes[]=scanlation_group&includes[]=manga&includes[]=user'
         )
         if not chapter_info: return False
         chapter_path = Path(f'MangaDex/{chapter_info.json()["data"]["attributes"]["chapter"]}/')
         chapter_path.mkdir(parents=True, exist_ok=True)
         hash = urls['hash']
-        for i, image in enumerate(urls['data']):
-            response = self.session.get(f'https://uploads.mangadex.org/data/{hash}/{image}')
+        def download_manga_page(url: str, path: Path):
+            image = requests.get(url)
             if not image: return False
-            with open(f'{chapter_path}/{i:04d}.png', 'wb') as file:
-                for data in response.iter_content(1024):
+            with open(path, 'wb') as file:
+                for data in image.iter_content(1024):
                     file.write(data)
+        threads = ThreadManager()
+        for i, image in enumerate(urls['data']):
+            threads.add_thread(Thread(
+                target=lambda url=f'https://uploads.mangadex.org/data/{hash}/{image}', path=f'{chapter_path}/{i:04d}.png': download_manga_page(url, path),
+            ))
+        threads.start()
+        threads.join()
         return True
-    
