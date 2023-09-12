@@ -10,22 +10,22 @@ class DataBase:
         self.dump = '''
             CREATE TABLE IF NOT EXISTS favorites (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                ml_id INTEGER UNIQUE,
-                md_id STRING UNIQUE,
-                mf_id STRING UNIQUE,
-                tcb_id STRING UNIQUE,
-                tsct_id STRING UNIQUE,
-                op_id STRING UNIQUE,
-                gkk_id STRING UNIQUE,
                 name TEXT NOT NULL,
                 folder_name STRING NOT NULL,
                 cover STRING NOT NULL,
                 description TEXT,
                 author STRING,
+                score FLOAT
+                md_id STRING UNIQUE,
+                ml_id INTEGER UNIQUE,
+                mf_id STRING UNIQUE,
+                tcb_id STRING UNIQUE,
+                tsct_id STRING UNIQUE,
+                op_id STRING UNIQUE,
+                gkk_id STRING UNIQUE,
                 last_chapter_readed_id STRING,
                 last_chapter_readed_source STRING,
                 last_chapter_readed_number STRING,
-                score FLOAT
             );
         '''
         #  CREATE TABLE IF NOT EXISTS last (
@@ -57,9 +57,9 @@ class DataBase:
             with open(self.config, mode='w') as file:
                 json.dump({
                     'config': {
-                    'theme-mode':'dark',
+                    'theme-mode': 'dark',
                     'theme-color':'blue',
-                    'reader-type':'h-n',
+                    'reader-type': 'h-n',
                     'keybinds': {
                         'full-screen': 'F11',
                         'return-home': 'F4',
@@ -84,22 +84,22 @@ class DataBase:
             name: str,
             folder_name: str,
             cover: str,
+            description: str=None,
+            author: str=None,
+            score: float=None,
             ml_id: int=None,
             md_id: str=None,
             mf_id: str=None,
             tcb_id: str=None,
             tsct_id: str=None,
             op_id: str=None,
-            gkk_id: str=None,
-            description: str=None,
-            author: str=None,
-            score: float=None
+            gkk_id: str=None
         ) -> bool:
         cur = self.connect()
         try:
             cur.execute(
-                'INSERT INTO favorites (ml_id, md_id, mf_id, tcb_id, tsct_id, op_id, gkk_id, name, folder_name, cover, description, author, score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-                (ml_id, md_id, mf_id, tcb_id, tsct_id, op_id, gkk_id, name, folder_name, cover, description, author, score)
+                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, mf_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                (name, folder_name, cover, description, author, score, ml_id, md_id, mf_id, tcb_id, tsct_id, op_id, gkk_id)
             )
             cur.connection.commit()
             cur.close()

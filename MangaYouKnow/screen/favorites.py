@@ -38,7 +38,7 @@ class Favorites:
             # chapters = database.get_data_chapters(info['folder_name'])
             # if not chapters:
             chapters = dl.get_manga_chapters(info['ml_id'])
-            page.dialog.content = ft.Column(height=3000, scroll='always')
+            page.dialog.content = ft.Card(ft.Column(height=3000, scroll='always'))
             is_readed = False
             last_readed = info.get('id_last_readed')
             if last_readed == None:
@@ -57,7 +57,7 @@ class Favorites:
                         on_click=lambda e, id_release=chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'], id_chapter=chapter['id_chapter']: read(id_release, id_chapter, info, chapters)                    
                     )
                 )
-            page.dialog.content.controls = list_cards
+            page.dialog.content.content.controls = list_cards
             progress_download_all = ft.ProgressBar(value=0.0)
             page.dialog.actions = [ft.TextButton('Baixar todos capítulos', on_click=lambda e: dl.download_all_manga_chapters(info['ml_id'], chapters, progress_bar=progress_download_all)), progress_download_all]
             page.update()
