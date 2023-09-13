@@ -83,7 +83,7 @@ class Index:
             )
             card.visible = True
             page.update()
-            response = downloader.search_mangas(e.control.value)
+            response = downloader.search(e.control.value)
             favorites = connection_data.get_database()
             list_favorites_ml_id = [i['ml_id'] for i in favorites]
             card.visible = True

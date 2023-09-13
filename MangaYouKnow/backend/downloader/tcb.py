@@ -1,8 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
+from backend.downloader.manga_dl import MangaDl
 
 
-class TCBScansDl:
+class TCBScansDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -18,6 +19,14 @@ class TCBScansDl:
             'Sec-Fetch-Site': 'same-origin',
             'Sec-Fetch-User': '?1',
         })
+
+    def search(self, query: str) -> list[dict] | bool:
+        mangas = self.get_mangas()
+        mangas_by_query = []
+        for manga in mangas:
+            if query in manga['name']:
+                mangas_by_query.append(manga)
+        return mangas_by_query if len(mangas_by_query) > 0 else False
 
     def get_mangas(self) -> list[dict] | bool:
         response = self.session.get('https://tcbscans.com/projects')
@@ -53,7 +62,7 @@ class TCBScansDl:
                 })
         return chapters_list
         
-    def get_chapter_imgs_url(self, chapter_url) -> list | bool:
+    def get_chapter_imgs(self, chapter_url) -> list | bool:
         response = self.session.get(f'https://tcbscans.com/chapters/{chapter_url}')
         if not response:
             return False
@@ -67,7 +76,7 @@ class TCBScansDl:
         return imgs_list
     
     def download_chapter(self, chapter_url) -> bool:
-        imgs_list = self.get_chapter_imgs_url(chapter_url)
+        imgs_list = self.get_chapter_imgs(chapter_url)
         if not imgs_list:
             return False
         # to complete

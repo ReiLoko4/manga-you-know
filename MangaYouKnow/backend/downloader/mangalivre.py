@@ -4,10 +4,11 @@ from threading import Thread
 from bs4 import BeautifulSoup
 from backend.database import DataBase
 from backend.thread_manager import ThreadManager
+from backend.downloader.manga_dl import MangaDl
 import flet as ft
 
 
-class MangaLivreDl:
+class MangaLivreDl(MangaDl):
     def __init__(self):
         self.connection_data = DataBase()
         self.session = requests.Session()
@@ -26,7 +27,7 @@ class MangaLivreDl:
             'x-requested-with': 'XMLHttpRequest',
         })
 
-    def get_manga_chapters(self, manga_id: str, write_data: bool = False) -> list:
+    def get_chapters(self, manga_id: str, write_data: bool = False) -> list:
         print(f'procurando capitulos {manga_id}')
         chapters_list = []
         self.end = False
@@ -90,7 +91,7 @@ class MangaLivreDl:
                     return chapter['releases'][key_scan]['id_release']
             offset += 1
 
-    def get_manga_chapter_imgs(self, id_release) -> dict | bool:
+    def get_chapter_imgs(self, id_release) -> dict | bool:
         response = self.session.get(
             f'https://mangalivre.net/leitor/pages/{id_release}.json'
         ).json()['images']
@@ -121,7 +122,7 @@ class MangaLivreDl:
         self.connection_data.add_manga(manga_bd)
         return True
 
-    def search_mangas(self, entry: str) -> dict:
+    def search(self, entry: str) -> dict:
         try:
             response = self.session.post(
                 'https://mangalivre.net/lib/search/series.json',
@@ -187,10 +188,10 @@ class MangaLivreDl:
         manga_info = self.connection_data.get_manga_info_by_key('ml_id', manga_id)
         if type(id_release) == str:
             chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
-            urls = self.get_manga_chapter_imgs(id_release)
+            urls = self.get_chapter_imgs(id_release)
         else:
             chapter_info = id_release
-            urls = self.get_manga_chapter_imgs(
+            urls = self.get_chapter_imgs(
                 id_release['releases'][list(id_release['releases'].keys())[0]]['id_release'])
         if not urls:
             print(f'capitulo {chapter_info["number"]} com erro!')
@@ -281,7 +282,7 @@ class MangaLivreDl:
             chapters = self.connection_data.get_data_chapters(
                 self.connection_data.get_manga_info_by_key('ml_id', manga_id)['folder_name'])
         elif chapters == None:
-            chapters = self.get_manga_chapters(manga_id)
+            chapters = self.get_chapters(manga_id)
         chapters.reverse()
         if not progress_bar == None:
             progress_bar.data = 1 / len(chapters)

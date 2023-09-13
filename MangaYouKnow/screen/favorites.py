@@ -24,7 +24,7 @@ class Favorites:
             page.data['folder_name'] = info['folder_name']
             page.data['manga_chapters'] = chapters
             page.data['id_chapter'] = id_chapter
-            page.data['chapter_images'] = dl.get_manga_chapter_imgs(id_release)
+            page.data['chapter_images'] = dl.get_chapter_imgs(id_release)
             page.go('/reader')
 
         def open(info):
@@ -37,7 +37,7 @@ class Favorites:
             page.update()
             # chapters = database.get_data_chapters(info['folder_name'])
             # if not chapters:
-            chapters = dl.get_manga_chapters(info['ml_id'])
+            chapters = dl.get_chapters(info['ml_id'])
             page.dialog.content = ft.Card(ft.Column(height=3000, scroll='always'))
             is_readed = False
             last_readed = info.get('id_last_readed')

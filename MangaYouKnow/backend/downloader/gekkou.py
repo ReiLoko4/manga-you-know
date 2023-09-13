@@ -4,9 +4,10 @@ from threading import Thread
 from bs4 import BeautifulSoup
 from backend.database import DataBase
 from backend.thread_manager import ThreadManager
+from backend.downloader.manga_dl import MangaDl
 
 
-class GekkouDl:
+class GekkouDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -24,7 +25,7 @@ class GekkouDl:
             'Sec-Fetch-Site': 'same-origin',
         })
 
-    def search_mangas(self, entry:str) -> list | bool:
+    def search(self, entry:str) -> list | bool:
         response = self.session.post(
             'https://gekkou.com.br/wp-admin/admin-ajax.php',
             data = {
@@ -63,7 +64,7 @@ class GekkouDl:
             list_chapters.append(chapter['href'])
         return list_chapters
     
-    def get_chapter_images_url(self, manga_name, chapter_num) -> list | bool:
+    def get_chapter_imgs(self, manga_name, chapter_num) -> list | bool:
         response = self.session.get(
             f'https://gekkou.com.br/manga/{manga_name.replace(" ", "-")}/{chapter_num}/',
             params={'style': 'list'}

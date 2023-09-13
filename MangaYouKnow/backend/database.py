@@ -25,7 +25,7 @@ class DataBase:
                 gkk_id STRING UNIQUE,
                 last_chapter_readed_id STRING,
                 last_chapter_readed_source STRING,
-                last_chapter_readed_number STRING,
+                last_chapter_readed_number STRING
             );
         '''
         #  CREATE TABLE IF NOT EXISTS last (

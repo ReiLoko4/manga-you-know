@@ -1,9 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
+from backend.downloader.manga_dl import MangaDl
 
 
 
-class MangaFireDl:
+class MangaFireDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({

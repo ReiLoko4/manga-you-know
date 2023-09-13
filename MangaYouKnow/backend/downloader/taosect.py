@@ -1,10 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
+from backend.downloader.manga_dl import MangaDl
 
 
 
-
-class TaoSectScanDl:
+class TaoSectScanDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -39,7 +39,7 @@ class TaoSectScanDl:
         return results if len(results) != 0 else False
 
 
-    def get_manga_chapters(self, manga_id:str):
+    def get_chapters(self, manga_id:str):
         '''
         manga_id: the name of the manga with the hyphens
         '''
@@ -59,7 +59,7 @@ class TaoSectScanDl:
         return chapters
 
 
-    def get_chapter_img_urls(self, chapter_url):
+    def get_chapter_imgs(self, chapter_url):
         if not 'taosect.com' in chapter_url:
             return False
         response = self.session.get(
