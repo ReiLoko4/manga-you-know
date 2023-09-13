@@ -6,6 +6,7 @@ from time import time
 from backend.downloader.mangalivre import MangaLivreDl
 from backend.downloader.mangadex import MangaDexDl
 from backend.database import DataBase
+from backend.download_manager import Downloader
 import flet_core.margin as margin
 
 
@@ -14,7 +15,16 @@ class Index:
 
         connection_data = DataBase()
         connection_manga = MangaDexDl()
-        downloader = MangaLivreDl()
+        downloader = Downloader()
+        source_selector = ft.Dropdown(options=[
+            ft.dropdown.Option('md', text='MangaDex'),
+            ft.dropdown.Option('ml', text='MangaLivre'),
+            ft.dropdown.Option('mf', text='MangaFire'),
+            ft.dropdown.Option('gkk', text='Gekkou'),
+            ft.dropdown.Option('tsct', text='Taosect'),
+            ft.dropdown.Option('tcb', text='TCB'),
+            ft.dropdown.Option('op', text='OP Scans'),
+        ], value='md')
 
         results = ft.Column(width=470, spacing=0.7)
         card = ft.Card(ft.Container(results), color='gray', visible=False)
@@ -35,12 +45,51 @@ class Index:
             index.visible = True
             page.update()
 
+        def match_source(source: str):
+            match source:
+                case 'md':
+                    return {
+                        'id': 'id',
+                        'db_id': 'md_id',
+                        'name': 'attributes.title.en',
+                    }
+                case 'ml':
+                    return {
+                        'id': 'id_serie',
+                        'db_id': 'ml_id',
+                        'name': 'name',
+
+                    }
+                case 'mf':
+                    return {
+                        'db_id': 'mf_id',        
+                    }
+                case 'gkk':
+                    return {
+                        'db_id': 'gkk_id',
+                    }
+                case 'tsct':
+                    return {
+                        'db_id': 'tsct_id',       
+                    }
+                case 'db_tcb':
+                    return {
+                        'id': 'tcb_id',           
+                    }
+                case 'db_op':
+                    return {
+                        'id': 'op_id',
+                    }
+                case _:
+                    return None
+
+
         def togle_favorite(manga: dict, button: ft.IconButton, is_on_search: bool = False):
-            if connection_data.is_favorite('ml_id', manga['id_serie']):
-                connection_data.delete_manga_by_id_key('ml_id', manga['id_serie'])
+            if connection_data.is_favorite(self.src_inf['db_id'], manga[self.src_inf['id']]):
+                connection_data.delete_manga_by_id_key(self.src_inf['db_id'], manga[self.src_inf['id']])
                 button.icon = ft.icons.BOOKMARK_OUTLINE
             else:
-                connection_data.add_manga(manga['name'], manga['link'].split('/')[-2], manga['cover'], ml_id=manga['id_serie'])
+                connection_data.add_manga(manga[self.src_inf['name']], manga['link'].split('/')[-2], manga['cover'], ml_id=manga[self.src_inf['id']])
                 button.icon = ft.icons.BOOKMARK_ROUNDED
             page.update()
             if is_on_search:
@@ -51,11 +100,11 @@ class Index:
 
         def manga_page(info_manga):
             button_favorite = ft.IconButton(
-                ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite('ml_id', info_manga['id_serie']) else ft.icons.BOOKMARK_OUTLINE,
+                ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite(self.src_inf['db_id'], info_manga[self.src_inf['id']]) else ft.icons.BOOKMARK_OUTLINE,
                 height=30)
             button_favorite.on_click = lambda e, info=info_manga, button=button_favorite: togle_favorite(info, button)
             manga_dialog = ft.AlertDialog(
-                title=ft.Text(info_manga['name'][0:30], tooltip=info_manga['name']),
+                title=ft.Text(info_manga[self.src_inf['name']][0:30], tooltip=info_manga[self.src_inf['name']]),
                 content=ft.Row([
                     ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT, animate_size=300,
                              border_radius=ft.border_radius.all(30)),
@@ -83,9 +132,10 @@ class Index:
             )
             card.visible = True
             page.update()
-            response = downloader.search(e.control.value)
+            self.src_inf = match_source(source_selector.value)
+            response = downloader.search(source_selector.value, e.control.value)
             favorites = connection_data.get_database()
-            list_favorites_ml_id = [i['ml_id'] for i in favorites]
+            list_favorites_id = [i[self.src_inf['id']] for i in favorites]
             card.visible = True
             results.controls.clear()
             if e.control.value != search.value:
@@ -101,12 +151,12 @@ class Index:
                 )
             else:
                 for manga in response:
-                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga['id_serie'] in list_favorites_ml_id else ft.icons.BOOKMARK_OUTLINE, height=30)
+                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga[self.src_inf['id']] in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
                     button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga, button, True)
                     results.controls.append(
                         ft.ListTile(
                             key='manga',
-                            title=ft.Text(f'{manga["name"][0:42]}...' if len(manga['name']) > 45 else manga['name'][0:50], tooltip=manga['name']),
+                            title=ft.Text(f'{manga[self.src_inf["name"]][0:42]}...' if len(manga[self.src_inf['name']]) > 45 else manga[self.src_inf['name']][0:50], tooltip=manga[self.src_inf['name']]),
                             height=45,
                             trailing=button_favorite,
                             on_click=lambda e, info=manga: manga_page(info)
@@ -138,7 +188,7 @@ class Index:
             ft.ResponsiveRow([
                 ft.Column([ft.Container(bgcolor='white', width=300)], col=3),
                 ft.Column([ft.Container(search, padding=10)], col=6),
-                ft.Column([ft.Container(ft.Dropdown(options=[ft.dropdown.Option('MangaLivre')]), width=200, padding=10)], col=3),
+                ft.Column([ft.Container(source_selector, width=200, padding=10)], col=3),
             ], alignment=ft.MainAxisAlignment.CENTER, columns=12
             )
         )

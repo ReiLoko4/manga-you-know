@@ -157,7 +157,6 @@ class DataBase:
         except:
             return False
         return True
-        
 
     def delete_manga(self, manga_id: int) -> bool:
         cur = self.connect()
@@ -185,7 +184,6 @@ class DataBase:
             return False
         return True
         
-    
     def is_favorite(self, key, content) -> bool:
         cur = self.connect()
         cur.execute(

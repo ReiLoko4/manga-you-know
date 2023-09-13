@@ -71,7 +71,7 @@ class MangaFireDl(MangaDl):
             'https://mangafire.to/ajax/read/chapter/2040402'
         )
 
-    def search_mangas(self, entry:str) -> list[dict] | bool:
+    def search(self, entry:str) -> list[dict] | bool:
         '''
         entry: a string with the query to search the manga you want
         

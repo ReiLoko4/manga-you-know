@@ -21,7 +21,8 @@ class MangaDexDl(MangaDl):
         )
         if not response or not response.json(): 
             return False
-        return response.json()
+        print(response.json())
+        return response.json()['data']
     
     def search_author(self, entry:str, limit=5)-> dict | bool:
         response = requests.get(

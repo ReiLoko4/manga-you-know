@@ -1,6 +1,6 @@
-from downloader import *
+from backend.downloader import *
 
-class Downloader():
+class Downloader:
     def __init__(self) -> None:
         self.aoashi = AoAshiDl()
         self.gekkou = GekkouDl()
@@ -16,19 +16,19 @@ class Downloader():
         match source:
             case 'aoashi':
                 return self.aoashi
-            case 'gekkou':
+            case 'gkk':
                 return self.gekkou
-            case 'mangadex':
+            case 'md':
                 return self.mangadex
-            case 'mangafire':
+            case 'mf':
                 return self.mangafire
-            case 'mangalivre':
+            case 'ml':
                 return self.mangalivre
             case 'op':
                 return self.op
             case 'opex':
                 return self.opex
-            case 'taosect':
+            case 'tsct':
                 return self.tsct
             case 'tcb':
                 return self.tcb
