@@ -138,7 +138,7 @@ class Index:
             ft.ResponsiveRow([
                 ft.Column([ft.Container(bgcolor='white', width=300)], col=3),
                 ft.Column([ft.Container(search, padding=10)], col=6),
-                ft.Column([ft.Container(bgcolor='white', width=300)], col=3),
+                ft.Column([ft.Container(ft.Dropdown(options=[ft.dropdown.Option('MangaLivre')]), width=200, padding=10)], col=3),
             ], alignment=ft.MainAxisAlignment.CENTER, columns=12
             )
         )

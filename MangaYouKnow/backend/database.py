@@ -50,6 +50,11 @@ class DataBase:
         cur.execute('SELECT * FROM favorites;')
         return [dict(i) for i in  cur.fetchall()]
     
+    def get_database_readed(self) -> list[dict]:
+        cur = self.connect()
+        cur.execute('SELECT * FROM favorites WHERE last_chapter_readed_id IS NOT NULL;')
+        return [dict(i) for i in  cur.fetchall()]
+    
     def create_config(self):
         if not self.config.exists():
             self.dir.mkdir(parents=True, exist_ok=True)
@@ -78,6 +83,16 @@ class DataBase:
         self.create_config()
         with open(self.config, 'r', encoding='UTF-8') as file:
             return json.load(file)
+
+    def execute_data(self, sql: str) -> bool:
+        cur = self.connect()
+        try:
+            cur.execute(sql)
+            cur.connection.commit()
+            cur.close()
+        except:
+            return False
+        return True
 
     def add_manga(
             self, 

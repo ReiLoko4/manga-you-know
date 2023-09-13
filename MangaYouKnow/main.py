@@ -14,7 +14,6 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     router = Router(page)
     page.on_route_change = router.route_change
-    # page.appbar = NavBar(page)
     page.banner = NavBar(page)
     page.scroll = ft.ScrollMode.ADAPTIVE
     page.add(

@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 
 
-class TaoSectScan:
+class TaoSectScanDl:
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({

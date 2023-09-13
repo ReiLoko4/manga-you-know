@@ -106,5 +106,5 @@ class MangaFireDl:
         return chapter > 1000
 
     
-print(MangaFireDl().get_chapters_by_language('one-piece.dkw'))
+# print(MangaFireDl().get_chapters_by_language('one-piece.dkw'))
         
