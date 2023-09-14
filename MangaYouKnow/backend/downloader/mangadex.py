@@ -11,12 +11,12 @@ class MangaDexDl(MangaDl):
     def __init__(self):
         self.connection_data = DataBase()
     
-    def search(self, entry:str, limit='5') -> dict | bool:
+    def search(self, entry:str, limit='10') -> dict | bool:
         response = requests.get(
-            f'https://api.mangadex.org/manga',
+            f'https://api.mangadex.org/manga?includes[]=cover_art&order[relevance]=desc&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica',
             params={
                 'title': entry,
-                'limit': limit    
+                'limit': limit,
             }
         )
         if not response or not response.json(): 
@@ -55,7 +55,6 @@ class MangaDexDl(MangaDl):
             if len(manga_list) >= response.json()['total']:
                 break
             offset += limit
-        self.connection_data.add_data_chapters('one piece', manga_list)
         return manga_list
     
     def get_chapter_imgs(self, chapter_id) -> list | bool:

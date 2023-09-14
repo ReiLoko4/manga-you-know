@@ -171,7 +171,7 @@ class DataBase:
             return False
         return True
     
-    def delete_manga_by_id_key(self, key: str, id: int | str) -> bool:
+    def delete_manga_by_key(self, key: str, id: int | str) -> bool:
         cur = self.connect()
         try:
             cur.execute(

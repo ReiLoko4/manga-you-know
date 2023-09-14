@@ -92,6 +92,7 @@ class MangaFireDl(MangaDl):
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
+        # print(response.text)
         manga_lists = []
         for div in soup.find_all('div', {'class': 'inner'}):
             manga_lists.append({
