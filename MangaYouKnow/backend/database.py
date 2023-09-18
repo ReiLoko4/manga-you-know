@@ -11,21 +11,21 @@ class DataBase:
             CREATE TABLE IF NOT EXISTS favorites (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 name TEXT NOT NULL,
-                folder_name STRING NOT NULL,
-                cover STRING NOT NULL,
+                folder_name TEXT NOT NULL,
+                cover TEXT NOT NULL,
                 description TEXT,
-                author STRING,
+                author TEXT,
                 score FLOAT
-                md_id STRING UNIQUE,
+                md_id TEXT UNIQUE,
                 ml_id INTEGER UNIQUE,
-                mf_id STRING UNIQUE,
-                tcb_id STRING UNIQUE,
-                tsct_id STRING UNIQUE,
-                op_id STRING UNIQUE,
-                gkk_id STRING UNIQUE,
-                last_chapter_readed_id STRING,
-                last_chapter_readed_source STRING,
-                last_chapter_readed_number STRING
+                mf_id TEXT UNIQUE,
+                tcb_id TEXT UNIQUE,
+                tsct_id TEXT UNIQUE,
+                op_id TEXT UNIQUE,
+                gkk_id TEXT UNIQUE,
+                last_chapter_readed_id TEXT,
+                last_chapter_readed_source TEXT,
+                last_chapter_readed_number TEXT
             );
         '''
         #  CREATE TABLE IF NOT EXISTS last (
@@ -48,12 +48,12 @@ class DataBase:
     def get_database(self) -> list[dict]:
         cur = self.connect()
         cur.execute('SELECT * FROM favorites;')
-        return [dict(i) for i in  cur.fetchall()]
+        return [dict(i) for i in cur.fetchall()]
     
     def get_database_readed(self) -> list[dict]:
         cur = self.connect()
         cur.execute('SELECT * FROM favorites WHERE last_chapter_readed_id IS NOT NULL;')
-        return [dict(i) for i in  cur.fetchall()]
+        return [dict(i) for i in cur.fetchall()]
     
     def create_config(self):
         if not self.config.exists():
@@ -84,15 +84,18 @@ class DataBase:
         with open(self.config, 'r', encoding='UTF-8') as file:
             return json.load(file)
 
-    def execute_data(self, sql: str) -> bool:
+    def execute_data(self, sql: str) -> list[dict] | bool:
         cur = self.connect()
         try:
             cur.execute(sql)
             cur.connection.commit()
-            cur.close()
-        except:
+            data = cur.fetchall()
+            return [dict(i) for i in  data] if data else True
+        except Exception as e:
+            print(e)
             return False
-        return True
+        finally:
+            cur.close()
 
     def add_manga(
             self, 
@@ -117,10 +120,11 @@ class DataBase:
                 (name, folder_name, cover, description, author, score, ml_id, md_id, mf_id, tcb_id, tsct_id, op_id, gkk_id)
             )
             cur.connection.commit()
-            cur.close()
+            return True
         except:
             return False
-        return True
+        finally:
+            cur.close()
     
     def get_manga(self, favorite_id:int) -> dict | bool:
         cur = self.connect()
@@ -172,11 +176,18 @@ class DataBase:
         return True
     
     def delete_manga_by_key(self, key: str, id: int | str) -> bool:
+        database = self.get_database()
+        id_row = None
+        for manga in database:
+            if manga[key] == id:
+                id_row = manga['id']
+                break
+        if not id_row: return False
         cur = self.connect()
         try:
             cur.execute(
-                'DELETE FROM favorites WHERE ? = ?;',
-                (key, id)
+                'DELETE FROM favorites WHERE id = ?;',
+                (id_row,)
             )
             cur.connection.commit()
             cur.close()
@@ -185,13 +196,18 @@ class DataBase:
         return True
         
     def is_favorite(self, key, content) -> bool:
-        cur = self.connect()
-        cur.execute(
-            'SELECT * FROM favorites WHERE ? = ?;',
-            (key, content)
-        )
-        if len(cur.fetchall()) > 0:
-            return True
+        # cur = self.connect()
+        # cur.execute(
+        #     'SELECT * FROM favorites WHERE ? = ?;',
+        #     (key, content)
+        # )
+        # data = cur.fetchall()
+        # if data:
+        #     return True
+        favorites = self.get_database()
+        for manga in favorites:
+            if manga[key] == content:
+                return True
         return False
 
     def add_data_chapters(self, manga_name:str, chapters:list[dict]):
@@ -230,4 +246,3 @@ class DataBase:
                 return chapter
         return False
     
-# print(DataBase().add_manga('teste', 'teste', 'teste'))

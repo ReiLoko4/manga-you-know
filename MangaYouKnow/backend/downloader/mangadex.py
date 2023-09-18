@@ -21,8 +21,20 @@ class MangaDexDl(MangaDl):
         )
         if not response or not response.json(): 
             return False
-        print(response.json())
-        return response.json()['data']
+        list_chapters = []
+        for manga in response.json()['data']:
+            id_filename = ''
+            for types in manga['relationships']:
+                if types['type'] == 'cover_art':
+                    id_filename = types['attributes']['fileName']
+            list_chapters.append({
+                'id': manga['id'],
+                'name': manga['attributes']['title']['en'],
+                'folder_name': manga['id'],
+                'description': manga['attributes']['description'].get('en'),
+                'cover': f"https://mangadex.org/covers/{manga['id']}/{id_filename}"
+            })
+        return list_chapters
     
     def search_author(self, entry:str, limit=5)-> dict | bool:
         response = requests.get(

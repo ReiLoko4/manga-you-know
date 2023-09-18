@@ -27,6 +27,40 @@ class MangaLivreDl(MangaDl):
             'x-requested-with': 'XMLHttpRequest',
         })
 
+    def search(self, entry: str) -> list[dict]:
+        try:
+            response = self.session.post(
+                'https://mangalivre.net/lib/search/series.json',
+                timeout=3,
+                data={'search': entry},
+                headers={'referer': 'mangalivre.net'}
+            )
+        except requests.exceptions.Timeout:
+            print('would not?')
+            response = self.session.post(
+                'https://leitor.net/lib/search/series.json',
+                data={'search': entry},
+                headers={
+                    'referer': 'leitor.net',
+                    'authority': 'leitor.net',
+                    'alt-Used': 'leitor.net'
+                }
+            )
+        # leitor.net is a mirror of mangalivre.net
+        # if the api from mangalivre.net don't response in 3.5 seconds
+        # the api from leitor.net will be used.
+        if not response.json()['series'] or not response:
+            return False
+        list_chapters = []
+        for manga in response.json()['series']:
+            list_chapters.append({
+                'id': manga['id_serie'],
+                'name': manga['name'],
+                'folder_name': manga['link'].split('/')[-1],
+                'cover': manga['cover']
+            })
+        return list_chapters
+
     def get_chapters(self, manga_id: str, write_data: bool = False) -> list:
         print(f'procurando capitulos {manga_id}')
         chapters_list = []
@@ -121,30 +155,6 @@ class MangaLivreDl(MangaDl):
         manga_bd.append(manga_path)
         self.connection_data.add_manga(manga_bd)
         return True
-
-    def search(self, entry: str) -> dict:
-        try:
-            response = self.session.post(
-                'https://mangalivre.net/lib/search/series.json',
-                timeout=3,
-                data={'search': entry},
-                headers={'referer': 'mangalivre.net'}
-            )
-        except requests.exceptions.Timeout:
-            print('would not?')
-            response = self.session.post(
-                'https://leitor.net/lib/search/series.json',
-                data={'search': entry},
-                headers={
-                    'referer': 'leitor.net',
-                    'authority': 'leitor.net',
-                    'alt-Used': 'leitor.net'
-                }
-            )
-        # leitor.net is a mirror of mangalivre.net
-        # if the api from mangalivre.net don't response in 3.5 seconds
-        # the api from leitor.net will be used.
-        return response.json()['series'] if response and response.json()['series'] else {}
 
     def download_manga_cover(self, manga_name: str, manga_id: str) -> list | bool:
         """

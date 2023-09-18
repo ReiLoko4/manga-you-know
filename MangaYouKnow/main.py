@@ -31,7 +31,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.data['reader_container'] = router.reader
     page.go('/')
     
-        # def resize(e:ft.ControlEvent):
+    # def resize(e:ft.ControlEvent):
     #     page.update()
     # page.on_resize = resize
     page.update()
