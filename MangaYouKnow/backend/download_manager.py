@@ -16,21 +16,21 @@ class Downloader:
         match source:
             case 'aoashi':
                 return self.aoashi
-            case 'gkk':
+            case 'gkk' | 'gkk_id':
                 return self.gekkou
-            case 'md':
+            case 'md' | 'md_id':
                 return self.mangadex
-            case 'mf':
+            case 'mf' | 'mf_id':
                 return self.mangafire
-            case 'ml':
+            case 'ml' | 'ml_id':
                 return self.mangalivre
-            case 'op':
+            case 'op' | 'op_id':
                 return self.op
-            case 'opex':
+            case 'opex' | 'opex_id':
                 return self.opex
-            case 'tsct':
+            case 'tsct' | 'tsct_id':
                 return self.tsct
-            case 'tcb':
+            case 'tcb' | 'tcb_id':
                 return self.tcb
             case _:
                 return None

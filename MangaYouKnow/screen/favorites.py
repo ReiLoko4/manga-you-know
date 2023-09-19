@@ -28,13 +28,68 @@ class Favorites:
             page.go('/reader')
 
         def open_manga(info):
-            list_chapters = ft.Column(height=3000, scroll='always')
+            list_chapters = ft.Column(height=8000, width=240, scroll='always')
+            sources = [i for i in list(info.keys()) if i.endswith('_id') and info[i] != None]
+            options = []
+            for source in sources:
+                match source:
+                    case 'ml_id':
+                        text = 'MangaLivre'
+                    case 'md_id':
+                        text = 'MangaDex'
+                    case 'mf_id':
+                        text = 'MangaFire'
+                    case 'gkk_id':
+                        text = 'Gekkou Scans'
+                    case 'tsct_id':
+                        text = 'Taosect Scans'
+                    case 'tcb_id':
+                        text = 'TCB Scans'
+                    case 'op_id':
+                        text = 'OP Scans'
+                options.append(ft.dropdown.Option(source, text))
+            chapters_by_source = {}
+            source_options = ft.Dropdown(
+                options=options,
+                width=140,
+                value=sources[0]
+            )
+            def load_chapters(_=None):
+                if chapters_by_source.get(source_options.value):
+                    list_chapters.controls = chapters_by_source[source_options.value]
+                    page.update()
+                    return
+                source_options.disabled = True
+                list_chapters.controls = [ft.Row([ft.ProgressRing(height=120, width=120)], alignment=ft.MainAxisAlignment.CENTER, width=230)]
+                page.update()
+                print(source_options.value)
+                chapters = dl.get_chapters(source_options.value, info[source_options.value])
+                chapters_by_source[source_options.value] = chapters
+                list_chapters.controls = []
+                icon = ft.icons.REMOVE
+                for chapter in chapters:
+                    # if str(last_readed) == str(chapter['id_chapter']):
+                    #     is_readed = True
+                    # if is_readed:
+                    #     icon = ft.icons.CHECK
+                    list_chapters.controls.append(
+                        ft.ListTile(
+                            title=ft.Text(chapter['number']),
+                            trailing=ft.IconButton(icon, disabled=True),
+                            on_click=lambda e, :print('fodasse')
+                        )
+                    )
+                source_options.disabled = False
+                page.update()
+
+            source_options.on_change = load_chapters
             alert = ft.AlertDialog(
                 title=ft.Text(info['name'] if len(info['name']) < 40 else f'{info["name"][0:37]}...', tooltip=info['name']),
                 content=ft.Container(
                     ft.Row([
                         ft.Column([
                             ft.Container(ft.Image(info['cover'], height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
+                            source_options
                         ]),
                         ft.Card(list_chapters, width=250)
                     ]), height=500, width=430
@@ -43,6 +98,7 @@ class Favorites:
             page.dialog = alert
             alert.open = True
             page.update()
+            load_chapters()
             # chapters = database.get_data_chapters(info['folder_name'])
             # if not chapters:
             # chapters = dl.get_chapters(info['ml_id'])
