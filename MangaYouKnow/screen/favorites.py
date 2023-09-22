@@ -139,7 +139,7 @@ class Favorites:
                     ft.Column([
                         change_name,
                     ])
-                )
+                ),
             )
             change_name.on_change = lambda e: save('name', e.control.value)
             page.dialog = edition
