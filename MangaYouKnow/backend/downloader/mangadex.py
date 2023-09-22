@@ -50,7 +50,7 @@ class MangaDexDl(MangaDl):
     
     def get_chapters(self, manga_id, limit=500) -> dict | bool:
         offset = 0
-        manga_list = []
+        chapters_list = []
         while True:
             response = requests.get(
                 f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]=en&order[chapter]=desc&order[volume]=desc',
@@ -60,14 +60,21 @@ class MangaDexDl(MangaDl):
                 break
             if not response.json()['data'] or len(response.json()['data']) == 0:
                 break
-            if len(manga_list) >= response.json()['total']:
+            if len(chapters_list) >= response.json()['total']:
                 break
             for chapter in response.json()['data']:
-                manga_list.append(chapter)
-            if len(manga_list) >= response.json()['total']:
+                chapters_list.append(chapter)
+            if len(chapters_list) >= response.json()['total']:
                 break
             offset += limit
-        return manga_list
+        formatted_list = []
+        for chapter in chapters_list:
+            formatted_list.append({
+                'id': chapter['id'],
+                'number': chapter['attributes']['chapter'],
+                'title': chapter['attributes']['title'],
+            })
+        return formatted_list
     
     def get_chapter_imgs(self, chapter_id) -> list | bool:
         response = requests.get(

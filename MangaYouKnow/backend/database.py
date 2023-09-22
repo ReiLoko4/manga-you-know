@@ -136,16 +136,17 @@ class DataBase:
         cur.close()
         return dict(cur.fetchone())
 
-    def set_manga(self, manga_id:str, key:str, content:str) -> bool:
+    def set_manga(self, manga_id:str, key:str, content: any) -> bool:
         cur = self.connect()
         try:
             cur.execute(
-                'UPDATE favorites SET ? = ? WHERE id = ?;',
+                'UPDATE favorites SET ? = "?" WHERE id = ?;' if type(content) == str else 'UPDATE favorites SET ? = ? WHERE id = ?;',
                 (key, content, manga_id)
             )
             cur.connection.commit()
             cur.close()
-        except:
+        except Exception as e:
+            print(e)
             return False
         return True
 

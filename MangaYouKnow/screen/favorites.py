@@ -126,6 +126,26 @@ class Favorites:
             # page.dialog.actions = [ft.TextButton('Baixar todos capítulos', on_click=lambda e: dl.download_all_manga_chapters(info['ml_id'], chapters, progress_bar=progress_download_all)), progress_download_all]
             # page.update()
 
+        def edit_manga(info: dict):
+            change_name = ft.TextField(label='Nome', value=info['name'])
+            def save(key, content):
+                # if database.set_manga(int(info['id']), key, content):
+                if database.execute_data(f'UPDATE favorites SET {key} = "{content}" WHERE id = {int(info["id"])};'):
+                    row_mangas.controls = load_mangas()
+                    page.update()
+            edition = ft.AlertDialog(
+                title=ft.Text('Editar Mangá'),
+                content=ft.Container(
+                    ft.Column([
+                        change_name,
+                    ])
+                )
+            )
+            change_name.on_change = lambda e: save('name', e.control.value)
+            page.dialog = edition
+            edition.open = True
+            page.update()
+
         def remove_manga(manga_id):
             def delete(_=None):
                 if database.delete_manga(int(manga_id)):
@@ -175,7 +195,7 @@ class Favorites:
                             ft.Container(
                                 ft.Row([
                                     ft.IconButton(ft.icons.MENU_BOOK, on_click=lambda e, info=i: open_manga(info)),
-                                    ft.IconButton(ft.icons.EDIT_SQUARE, disabled=True, tooltip='Em breve!'),
+                                    ft.IconButton(ft.icons.EDIT_SQUARE, on_click=lambda e, info=i: edit_manga(info)),
                                     ft.IconButton(ft.icons.HIGHLIGHT_REMOVE,
                                               on_click=lambda e, info=i: remove_manga(info['id']))
                                 ], alignment=ft.MainAxisAlignment.CENTER, width=180), padding=padding.only(top=-5))

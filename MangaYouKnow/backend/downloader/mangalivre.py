@@ -93,10 +93,21 @@ class MangaLivreDl(MangaDl):
         to_out_list = []
         for i in chapters_list:
             for chapter in i[0]:
+                release_keys = list(chapter['releases'].keys())
                 if i[0] == chapters_list[0]:
-                    to_out_list.append(chapter)
-                elif chapter['id_chapter'] not in [y['id_chapter'] for y in to_out_list]:
-                    to_out_list.append(chapter)
+                    to_out_list.append({
+                        'id': chapter['releases'][release_keys[0]]['id_release'],
+                        'number': chapter['number'],
+                        'title': chapter['chapter_name'],
+                        'extra_id': [chapter['releases'][i]['id_release'] for i in release_keys[1:]]
+                    })
+                elif chapter['releases'][release_keys[0]]['id_release'] not in [y['id'] for y in to_out_list]:
+                    to_out_list.append({
+                        'id': chapter['releases'][release_keys[0]]['id_release'],
+                        'number': chapter['number'],
+                        'title': chapter['chapter_name'],
+                        'extra_id': [chapter['releases'][i]['id_release'] for i in release_keys[1:]]
+                    })
         chapters_list = to_out_list
         if write_data:
             self.connection_data.add_data_chapters(

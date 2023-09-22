@@ -96,7 +96,7 @@ class MangaFireDl(MangaDl):
         manga_lists = []
         for div in soup.find_all('div', {'class': 'inner'}):
             manga_lists.append({
-                'name': div.find('a', {'class':'color-light'})['title'],
+                'name': div.find('a', {'class':'color-light'})['title'] if div.find('a', {'class':'color-light'}) else None,
                 'url': div.find('a', {'class':'color-light'})['href'],
                 'languages': [i.replace(' ', '') for i in div.find('div', {'class':'lang'}).text.split('/')],
                 'cover': div.find('img')['src']
