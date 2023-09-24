@@ -62,7 +62,6 @@ class Favorites:
                 source_options.disabled = True
                 list_chapters.controls = [ft.Row([ft.ProgressRing(height=120, width=120)], alignment=ft.MainAxisAlignment.CENTER, width=230)]
                 page.update()
-                print(source_options.value)
                 chapters = dl.get_chapters(source_options.value, info[source_options.value])
                 chapters_by_source[source_options.value] = chapters
                 list_chapters.controls = []
@@ -128,9 +127,9 @@ class Favorites:
 
         def edit_manga(info: dict):
             change_name = ft.TextField(label='Nome', value=info['name'])
-            def save(key, content):
+            def save(column, content):
                 # if database.set_manga(int(info['id']), key, content):
-                if database.execute_data(f'UPDATE favorites SET {key} = "{content}" WHERE id = {int(info["id"])};'):
+                if database.set_manga(info['id'], column, content):
                     row_mangas.controls = load_mangas()
                     page.update()
             edition = ft.AlertDialog(
