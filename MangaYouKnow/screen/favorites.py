@@ -1,13 +1,15 @@
 import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
-from backend.database import DataBase
-from backend.downloader.mangalivre import MangaLivreDl
+
+from MangaYouKnow.backend.database import DataBase
+from MangaYouKnow.backend.downloader import MangaLivreDl
+from MangaYouKnow.backend.manager import DownloadManager
 
 
 class Favorites:
     def __init__(self, page: ft.Page):
-        dl = MangaLivreDl()
+        downloader = DownloadManager(MangaLivreDl())
         database = DataBase()
         search = ft.TextField(
             label='Pesquisar Favoritos...',
@@ -24,7 +26,8 @@ class Favorites:
             page.data['folder_name'] = info['folder_name']
             page.data['manga_chapters'] = chapters
             page.data['id_chapter'] = id_chapter
-            page.data['chapter_images'] = dl.get_manga_chapter_imgs(id_release)
+            page.data['chapter_images'] = downloader.get_manga_chapter_images(id_release)
+
             page.go('/reader')
 
         def open(info):
@@ -38,7 +41,8 @@ class Favorites:
             page.update()
             # chapters = database.get_data_chapters(info['folder_name'])
             # if not chapters:
-            chapters = dl.get_manga_chapters(info['id'])
+            chapters = downloader.get_manga_chapters(info['id'])
+
             page.dialog.content = ft.Column(height=3000, scroll='always')
             is_readed = False
             last_readed = info.get('id_last_readed')

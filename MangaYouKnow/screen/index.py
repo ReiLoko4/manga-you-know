@@ -1,21 +1,18 @@
-import asyncio
+from time import sleep
 
 import flet as ft
-from time import sleep
-from time import time
-from backend.downloader.mangalivre import MangaLivreDl
-from backend.downloader.mangadex import MangaDexDl
-from backend.database import DataBase
 
-import flet_core.margin as margin
+from MangaYouKnow.backend.database import DataBase
+from MangaYouKnow.backend.downloader import MangaLivreDl
+from MangaYouKnow.backend.manager import DownloadManager
 
 
 class Index:
     def __init__(self, page: ft.Page):
 
         connection_data = DataBase()
-        connection_manga = MangaDexDl()
-        downloader = MangaLivreDl()
+
+        downloader = DownloadManager(MangaLivreDl())
 
         results = ft.Column(width=470, spacing=0.7)
         card = ft.Card(ft.Container(results), color='gray', visible=False)
@@ -84,7 +81,9 @@ class Index:
             )
             card.visible = True
             page.update()
+
             response = downloader.search_mangas(e.control.value)
+
             favorites = connection_data.get_database()
             list_favorites_id = [i['id'] for i in favorites]
             card.visible = True

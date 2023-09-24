@@ -1,14 +1,10 @@
 import flet as ft
-from screen.index import Index
-from screen.favorites import Favorites
-from screen.configs import Configs
-from screen.reader import MangaReader
-from screen.about import About
 
+from MangaYouKnow.screen import Index, Favorites, Configs, MangaReader, About
 
 
 class Router:
-    def __init__(self, page:ft.Page):
+    def __init__(self, page: ft.Page):
         self.page = page
         self.ft = ft
         index = Index(page).return_content()
@@ -28,9 +24,9 @@ class Router:
             '/configs': configs
         }
         self.update = {
-           '/': index,
-           '/favorites': favorites.data[0],
-           '/configs': configs
+            '/': index,
+            '/favorites': favorites.data[0],
+            '/configs': configs
         }
         self.resize = {
             '/': index,
@@ -40,7 +36,7 @@ class Router:
         self.reader = ft.Container()
         self.reader.visible = False
 
-    def route_change(self, route:ft.RouteChangeEvent):
+    def route_change(self, route: ft.RouteChangeEvent):
         self.page.scroll_to(delta=0)
         if route.route == '/reader':
             self.page.dialog.open = False
@@ -58,6 +54,5 @@ class Router:
         self.body.content = self.routes[route.route]
         self.body.update()
         if route.route == '/favorites':
-           self.update[route.route](self.page.width-90)
-           self.page.on_resize = self.resize[route.route]
-
+            self.update[route.route](self.page.width - 90)
+            self.page.on_resize = self.resize[route.route]

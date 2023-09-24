@@ -1,15 +1,19 @@
-import requests
+from abc import ABC
 from pathlib import Path
 from threading import Thread
+
+import requests
 from bs4 import BeautifulSoup
-from backend.database import DataBase
-from backend.thread_manager import ThreadManager
+
+from MangaYouKnow.backend.database import DataBase
+from MangaYouKnow.backend.interfaces import IDownloader
+from MangaYouKnow.backend.manager import ThreadManager
 
 
-class MangaLivreDl:
+class MangaLivreDl(IDownloader, ABC):
     def __init__(self):
         self.connection_data = DataBase()
-        self.session = requests.Session()
+        self.session = requests.session()
         self.session.headers.update({
             'authority': 'mangalivre.net',
             'accept': 'application/json, text/javascript, */*; q=0.01',
@@ -26,7 +30,7 @@ class MangaLivreDl:
         })
 
     def get_manga_chapters(self, manga_id: str, write_data: bool = False) -> list:
-        print(f'procurando capitulos {manga_id}')
+        # print(f'procurando capitulos {manga_id}')
         chapters_list = []
         self.end = False
 
@@ -65,6 +69,7 @@ class MangaLivreDl:
                 final_list.append(chapter)
             elif chapter['id_chapter'] not in [y['id_chapter'] for y in final_list]:
                 final_list.append(chapter)
+
         chapters_list = final_list
 
         def to_sort(e):
@@ -100,7 +105,7 @@ class MangaLivreDl:
                     return chapter['releases'][key_scan]['id_release']
             offset += 1
 
-    def get_manga_chapter_imgs(self, id_release) -> dict | bool:
+    def get_manga_chapter_images(self, id_release) -> dict | bool:
         response = self.session.get(
             f'https://mangalivre.net/leitor/pages/{id_release}.json'
         ).json()['images']
@@ -198,10 +203,10 @@ class MangaLivreDl:
 
         if type(id_release) == str:
             chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
-            urls = self.get_manga_chapter_imgs(id_release)
+            urls = self.get_manga_chapter_images(id_release)
         else:
             chapter_info = id_release
-            urls = self.get_manga_chapter_imgs(
+            urls = self.get_manga_chapter_images(
                 id_release['releases'][list(id_release['releases'].keys())[0]]['id_release'])
         if not urls:
             print(f'capitulo {chapter_info["number"]} com erro!')

@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 
 
-
 class MangaFireDl:
     def __init__(self):
         self.session = requests.Session()
@@ -32,7 +31,7 @@ class MangaFireDl:
             return False
         return response.text
 
-    def get_chapters_by_language(self, manga_id, lang:str='PT-BR') -> list[dict] | bool:
+    def get_chapters_by_language(self, manga_id, lang: str = 'PT-BR') -> list[dict] | bool:
         '''
         manga_id: name of the manga
         lang: languague
@@ -50,14 +49,14 @@ class MangaFireDl:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
         chapters_list = []
-        for li  in soup.find('ul', {'class': 'chapter-list lang-chapter', 'data-name': lang.upper()}).find_all('li'):
+        for li in soup.find('ul', {'class': 'chapter-list lang-chapter', 'data-name': lang.upper()}).find_all('li'):
             chapters_list.append({
                 'number': li['data-number'],
                 'title': li.find_all('span')[0].text,
             })
         return chapters_list
-    
-    def get_chapter_imgs(self, manga_id:str, chapter_number:str, lang='pt-br') -> list | bool:
+
+    def get_chapter_imgs(self, manga_id: str, chapter_number: str, lang='pt-br') -> list | bool:
         response = self.session.get(
             f'https://mangafire.to/ajax/read/{manga_id.split(".")[-1]}/list',
             params={'viewby': 'chapter'},
@@ -65,12 +64,12 @@ class MangaFireDl:
         )
         if not response:
             return False
-        
+
         images = self.session.get(
             'https://mangafire.to/ajax/read/chapter/2040402'
         )
 
-    def search_mangas(self, entry:str) -> list[dict] | bool:
+    def search_mangas(self, entry: str) -> list[dict] | bool:
         '''
         entry: a string with the query to search the manga you want
         
@@ -94,17 +93,15 @@ class MangaFireDl:
         manga_lists = []
         for div in soup.find_all('div', {'class': 'inner'}):
             manga_lists.append({
-                'name': div.find('a', {'class':'color-light'})['title'],
-                'url': div.find('a', {'class':'color-light'})['href'],
-                'languages': [i.replace(' ', '') for i in div.find('div', {'class':'lang'}).text.split('/')],
+                'name': div.find('a', {'class': 'color-light'})['title'],
+                'url': div.find('a', {'class': 'color-light'})['href'],
+                'languages': [i.replace(' ', '') for i in div.find('div', {'class': 'lang'}).text.split('/')],
                 'cover': div.find('img')['src']
             })
         return manga_lists
-    
 
     def is_chapters_big(self, chapter):
         return chapter > 1000
 
-    
+
 print(MangaFireDl().get_chapters_by_language('one-piece.dkw'))
-        
