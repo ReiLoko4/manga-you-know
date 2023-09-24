@@ -3,7 +3,7 @@ from screen.user_control.app_bar import NavBar
 from screen.router_manager import Router
 
 
-__version__ = '0.7b'
+__version__ = '0.8b'
 
 
 def __main__(page: ft.Page) -> ft.FletApp:
@@ -14,7 +14,6 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     router = Router(page)
     page.on_route_change = router.route_change
-    # page.appbar = NavBar(page)
     page.banner = NavBar(page)
     page.scroll = ft.ScrollMode.ADAPTIVE
     page.add(
@@ -32,7 +31,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.data['reader_container'] = router.reader
     page.go('/')
     
-        # def resize(e:ft.ControlEvent):
+    # def resize(e:ft.ControlEvent):
     #     page.update()
     # page.on_resize = resize
     page.update()

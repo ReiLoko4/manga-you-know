@@ -1,7 +1,8 @@
 import requests
+from backend.downloader.manga_dl import MangaDl
 
 
-class OpScansDl:
+class OpScansDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -17,6 +18,9 @@ class OpScansDl:
             'Sec-Fetch-Mode': 'navigate',
             'Sec-Fetch-Site': 'same-origin',
         })
+    
+    def search(self, query: str):
+        pass
 
     def get_chapters(self, manga_id) -> list | bool:
         '''
@@ -28,3 +32,6 @@ class OpScansDl:
         if not response:
             return False
         print(response.text)
+
+    def get_chapter_imgs(self, chapter_id):
+        pass
