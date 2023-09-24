@@ -1,4 +1,5 @@
 from MangaYouKnow.backend.downloader import *
+from MangaYouKnow.backend.interfaces import MangaDl
 
 
 class Downloader:
@@ -15,7 +16,7 @@ class Downloader:
             "tcb": TCBScansDl()
         }
 
-    def match_source(self, source) -> object:
+    def match_source(self, source) -> MangaDl | object:
         return self.downloaders[source]
 
     def search(self, source: str, query: str):
