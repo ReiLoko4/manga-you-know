@@ -1,8 +1,9 @@
 import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
-from backend.database import DataBase
-from backend.download_manager import Downloader
+
+from MangaYouKnow.backend.database import DataBase
+from MangaYouKnow.backend.manager import Downloader
 
 
 class Favorites:

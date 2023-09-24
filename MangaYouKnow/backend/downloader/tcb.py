@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from backend.downloader.manga_dl import MangaDl
+from MangaYouKnow.backend.interfaces import MangaDl
 
 
 class TCBScansDl(MangaDl):
