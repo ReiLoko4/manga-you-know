@@ -144,8 +144,7 @@ class MangaReader:
         if chapter == None:
             print('sem mais capitulos')
             return False
-
-        manga_pages = self.downloader.get_manga_chapter_images(
+        manga_pages = self.dl.get_chapter_imgs(
             chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'])
 
         if not manga_pages:
