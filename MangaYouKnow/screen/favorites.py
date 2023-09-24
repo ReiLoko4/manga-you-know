@@ -1,6 +1,7 @@
 import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
+
 from backend.database import DataBase
 from backend.download_manager import Downloader
 

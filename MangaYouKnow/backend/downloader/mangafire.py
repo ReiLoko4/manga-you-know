@@ -65,7 +65,7 @@ class MangaFireDl(MangaDl):
     #     return response.text
     # Deprecated !!!
 
-    def get_chapters(self, manga_id, lang:str='PT-BR') -> list[dict] | bool:
+  def get_chapters(self, manga_id, lang:str='PT-BR') -> list[dict] | bool:
         '''
         manga_id: name of the manga
         lang: languague
@@ -90,8 +90,8 @@ class MangaFireDl(MangaDl):
                 'title': li.find_all('span')[0].text,
             })
         return chapters_list
-    
-    def get_chapter_imgs(self, manga_id:str, chapter_number:str, lang='pt-br') -> list | bool:
+
+    def get_chapter_imgs(self, manga_id: str, chapter_number: str, lang='pt-br') -> list | bool:
         response = self.session.get(
             f'https://mangafire.to/ajax/read/{manga_id.split(".")[-1]}/list',
             params={'viewby': 'chapter'},
@@ -99,14 +99,7 @@ class MangaFireDl(MangaDl):
         )
         if not response:
             return False
-        
+
         images = self.session.get(
             'https://mangafire.to/ajax/read/chapter/2040402'
         )
-
-    
-
-    def is_chapters_big(self, chapter):
-        return chapter > 1000
-
-    

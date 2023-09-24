@@ -1,4 +1,4 @@
-import asyncio
+from time import sleep
 
 import flet as ft
 from time import sleep
@@ -25,8 +25,6 @@ class Index:
             ft.dropdown.Option('tcb', text='TCB'),
             ft.dropdown.Option('op', text='OP Scans'),
         ], value='md', width=120)
-
-        
 
         results = ft.Column(width=470, spacing=0.7)
         card = ft.Card(ft.Container(results), color='gray', visible=False)

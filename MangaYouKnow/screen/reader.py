@@ -2,15 +2,16 @@ import flet as ft
 import base64
 import requests
 from threading import Thread
-from backend.thread_manager import ThreadManager
-from backend.downloader.mangalivre import MangaLivreDl
-from backend.database import DataBase
+
+from MangaYouKnow.backend.manager import ThreadManager, DownloadManager
+from MangaYouKnow.backend.downloader import MangaLivreDl
+from MangaYouKnow.backend.database import DataBase
 
 
 class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.dl = MangaLivreDl()
+        self.downloader = DownloadManager(MangaLivreDl())
         self.db = DataBase()
         self.content = None
         self.create_content()
@@ -145,6 +146,7 @@ class MangaReader:
             return False
         manga_pages = self.dl.get_chapter_imgs(
             chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'])
+
         if not manga_pages:
             print('errokkkkk')
             return False

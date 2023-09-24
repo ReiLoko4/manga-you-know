@@ -1,17 +1,22 @@
-import requests
+from abc import ABC
 from pathlib import Path
 from threading import Thread
+
+import requests
 from bs4 import BeautifulSoup
 from backend.database import DataBase
 from backend.thread_manager import ThreadManager
 from backend.downloader.manga_dl import MangaDl
 import flet as ft
 
+from MangaYouKnow.backend.database import DataBase
+from MangaYouKnow.backend.interfaces import IDownloader
+from MangaYouKnow.backend.manager import ThreadManager
 
 class MangaLivreDl(MangaDl):
     def __init__(self):
         self.connection_data = DataBase()
-        self.session = requests.Session()
+        self.session = requests.session()
         self.session.headers.update({
             'authority': 'mangalivre.net',
             'accept': 'application/json, text/javascript, */*; q=0.01',
