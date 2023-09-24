@@ -1,7 +1,7 @@
-import json
 import requests
 from bs4 import BeautifulSoup
-from backend.downloader.manga_dl import MangaDl
+
+from MangaYouKnow.backend.interfaces import MangaDl
 
 
 class MangaFireDl(MangaDl):
@@ -21,10 +21,10 @@ class MangaFireDl(MangaDl):
             'Alt-Used': 'mangafire.to',
         })
 
-    def search(self, entry:str) -> list[dict] | bool:
+    def search(self, entry: str) -> list[dict] | bool:
         '''
         entry: a string with the query to search the manga you want
-        
+
         ---
 
         returns a list of dictonaries
@@ -45,13 +45,13 @@ class MangaFireDl(MangaDl):
         manga_lists = []
         for div in soup.find_all('div', {'class': 'inner'})[:-1]:
             manga_lists.append({
-                'id': div.find('a', {'class':'poster'})['href'].split('/')[-1],
+                'id': div.find('a', {'class': 'poster'})['href'].split('/')[-1],
                 'name': div.find('img')['alt'],
-                'folder_name': div.find('a', {'class':'poster'})['href'].split('/')[-1],
+                'folder_name': div.find('a', {'class': 'poster'})['href'].split('/')[-1],
                 'cover': div.find('img')['src']
             })
-        return manga_lists[:10] #to keep igual to the other sources
-    
+        return manga_lists[:10]  # to keep igual to the other sources
+
     # def get_chapters(self, manga_id) -> list[list[dict]] | bool:
     #     '''
     #     manga_id: name of the manga
@@ -65,7 +65,7 @@ class MangaFireDl(MangaDl):
     #     return response.text
     # Deprecated !!!
 
-  def get_chapters(self, manga_id, lang:str='PT-BR') -> list[dict] | bool:
+    def get_chapters(self, manga_id, lang: str = 'PT-BR') -> list[dict] | bool:
         '''
         manga_id: name of the manga
         lang: languague
@@ -83,9 +83,9 @@ class MangaFireDl(MangaDl):
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
         chapters_list = []
-        for li  in soup.find('ul', {'class': 'scroll-sm'}).find_all('li'):
+        for li in soup.find('ul', {'class': 'scroll-sm'}).find_all('li'):
             chapters_list.append({
-                'id' : '/'.join(li.find('a')['href'].split('/')[-2:-1]),
+                'id': '/'.join(li.find('a')['href'].split('/')[-2:-1]),
                 'number': li['data-number'],
                 'title': li.find_all('span')[0].text,
             })
@@ -103,3 +103,6 @@ class MangaFireDl(MangaDl):
         images = self.session.get(
             'https://mangafire.to/ajax/read/chapter/2040402'
         )
+
+    def is_chapters_big(self, chapter):
+        return chapter > 1000

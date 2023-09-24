@@ -3,15 +3,13 @@ import base64
 import requests
 from threading import Thread
 
-from MangaYouKnow.backend.manager import ThreadManager, DownloadManager
-from MangaYouKnow.backend.downloader import MangaLivreDl
+from MangaYouKnow.backend.manager import ThreadManager
 from MangaYouKnow.backend.database import DataBase
 
 
 class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.downloader = DownloadManager(MangaLivreDl())
         self.db = DataBase()
         self.content = None
         self.create_content()

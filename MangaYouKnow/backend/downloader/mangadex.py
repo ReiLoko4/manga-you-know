@@ -1,17 +1,18 @@
-import requests
 from pathlib import Path
 from threading import Thread
-from bs4 import BeautifulSoup
-from backend.database import DataBase
-from backend.thread_manager import ThreadManager
-from backend.downloader.manga_dl import MangaDl
+
+import requests
+
+from MangaYouKnow.backend.database import DataBase
+from MangaYouKnow.backend.interfaces import MangaDl
+from MangaYouKnow.backend.manager import ThreadManager
 
 
 class MangaDexDl(MangaDl):
     def __init__(self):
         self.connection_data = DataBase()
     
-    def search(self, entry:str, limit='10') -> dict | bool:
+    def search(self, entry: str, limit='10') -> dict | bool:
         response = requests.get(
             f'https://api.mangadex.org/manga?includes[]=cover_art&order[relevance]=desc&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica',
             params={
@@ -27,9 +28,14 @@ class MangaDexDl(MangaDl):
             for types in manga['relationships']:
                 if types['type'] == 'cover_art':
                     id_filename = types['attributes']['fileName']
+            # print(manga['attributes'])
+
+            title_name = manga['attributes']['title']['en'] if 'en' in manga['attributes']['title'] \
+                else manga['attributes']['title']['ja-ro']
+
             list_chapters.append({
                 'id': manga['id'],
-                'name': manga['attributes']['title']['en'],
+                'name': title_name,
                 'folder_name': manga['id'],
                 'description': manga['attributes']['description'].get('en'),
                 'cover': f"https://mangadex.org/covers/{manga['id']}/{id_filename}"

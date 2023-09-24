@@ -1,1 +1,1 @@
-from .downloader_interface import IDownloader
+from .manga_dl import MangaDl

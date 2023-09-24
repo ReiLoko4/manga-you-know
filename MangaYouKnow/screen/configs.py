@@ -1,5 +1,5 @@
 import flet as ft
-from backend.database import DataBase
+from MangaYouKnow.backend.database import DataBase
 
 class Configs:
     def __init__(self, page: ft.Page):

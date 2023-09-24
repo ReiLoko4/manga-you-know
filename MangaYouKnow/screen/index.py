@@ -1,13 +1,10 @@
 from time import sleep
 
 import flet as ft
-from time import sleep
-from time import time
-from backend.downloader.mangalivre import MangaLivreDl
-from backend.downloader.mangadex import MangaDexDl
-from backend.database import DataBase
-from backend.download_manager import Downloader
-import flet_core.margin as margin
+
+from MangaYouKnow.backend.database import DataBase
+from MangaYouKnow.backend.downloader import MangaDexDl
+from MangaYouKnow.backend.manager import Downloader
 
 
 class Index:
