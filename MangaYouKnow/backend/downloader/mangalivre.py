@@ -6,9 +6,9 @@ import requests
 from bs4 import BeautifulSoup
 import flet as ft
 
-from MangaYouKnow.backend.database import DataBase
-from MangaYouKnow.backend.interfaces import MangaDl
-from MangaYouKnow.backend.manager import ThreadManager
+from backend.database import DataBase
+from backend.interfaces import MangaDl
+from backend.manager import ThreadManager
 
 class MangaLivreDl(MangaDl):
     def __init__(self):

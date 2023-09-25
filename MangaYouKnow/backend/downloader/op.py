@@ -1,5 +1,5 @@
 import requests
-from MangaYouKnow.backend.interfaces import MangaDl
+from backend.interfaces import MangaDl
 
 
 class OpScansDl(MangaDl):

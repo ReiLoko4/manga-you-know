@@ -3,8 +3,8 @@ import base64
 import requests
 from threading import Thread
 
-from MangaYouKnow.backend.manager import ThreadManager
-from MangaYouKnow.backend.database import DataBase
+from backend.manager import ThreadManager
+from backend.database import DataBase
 
 
 class MangaReader:

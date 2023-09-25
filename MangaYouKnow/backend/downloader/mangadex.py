@@ -3,9 +3,9 @@ from threading import Thread
 
 import requests
 
-from MangaYouKnow.backend.database import DataBase
-from MangaYouKnow.backend.interfaces import MangaDl
-from MangaYouKnow.backend.manager import ThreadManager
+from backend.database import DataBase
+from backend.interfaces import MangaDl
+from backend.manager import ThreadManager
 
 
 class MangaDexDl(MangaDl):

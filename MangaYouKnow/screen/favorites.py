@@ -2,8 +2,8 @@ import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
 
-from MangaYouKnow.backend.database import DataBase
-from MangaYouKnow.backend.manager import Downloader
+from backend.database import DataBase
+from backend.manager import Downloader
 
 
 class Favorites:
@@ -129,7 +129,7 @@ class Favorites:
         def edit_manga(info: dict):
             change_name = ft.TextField(label='Nome', value=info['name'])
             def save(column, content):
-                # if database.set_manga(int(info['id']), key, content):
+                # if database.set_manga(into['id']), key, content):
                 if database.set_manga(info['id'], column, content):
                     row_mangas.controls = load_mangas()
                     page.update()

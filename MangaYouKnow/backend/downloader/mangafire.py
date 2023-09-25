@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-from MangaYouKnow.backend.interfaces import MangaDl
+from backend.interfaces import MangaDl
 
 
 class MangaFireDl(MangaDl):

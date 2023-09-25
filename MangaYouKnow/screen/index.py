@@ -2,16 +2,14 @@ from time import sleep
 
 import flet as ft
 
-from MangaYouKnow.backend.database import DataBase
-from MangaYouKnow.backend.downloader import MangaDexDl
-from MangaYouKnow.backend.manager import Downloader
+from backend.database import DataBase
+from backend.manager import Downloader
 
 
 class Index:
     def __init__(self, page: ft.Page):
 
         connection_data = DataBase()
-        connection_manga = MangaDexDl()
         downloader = Downloader()
         source_selector = ft.Dropdown(options=[
             ft.dropdown.Option('md', text='MangaDex'),

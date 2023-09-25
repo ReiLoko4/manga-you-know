@@ -1,6 +1,6 @@
 import webbrowser
 import flet as ft
-from MangaYouKnow.backend.database import DataBase
+from backend.database import DataBase
 import pyperclip
 
 class About:

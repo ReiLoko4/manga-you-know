@@ -1,6 +1,6 @@
 import flet as ft
 
-from MangaYouKnow.screen import Index, Favorites, Configs, MangaReader, About
+from screen import Index, Favorites, Configs, MangaReader, About
 
 
 class Router:
