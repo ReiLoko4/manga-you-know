@@ -1,11 +1,8 @@
-from abc import ABC
 from pathlib import Path
 from threading import Thread
-
 import requests
 from bs4 import BeautifulSoup
 import flet as ft
-
 from backend.database import DataBase
 from backend.interfaces import MangaDl
 from backend.manager import ThreadManager
@@ -209,13 +206,12 @@ class MangaLivreDl(MangaDl):
 
     def download_manga_chapter(self, manga_id: str, id_release: str | dict, progress_bar: ft.ProgressBar = None) -> bool:
         manga_info = self.connection_data.get_manga_info_by_key('ml_id', manga_id)
-        if type(id_release) == str:
+        if type(id_release) != dict:
             chapter_info = self.connection_data.get_chapter_info(manga_id, id_release)
             urls = self.get_chapter_imgs(id_release)
         else:
             chapter_info = id_release
-            urls = self.get_chapter_imgs(
-                id_release['releases'][list(id_release['releases'].keys())[0]]['id_release'])
+            urls = self.get_chapter_imgs(chapter_info['id'])
         if not urls:
             print(f'capitulo {chapter_info["number"]} com erro!')
             return False
@@ -238,7 +234,7 @@ class MangaLivreDl(MangaDl):
             threads.add_thread(download)
         threads.start()
         threads.join()
-        if not progress_bar == None:
+        if progress_bar != None:
             progress_bar.value += float(progress_bar.data)
             progress_bar.update()
         print(f'capítulo {chapter_info["number"]} baixado! ')

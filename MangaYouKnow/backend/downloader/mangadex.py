@@ -31,7 +31,7 @@ class MangaDexDl(MangaDl):
             # print(manga['attributes'])
 
             title_name = manga['attributes']['title']['en'] if 'en' in manga['attributes']['title'] \
-                else manga['attributes']['title']['ja-ro']
+                else manga['attributes']['title'][list(manga['attributes']['title'].keys())[0]]
 
             list_chapters.append({
                 'id': manga['id'],

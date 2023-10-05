@@ -34,10 +34,12 @@ class Favorites:
             options = []
             for source in sources:
                 match source:
-                    case 'ml_id':
-                        text = 'MangaLivre'
                     case 'md_id':
                         text = 'MangaDex'
+                    case 'ml_id':
+                        text = 'MangaLivre'
+                    case 'ms_id':
+                        text = 'MangaSee'
                     case 'mf_id':
                         text = 'MangaFire'
                     case 'gkk_id':

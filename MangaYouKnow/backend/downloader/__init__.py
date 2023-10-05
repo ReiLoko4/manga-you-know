@@ -2,6 +2,7 @@ from .aoashi import AoAshiDl
 from .gekkou import GekkouDl
 from .mangadex import MangaDexDl
 from .mangalivre import MangaLivreDl
+from .mangasee import MangaSeeDl
 from .mangafire import MangaFireDl
 from .op import OpScansDl
 from .opex import OpexDl

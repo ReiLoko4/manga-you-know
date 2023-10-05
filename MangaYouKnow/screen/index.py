@@ -14,6 +14,7 @@ class Index:
         source_selector = ft.Dropdown(options=[
             ft.dropdown.Option('md', text='MangaDex'),
             ft.dropdown.Option('ml', text='MangaLivre'),
+            ft.dropdown.Option('ms', text='MangaSee'),
             ft.dropdown.Option('mf', text='MangaFire'),
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
@@ -21,7 +22,11 @@ class Index:
             ft.dropdown.Option('op', text='OP Scans'),
         ], value='md', width=120)
 
-        results = ft.Column(width=470, spacing=0.7)
+        local_search = [
+            'ms'
+        ]
+
+        results = ft.Column(width=470, spacing=0.7, data={'last_src': '', 'chapters': [] })
         card = ft.Card(ft.Container(results), color='gray', visible=False)
         search = ft.TextField(
             label='Pesquisar Mangás...',
@@ -35,55 +40,6 @@ class Index:
         manga = ft.Row(visible=False)
         self.is_clicked = False
 
-        def back_index(e):
-            manga.visible = False
-            index.visible = True
-            page.update()
-
-        def match_source(manga: dict, key: str=None):
-            match source_selector.value:
-                case 'md':
-                    get_manga = {
-                        'id': manga['id'],
-                        'db_id': 'md_id',
-                        'name': manga['attributes']['title']['en'],
-                        'folder_name': manga['id'],
-                    }
-                case 'ml':
-                    get_manga = {
-                        'id': manga['id_serie'],
-                        'db_id': 'ml_id',
-                        'name': manga['name'],
-                        'folder_name': manga['link'].split('/')[-2],
-                        'cover': manga['cover']
-                    }
-                case 'mf':
-                    get_manga = {
-                        'id': manga['url'],
-                        'db_id': 'mf_id', 
-                        'name': manga['name'],       
-                    }
-                case 'gkk':
-                    get_manga = {
-                        'db_id': 'gkk_id',
-                    }
-                case 'tsct':
-                    get_manga = {
-                        'db_id': 'tsct_id',       
-                    }
-                case 'db_tcb':
-                    get_manga = {
-                        'id': 'tcb_id',           
-                    }
-                case 'db_op':
-                    get_manga = {
-                        'id': 'op_id',
-                    }
-                case _:
-                    return None
-            return get_manga[key] if key else get_manga
-
-
         def togle_favorite(manga: dict, button: ft.IconButton, is_on_search: bool = False):
             if connection_data.is_favorite(f'{source_selector.value}_id', manga['id']):
                 if connection_data.delete_manga_by_key(f'{source_selector.value}_id', manga['id']):
@@ -95,6 +51,7 @@ class Index:
                     manga['cover'],
                     md_id=manga['id'] if source_selector.value == 'md' else None,
                     ml_id=manga['id'] if source_selector.value == 'ml' else None,
+                    ms_id=manga['id'] if source_selector.value == 'ms' else None,
                     mf_id=manga['id'] if source_selector.value == 'mf' else None,
                     gkk_id=manga['id'] if source_selector.value == 'gkk' else None,
                     tsct_id=manga['id'] if source_selector.value == 'tsct' else None,
@@ -147,13 +104,18 @@ class Index:
             )
             card.visible = True
             page.update()
-            response = downloader.search(source_selector.value, query)
+            response = downloader.search(source_selector.value, query, results.data['chapters'] if results.data['last_src'] == source_selector.value else None)
+            if query != search.value:
+                    return False
+            if source_selector.value in local_search:
+                results.data['chapters'] = response[1]
+                response = response[0]
+                results.data['last_src'] = source_selector.value
             favorites = connection_data.get_database()
             list_favorites_id = [i[f'{source_selector.value}_id'] for i in favorites]
             card.visible = True
             results.controls.clear()
-            if query != search.value:
-                return False
+            
             if not response:
                 results.controls.append(
                     ft.ListTile(
@@ -203,7 +165,6 @@ class Index:
         search.on_change = search_mangas
         search.on_blur = out_search
         search.on_focus = focus_search
-
         index.controls.append(
             ft.ResponsiveRow([
                 ft.Column([ft.Container(bgcolor='white', width=300)], col=2),

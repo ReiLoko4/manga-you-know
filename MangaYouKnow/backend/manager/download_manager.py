@@ -5,24 +5,26 @@ from backend.interfaces import MangaDl
 class Downloader:
     def __init__(self) -> None:
         self.downloaders = {
-            "aoashi": AoAshiDl(),
-            "gkk": GekkouDl(),
-            "md": MangaDexDl(),
-            "mf": MangaFireDl(),
-            "ml": MangaLivreDl(),
-            "op": OpScansDl(),
-            "opex": OpexDl(),
-            "tsct": TaoSectScanDl(),
-            "tcb": TCBScansDl()
+            'aoashi': AoAshiDl(),
+            'gkk': GekkouDl(),
+            'md': MangaDexDl(),
+            'ms': MangaSeeDl(),
+            'ml': MangaLivreDl(),
+            'mf': MangaFireDl(),
+            'op': OpScansDl(),
+            'opex': OpexDl(),
+            'tsct': TaoSectScanDl(),
+            'tcb': TCBScansDl()
         }
 
     def match_source(self, source) -> MangaDl | object:
-        return self.downloaders[source]
+        return self.downloaders[source.replace('_id', '')]
 
-    def search(self, source: str, query: str):
+    def search(self, source: str, query: str, pre_results: list[dict] = None):
         source = self.match_source(source)
         if source:
-            return source.search(query)
+            return source.search(query) if not pre_results \
+                else source.search(query, pre_results)
         return False
 
     def get_chapters(self, source: str, source_id: str) -> list[dict] | list | bool:

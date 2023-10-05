@@ -18,6 +18,7 @@ class DataBase:
                 score FLOAT
                 md_id TEXT UNIQUE,
                 ml_id INTEGER UNIQUE,
+                ms_id TEXT UNIQUE,
                 mf_id TEXT UNIQUE,
                 tcb_id TEXT UNIQUE,
                 tsct_id TEXT UNIQUE,
@@ -107,6 +108,7 @@ class DataBase:
             score: float=None,
             ml_id: int=None,
             md_id: str=None,
+            ms_id: str=None,
             mf_id: str=None,
             tcb_id: str=None,
             tsct_id: str=None,
@@ -116,12 +118,13 @@ class DataBase:
         cur = self.connect()
         try:
             cur.execute(
-                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, mf_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-                (name, folder_name, cover, description, author, score, ml_id, md_id, mf_id, tcb_id, tsct_id, op_id, gkk_id)
+                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, tcb_id, tsct_id, op_id, gkk_id)
             )
             cur.connection.commit()
             return True
-        except:
+        except Exception as e:
+            print(e)
             return False
         finally:
             cur.close()
