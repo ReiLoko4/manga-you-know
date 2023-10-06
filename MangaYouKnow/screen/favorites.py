@@ -69,6 +69,7 @@ class Favorites:
                 chapters_by_source[source_options.value] = chapters
                 list_chapters.controls = []
                 icon = ft.icons.REMOVE
+                
                 for chapter in chapters:
                     # if str(last_readed) == str(chapter['id_chapter']):
                     #     is_readed = True
@@ -83,7 +84,10 @@ class Favorites:
                     )
                 source_options.disabled = False
                 page.update()
-
+            download_all = ft.IconButton(
+                ft.icons.DOWNLOAD,
+                tooltip='Baixar todos capítulos',
+                on_click=lambda e: dl.download_all_chapters(info, source_options.value, chapters_by_source[source_options.value]))
             source_options.on_change = load_chapters
             alert = ft.AlertDialog(
                 title=ft.Text(info['name'] if len(info['name']) < 40 else f'{info["name"][0:37]}...', tooltip=info['name']),
@@ -91,7 +95,8 @@ class Favorites:
                     ft.Row([
                         ft.Column([
                             ft.Container(ft.Image(info['cover'], height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
-                            source_options
+                            source_options,
+                            download_all
                         ]),
                         ft.Card(list_chapters, width=250)
                     ]), height=500, width=430

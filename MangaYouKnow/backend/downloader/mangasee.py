@@ -65,7 +65,7 @@ class MangaSeeDl(MangaDl):
                 if int(chapter['Chapter'][0]) != 1:
                     index = f'-index-{chapter["Chapter"][0]}'
                 chapters.append({
-                    'id': f'{manga_id}-chapter-{int(chapter["Chapter"][1:-1])}{index}-{page}.html',
+                    'id': f'{manga_id}-chapter-{int(chapter["Chapter"][1:-1])}{index}{page}.html',
                     'number': int(chapter['Chapter'][1:-1]),
                     'title': chapter['ChapterName'],
                 })
@@ -79,7 +79,7 @@ class MangaSeeDl(MangaDl):
             manga_id = response.text.split('vm.IndexName = "')[1].split('"')[0]
             manga_info = json.loads(response.text.split('vm.CurChapter = ')[1].split('\n')[0][:-2])
             directory = manga_info['Directory']
-            num_pages = manga_info['Page']
+            num_pages = int(manga_info['Page'])
             chapter = manga_info['Chapter'][1:-1]
             chapter_imgs = []
             for page in range(1, num_pages+1, 1):

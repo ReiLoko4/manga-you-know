@@ -22,28 +22,29 @@ class TCBScansDl(MangaDl):
 
     def search(self, query: str) -> list[dict] | bool:
         mangas = self.get_mangas()
-        mangas_by_query = []
+        sorted_mangas = []
         for manga in mangas:
-            if query in manga['name']:
-                mangas_by_query.append(manga)
-        return mangas_by_query if len(mangas_by_query) > 0 else False
+            if query.lower() in manga['name'].lower():
+                sorted_mangas.append(manga)
+        return sorted_mangas[:10]
 
     def get_mangas(self) -> list[dict] | bool:
         response = self.session.get('https://tcbscans.com/projects')
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
-        list_mangas = []
-        for a in soup.find_all('a'):
-            if a.get('href') == None: 
-                continue
-            if '/mangas' in a.get('href') and a.get('href') not in [i['url'] for i in list_mangas]:
-                if len(str(a).split('>')[-2].replace('</a', '')) != 0:
-                    list_mangas.append({
-                        'name': str(a).split('>')[-2].replace('</a', ''),
-                        'url': str(a['href']).replace('/mangas/', '')
+        mangas = []
+        for a in soup.find_all('a', {'href': True}):
+            if '/mangas' in a['href'] and a.find('img'):
+                    print(a)
+                    img = a.find('img')
+                    mangas.append({
+                        'id': str(a['href']).replace('/mangas/', ''),
+                        'name': img['alt'],
+                        'folder_name': str(a['href']).split('/')[-1],
+                        'cover': img['src']
                     })
-        return list_mangas
+        return mangas
     
     def get_chapters(self, manga_url) -> list[dict] | bool:
         response = self.session.get(f'https://tcbscans.com/mangas/{manga_url}')
@@ -56,9 +57,9 @@ class TCBScansDl(MangaDl):
                 continue       
             if '/chapters/' in a['href']:
                 chapters_list.append({
-                    'number': (str(a.find_all('div')[0]).replace('<div class="text-lg font-bold">', '')).replace('</div>', '').split(' ')[-1],
-                    'title': (str(a.find_all('div')[1]).replace('<div class="text-lg font-bold">', '')).replace('</div>', '').split(' ')[-1] if len(str(a.find_all('div')[1])) != 33 else None,
-                    'url': str(a['href']).replace('/chapters/', '')
+                    'id': str(a['href']).replace('/chapters/', ''),
+                    'number': a.find_all('div')[0].text.split(' ')[-1],
+                    'title': a.find_all('div')[1].text,
                 })
         return chapters_list
         
@@ -67,13 +68,11 @@ class TCBScansDl(MangaDl):
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
-        imgs_list = []
-        for img in soup.find_all('img'):
-            if img.get('class') == None:
-                continue
+        chapter_imgs = []
+        for img in soup.find_all('img', {'class': True, 'src': True}):
             if 'fixed-ratio-content' in img['class']:
-                imgs_list.append(img['src'])
-        return imgs_list
+                chapter_imgs.append(img['src'])
+        return chapter_imgs
     
     def download_chapter(self, chapter_url) -> bool:
         imgs_list = self.get_chapter_imgs(chapter_url)

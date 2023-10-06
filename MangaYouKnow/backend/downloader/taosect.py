@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
 
 
-
 class TaoSectScanDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
@@ -22,7 +21,6 @@ class TaoSectScanDl(MangaDl):
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'
         })
 
-
     def search(self, entry:str):
         response = self.session.get(
             'https://taosect.com/',
@@ -31,13 +29,15 @@ class TaoSectScanDl(MangaDl):
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
-        results = []
-        for a in soup.find_all('a'):
-            if a.get('href') != None:
-                if 'projeto' in a['href']:
-                    results.append(a['href'])
-        return results if len(results) != 0 else False
-
+        mangas = []
+        for article in soup.find('div', {'class': 'post-list'}).find_all('article', {'class': 'post-projeto'}):
+            mangas.append({
+                'id': article.find('a')['href'].split('/')[-2],
+                'name': article.find('a')['href'].split('/')[-2].replace('-', ' ').title(),
+                'folder_name': article.find('a')['href'].split('/')[-2],
+                'cover':  str(article.find('div')['style']).split('url(')[1].split(')')[0],
+            })
+        return mangas[:10]
 
     def get_chapters(self, manga_id:str):
         '''
@@ -50,21 +50,20 @@ class TaoSectScanDl(MangaDl):
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
         chapters = []
-        for a in soup.find_all('a'):
-            if a.get('href') != None:
-                if 'leitor-online' in a['href']:
-                    chapters.append(a['href'])
-        chapters.pop(0)
+        for a in soup.find_all('a', {'href': True}):
+            if 'leitor-online' in a['href'] and manga_id in a['href'] \
+                    and 'Último Capítulo' not in a.text \
+                    and 'Primeiro Capítulo' not in a.text:
+                chapters.append({
+                    'id': a['href'].split('/')[-2],
+                    'number': a.text.split(' ')[-2],
+                    'title': a.text
+                })
         chapters.reverse()
         return chapters
 
-
-    def get_chapter_imgs(self, chapter_url):
-        if not 'taosect.com' in chapter_url:
-            return False
-        response = self.session.get(
-            chapter_url
-        )
+    def get_chapter_imgs(self, chapter_id):
+        response = self.session.get(f'https://taosect.com/projeto/{chapter_id}')
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -72,13 +71,3 @@ class TaoSectScanDl(MangaDl):
         for option in soup.find('select', {'id': 'leitor_pagina_projeto'}).find_all('option'):
             urls.append(option['value'])
         return urls
-
-
-
-
-
-
-
-
-
-

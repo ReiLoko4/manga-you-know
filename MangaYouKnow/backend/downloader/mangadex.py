@@ -86,8 +86,15 @@ class MangaDexDl(MangaDl):
         response = requests.get(
             f'https://api.mangadex.org/at-home/server/{chapter_id}?forcePort443=false',
         )
-        if not response: return False
-        return response.json()['chapter']
+        if not response: 
+            return False
+        chapter = response.json()
+        chapter_imgs = []
+        for img in chapter['chapter']['data']:
+            chapter_imgs.append(
+                f'{chapter["baseUrl"]}/data/{chapter["chapter"]["hash"]}/{img}'
+            )
+        return chapter_imgs
     
     def download_chapter(self, chapter_id) -> bool:
         urls = self.get_chapter_imgs(chapter_id)

@@ -139,7 +139,7 @@ class MangaLivreDl(MangaDl):
         response = self.session.get(
             f'https://mangalivre.net/leitor/pages/{id_release}.json'
         ).json()['images']
-        return response if response else False
+        return [i['legacy'] for i in response] if response else False
 
     def save_manga_info(self, manga_name: str, manga_id: str, last_read: str) -> bool:
         manga_name = manga_name.replace(' ', '-').lower()

@@ -27,7 +27,7 @@ class OpScansDl(MangaDl):
         manga_id: manga name from site with hyphens
         '''
         response = self.session.get(
-            f'https://opscans.com/manga/{manga_id}/',
+            f'https://opscanlations.com/manga/{manga_id}/',
         )
         if not response:
             return False
