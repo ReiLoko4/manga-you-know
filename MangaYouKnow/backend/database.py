@@ -15,7 +15,7 @@ class DataBase:
                 cover TEXT NOT NULL,
                 description TEXT,
                 author TEXT,
-                score FLOAT
+                score FLOAT,
                 md_id TEXT UNIQUE,
                 ml_id INTEGER UNIQUE,
                 ms_id TEXT UNIQUE,
