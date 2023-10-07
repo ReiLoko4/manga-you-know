@@ -2,56 +2,37 @@ import flet as ft
 import base64
 import requests
 from threading import Thread
-
-from backend.manager import ThreadManager
 from backend.database import DataBase
+from backend.manager import ThreadManager, Downloader
 
 
 class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = DataBase()
+        self.dl = Downloader()
         self.content = None
         self.create_content()
 
     def create_content(self):
+        self.page.banner.visible = False
         self.chapters = self.page.data['manga_chapters']
         self.pages = self.page.data['chapter_images']
-
-        self.images_b64 = []
-
-        def get_base_64_image(url, index: int):
-            response = requests.get(url)
-            self.images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
-
-        threads = ThreadManager()
-        for i, image in enumerate(self.pages):
-            threads.add_thread(
-                Thread(
-                    target=lambda url=image['legacy'], index=i: get_base_64_image(url, index)
-                )
-            )
-        threads.start()
-        threads.join()
-
-        def to_sort(e):
-            return e[1]
-
-        self.images_b64.sort(key=to_sort)
         self.page.window_full_screen = True
-        self.currently_page = ft.Text(f' 1/{len(self.images_b64)}')
-        self.images = [ft.Image(src_base64=i[0], fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height) for i in
-                       self.images_b64]
+        self.pages_len = len(self.pages)
+        self.currently_page = ft.Text(f' 1/{self.pages_len}')
+        self.panel = ft.Image(src_base64=self.pages[0], fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
         self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
         self.btn_next_chapter.visible = False
         is_second_time = False
         if self.content != None:
             is_second_time = True
+        self.image_row = ft.Row(
+            [self.panel],
+            alignment=ft.MainAxisAlignment.CENTER
+        )
         self.content = ft.Stack([
-            ft.Row(
-                self.images,
-                alignment=ft.MainAxisAlignment.CENTER
-            ),
+            self.image_row,                
             ft.Row(
                 [
                     self.btn_next_chapter,
@@ -60,33 +41,27 @@ class MangaReader:
                 alignment=ft.MainAxisAlignment.END,
             )
         ])
-        self.page.banner.visible = False
-        for i, img in enumerate(self.images):
-            if i != 0:
-                img.visible = False
-
         def next(e=None):
-            for i, img in enumerate(self.images):
-                if img.visible:
-                    if len(self.images) > i + 1:
-                        img.visible = False
-                        self.images[i + 1].visible = True
-                        self.images[i + 1].height = self.page.height
-                        self.currently_page.value = f'{i + 2}/{len(self.images)}'
-                        if len(self.images) == i + 2:
-                            self.db.set_manga(self.page.data['id'], 'id_last_readed', self.page.data['id_chapter'])
-                            if not self.chapters[0]['id_chapter'] == self.page.data['id_chapter']:
+            for i, img in enumerate(self.pages):
+                if self.panel.src_base64 == img:
+                    if self.pages_len > i + 1:
+                        self.panel.src_base64 = self.pages[i + 1]
+                        self.panel.height = self.page.height
+                        self.currently_page.value = f'{i + 2}/{self.pages_len}'
+                        if self.pages_len == i + 2:
+                        #     self.db.set_manga(self.page.data['id'], 'id_last_readed', self.page.data['id_chapter'])
+                            if not self.chapters[0]['id'] == self.page.data['chapter_id']:
                                 self.btn_next_chapter.visible = True
                     break
             self.page.update()
 
         def previous(e=None):
-            for i, img in enumerate(self.images):
-                if img.visible:
+            for i, img in enumerate(self.pages):
+                if self.panel.src_base64 == img:
                     if i != 0:
-                        img.visible = False
-                        self.images[i - 1].visible = True
-                        self.currently_page.value = f'{i}/{len(self.images)}'
+                        self.panel.src_base64 = self.pages[i - 1]
+                        self.panel.height = self.page.height
+                        self.currently_page.value = f'{i}/{self.pages_len}'
                     break
             self.page.update()
 
@@ -112,9 +87,7 @@ class MangaReader:
             self.page.update()
 
         def resize(e):
-            for i in self.images:
-                if i.visible:
-                    i.height = float(e.control.height)
+            self.panel.height = float(e.control.height)
             self.page.update()
 
         self.content.data = {
@@ -129,26 +102,46 @@ class MangaReader:
         return self.content
 
     def next_chapter(self, _=None):
+        print('que porra')
+        self.image_row.controls = [ft.ProgressRing(width=120, height=120)]
+        self.page.update()
         self.chapters.reverse()
-        chapter = None
+        chapter_id = None
         for i, chapter in enumerate(self.chapters):
-            if str(chapter['id_chapter']) == str(self.page.data['id_chapter']):
+            if chapter['id'] == self.page.data['chapter_id']:
                 if len(self.chapters) == i + 1:
                     print('no more chapters')
                     return False
-                self.page.data['id_chapter'] = self.chapters[i + 1]['id_chapter']
-                chapter = self.chapters[i + 1]
+                print(chapter, self.chapters[i + 1])
+                self.page.data['chapter_id'] = self.chapters[i + 1]['id']
+                chapter_id = self.chapters[i + 1]['id']
                 break
-        if chapter == None:
-            print('sem mais capitulos')
+        self.chapters.reverse()
+        if chapter_id == None:
             return False
-        manga_pages = self.dl.get_chapter_imgs(
-            chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'])
-
-        if not manga_pages:
+        pages = self.dl.get_chapter_image_urls(self.page.data['source'], chapter_id)
+        if not pages:
             print('errokkkkk')
             return False
-        self.page.data['chapter_images'] = manga_pages
-        self.chapters.reverse()
+
+        images_b64 = []
+        def get_base_64_image(url, index: int):
+            response = requests.get(url)
+            images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
+        threads = ThreadManager()
+        for i, image in enumerate(pages):
+            threads.add_thread(
+                Thread(
+                    target=get_base_64_image,
+                    args=(image, i)
+                )
+            )
+        threads.start()
+        threads.join()
+        images_b64.sort(key=lambda e: e[1])
+        final_images = []
+        for image in images_b64:
+            final_images.append(image[0])
+        self.page.data['chapter_images'] = final_images
         self.create_content()
         self.page.update()

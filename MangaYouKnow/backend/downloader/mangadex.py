@@ -94,6 +94,7 @@ class MangaDexDl(MangaDl):
             chapter_imgs.append(
                 f'{chapter["baseUrl"]}/data/{chapter["chapter"]["hash"]}/{img}'
             )
+        print(chapter_imgs)
         return chapter_imgs
     
     def download_chapter(self, chapter_id) -> bool:

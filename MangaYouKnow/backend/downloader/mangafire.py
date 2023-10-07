@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-
 from backend.interfaces import MangaDl
 
 
@@ -69,12 +68,6 @@ class MangaFireDl(MangaDl):
         '''
         manga_id: name of the manga
         lang: languague
-
-        returns a list of dictionares
-
-        keys:
-            number: str\n
-            title: str
         '''
         response = self.session.get(
             f'https://mangafire.to/manga/{manga_id}'
@@ -85,7 +78,7 @@ class MangaFireDl(MangaDl):
         chapters_list = []
         for li in soup.find('ul', {'class': 'scroll-sm'}).find_all('li'):
             chapters_list.append({
-                'id': '/'.join(li.find('a')['href'].split('/')[-2:-1]),
+                'id': li.find('a')['href'].replace('/read/', ''),
                 'number': li['data-number'],
                 'title': li.find_all('span')[0].text,
             })

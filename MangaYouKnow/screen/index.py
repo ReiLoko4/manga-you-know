@@ -19,7 +19,7 @@ class Index:
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),
-            ft.dropdown.Option('op', text='OP Scans', disabled=True),
+            # ft.dropdown.Option('op', text='OP Scans', disabled=True),
         ], value='md', width=120)
 
         local_search = [

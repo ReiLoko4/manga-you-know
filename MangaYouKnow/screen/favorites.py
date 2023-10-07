@@ -1,9 +1,11 @@
 import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
-
+import requests
+import base64
+from threading import Thread
 from backend.database import DataBase
-from backend.manager import Downloader
+from backend.manager import Downloader, ThreadManager
 
 
 class Favorites:
@@ -18,14 +20,36 @@ class Favorites:
             focused_border_color=ft.colors.BLUE_300
         )
 
-        def read(id_release, id_chapter, info: dict, chapters: list[dict]):
-            print(f'capitulooo {id_release}')
-            page.data['id'] = info['id']
-            page.data['name'] = info['name']
-            page.data['folder_name'] = info['folder_name']
+        def read(source, manga, chapter_id, chapters: list[dict]):
+            page.dialog.content = ft.Container(
+                ft.Column([
+                    ft.ProgressRing(height=120, width=120),
+                ])
+            )
+            page.update()
+            pages = dl.get_chapter_image_urls(source, chapter_id)
+            images_b64 = []
+            def get_base_64_image(url, index: int):
+                response = requests.get(url)
+                images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
+            threads = ThreadManager()
+            for i, image in enumerate(pages):
+                threads.add_thread(
+                    Thread(
+                        target=get_base_64_image,
+                        args=(image, i)
+                    )
+                )
+            threads.start()
+            threads.join()
+            images_b64.sort(key=lambda e: e[1])
+            final_images = []
+            for image in images_b64:
+                final_images.append(image[0])
+            page.data['chapter_images'] = final_images
             page.data['manga_chapters'] = chapters
-            page.data['id_chapter'] = id_chapter
-            page.data['chapter_images'] = dl.get_chapter_imgs(id_release)
+            page.data['chapter_id'] = chapter_id
+            page.data['source'] = source
             page.go('/reader')
 
         def open_manga(info):
@@ -63,6 +87,7 @@ class Favorites:
                     page.update()
                     return
                 source_options.disabled = True
+                download_all.disabled = True
                 list_chapters.controls = [ft.Row([ft.ProgressRing(height=120, width=120)], alignment=ft.MainAxisAlignment.CENTER, width=230)]
                 page.update()
                 chapters = dl.get_chapters(source_options.value, info[source_options.value])
@@ -79,10 +104,11 @@ class Favorites:
                         ft.ListTile(
                             title=ft.Text(chapter['number']),
                             trailing=ft.IconButton(icon, disabled=True),
-                            on_click=lambda e, :print('fodasse')
+                            on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters)
                         )
                     )
                 source_options.disabled = False
+                download_all.disabled = False
                 page.update()
             download_all = ft.IconButton(
                 ft.icons.DOWNLOAD,
@@ -106,32 +132,6 @@ class Favorites:
             alert.open = True
             page.update()
             load_chapters()
-            # chapters = database.get_data_chapters(info['folder_name'])
-            # if not chapters:
-            # chapters = dl.get_chapters(info['ml_id'])
-            # page.dialog.content = ft.Card(ft.Column(height=3000, scroll='always'))
-            # is_readed = False
-            # last_readed = info.get('id_last_readed')
-            # if last_readed == None:
-            #     last_readed = ''
-            # icon = ft.icons.REMOVE
-            # list_cards = []
-            # for chapter in chapters:
-            #     if str(last_readed) == str(chapter['id_chapter']):
-            #         is_readed = True
-            #     if is_readed:
-            #         icon = ft.icons.CHECK
-            #     list_cards.append(
-            #         ft.ListTile(
-            #             title=ft.Text(chapter['number']),
-            #             trailing=ft.IconButton(icon, disabled=True),
-            #             on_click=lambda e, id_release=chapter['releases'][list(chapter['releases'].keys())[0]]['id_release'], id_chapter=chapter['id_chapter']: read(id_release, id_chapter, info, chapters)                    
-            #         )
-            #     )
-            # page.dialog.content.content.controls = list_cards
-            # progress_download_all = ft.ProgressBar(value=0.0)
-            # page.dialog.actions = [ft.TextButton('Baixar todos capítulos', on_click=lambda e: dl.download_all_manga_chapters(info['ml_id'], chapters, progress_bar=progress_download_all)), progress_download_all]
-            # page.update()
 
         def edit_manga(info: dict):
             change_name = ft.TextField(label='Nome', value=info['name'])

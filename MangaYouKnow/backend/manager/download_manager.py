@@ -74,6 +74,7 @@ class Downloader:
         threads = ThreadManager()
         if not chapters:
             return False
+        print(f'downloading {len(chapters)} chapters.')
         for i, chapter in enumerate(chapters):
             threads.add_thread(
                 Thread(
@@ -85,4 +86,5 @@ class Downloader:
                 threads.start()
                 threads.join()
                 threads = ThreadManager()
+        print('finished.')
         return True

@@ -23,25 +23,30 @@ class GekkouDl(MangaDl):
 
     def search(self, entry:str) -> list | bool:
         response = self.session.post(
-            'https://gekkou.com.br/wp-admin/admin-ajax.php',
-            data = {
+            f'https://gekkou.com.br/',
+            params = {
+                's': entry,
                 'action': 'wp-manga-search-manga',
-                'title': entry
+                'post_type': 'wp-manga',
+                'author': '',
+                'artist': '',
+                'release': '',
+                'adult': ''
             }
         )
         if not response:
             return False
-        if not response.json()['success']:
-            return False
+        soup = BeautifulSoup(response.text, 'html.parser')
         manga_list = []
-        for manga in response.json()['data']:
+        for manga in soup.find_all('div', {'class': 'tab-thumb c-image-hover'}):
+            link = manga.find('a')
             manga_list.append({
-                'id': manga['url'].split('/')[-2],
-                'name': manga['title'],
-                'folder_name': manga['url'].split('/')[-2],
-                'cover': None
+                'id': link['href'].split('/')[-2],
+                'name': link['title'],
+                'folder_name': link['href'].split('/')[-2],
+                'cover': manga.find('img')['data-src']
             })
-        return manga_list
+        return manga_list[:10]
 
     def get_chapters(self, manga_name) -> list | bool:
         response = self.session.post(f'https://gekkou.com.br/manga/{manga_name.replace(" ", "-")}/ajax/chapters/')
@@ -49,12 +54,12 @@ class GekkouDl(MangaDl):
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
         list_chapters = []
-        for a in soup.find_all('a'):
-            if a['href'] !='#' and a['href'].split('/')[-2] not in list_chapters: 
+        for a in soup.find_all('a', {'href': True}):
+            if a['href'] !='#' and a['href'].replace('https://gekkou.com.br/manga/', '') not in [i['id'] for i in list_chapters]: 
                 list_chapters.append({
-                    'id': a['href'].split('/')[-2],
+                    'id': a['href'].replace('https://gekkou.com.br/manga/', ''),
                     'number': a['href'].split('/')[-2],
-
+                    'title': a.text
                 })
         return list_chapters
         # works w
@@ -70,16 +75,16 @@ class GekkouDl(MangaDl):
                 list_chapters.append(a['href'])
         return list_chapters
     
-    def get_chapter_imgs(self, manga_name, chapter_num) -> list | bool:
+    def get_chapter_imgs(self, chapter_id) -> list | bool:
         response = self.session.get(
-            f'https://gekkou.com.br/manga/{manga_name.replace(" ", "-")}/{chapter_num}/',
+            f'https://gekkou.com.br/manga/{chapter_id}',
             params={'style': 'list'}
         )
         if not response:
             return False
         list_imgs = []
         soup = BeautifulSoup(response.text, 'html.parser')
-        for div in soup.find_all('div', {'class': 'page-break'}):
+        for div in soup.find_all('div', {'class': 'page-break '}):
             list_imgs.append(div.find('img')['data-src'].replace('\t\t\t\n\t\t\t', ''))
         return list_imgs
 

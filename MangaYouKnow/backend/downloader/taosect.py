@@ -55,7 +55,7 @@ class TaoSectScanDl(MangaDl):
                     and 'Último Capítulo' not in a.text \
                     and 'Primeiro Capítulo' not in a.text:
                 chapters.append({
-                    'id': a['href'].split('/')[-2],
+                    'id': '/'.join(a['href'].split('/')[-3:-1]),
                     'number': a.text.split(' ')[-2],
                     'title': a.text
                 })
@@ -63,7 +63,7 @@ class TaoSectScanDl(MangaDl):
         return chapters
 
     def get_chapter_imgs(self, chapter_id):
-        response = self.session.get(f'https://taosect.com/projeto/{chapter_id}')
+        response = self.session.get(f'https://taosect.com/leitor-online/projeto/{chapter_id}')
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
