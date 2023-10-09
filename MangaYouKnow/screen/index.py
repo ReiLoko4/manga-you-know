@@ -15,11 +15,11 @@ class Index:
             ft.dropdown.Option('md', text='MangaDex'),
             ft.dropdown.Option('ml', text='MangaLivre'),
             ft.dropdown.Option('ms', text='MangaSee'),
-            ft.dropdown.Option('mf', text='MangaFire'),
+            # ft.dropdown.Option('mf', text='MangaFire'),
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),
-            # ft.dropdown.Option('op', text='OP Scans', disabled=True),
+            # ft.dropdown.Option('op', text='OP Scans'),
         ], value='md', width=120)
 
         local_search = [

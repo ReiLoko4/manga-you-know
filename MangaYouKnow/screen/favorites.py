@@ -102,7 +102,7 @@ class Favorites:
                     #     icon = ft.icons.CHECK
                     list_chapters.controls.append(
                         ft.ListTile(
-                            title=ft.Text(chapter['number']),
+                            title=ft.Text(chapter['number'] if chapter['number'] else chapter['title']),
                             trailing=ft.IconButton(icon, disabled=True),
                             on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters)
                         )
