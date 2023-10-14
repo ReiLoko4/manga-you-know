@@ -42,5 +42,5 @@ Project with the aim of offering a reader, a search engine and a checker for new
 
 # Use mode
 
-First download the app [here](https://github.com/ReiLoko4/manga-you-know/releases/download/0.9b/MangaYouKnow-0.9b.exe). For now I don't have time to write a good documentation... but you can ask me question and me send feedback in my  [X](https://twitter.com/ReiLokoFn).
+First download the app [here](https://github.com/ReiLoko4/manga-you-know/releases/download/0.9b/MangaYouKnow.0.9b.exe). For now I don't have time to write a good documentation... but you can ask me question and me send feedback in my  [X](https://twitter.com/ReiLokoFn).
 
