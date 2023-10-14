@@ -47,7 +47,7 @@ Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos
 
 # Modo de uso
 
-Primeiro baixe o app [aqui](https://github.com/ReiLoko4/manga-you-know/releases/download/0.9b/MangaYouKnow-0.9b.exe). Por enquanto não tenho tempo pra escrever uma documentação melhor... mas você pode perguntar algo ou dar feedback no meu [X](https://twitter.com/ReiLokoFn).
+Primeiro baixe o app [aqui](https://github.com/ReiLoko4/manga-you-know/releases/download/0.9b/MangaYouKnow.0.9b.exe). Por enquanto não tenho tempo pra escrever uma documentação melhor... mas você pode perguntar algo ou dar feedback no meu [X](https://twitter.com/ReiLokoFn).
 
 
 
