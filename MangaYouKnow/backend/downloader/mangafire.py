@@ -44,7 +44,7 @@ class MangaFireDl(MangaDl):
         manga_lists = []
         for div in soup.find_all('div', {'class': 'inner'})[:-1]:
             manga_lists.append({
-                'id': div.find('a', {'class': 'poster'})['href'].split('/')[-1],
+                'id': div.find('a', {'class': 'poster'})['href'].split('/')[-1].split('.')[-1],
                 'name': div.find('img')['alt'],
                 'folder_name': div.find('a', {'class': 'poster'})['href'].split('/')[-1],
                 'cover': div.find('img')['src']
@@ -70,32 +70,29 @@ class MangaFireDl(MangaDl):
         lang: languague
         '''
         response = self.session.get(
-            f'https://mangafire.to/manga/{manga_id}'
+            f'https://mangafire.to/ajax/read/{manga_id}/chapter/en'
         )
         if not response:
             return False
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = BeautifulSoup(response.content, 'html.parser')
         chapters_list = []
-        for li in soup.find('ul', {'class': 'scroll-sm'}).find_all('li'):
+        for li in soup.find('ul').find_all('li'):
+            a = li.find('a')
             chapters_list.append({
-                'id': li.find('a')['href'].replace('/read/', ''),
-                'number': li['data-number'],
-                'title': li.find_all('span')[0].text,
+                'id': a['data-id'].replace('\\', '').replace('"', ''),
+                'number': a['data-number'].replace('\\', '').replace('"', ''),
+                'title': a['title'],
             })
         return chapters_list
 
-    def get_chapter_imgs(self, manga_id: str, chapter_number: str, lang='pt-br') -> list | bool:
+    def get_chapter_imgs(self, chapter_id: str, lang='pt-br') -> list | bool:
         response = self.session.get(
-            f'https://mangafire.to/ajax/read/{manga_id.split(".")[-1]}/list',
-            params={'viewby': 'chapter'},
-            headers={'Referer': f'https://mangafire.to/read/{manga_id}/{lang}/chapter-{chapter_number}'}
+            f'https://mangafire.to/ajax/read/chapter/{chapter_id}',
+            # headers={'Referer': f'https://mangafire.to/read/{manga_id}/{lang}/chapter-{chapter_number}'}
         )
         if not response:
             return False
-
-        images = self.session.get(
-            'https://mangafire.to/ajax/read/chapter/2040402'
-        )
+        return [i[0] for i in response.json()['result']['images']]
 
     def is_chapters_big(self, chapter):
         return chapter > 1000

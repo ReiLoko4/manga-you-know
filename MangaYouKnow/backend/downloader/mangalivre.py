@@ -61,10 +61,8 @@ class MangaLivreDl(MangaDl):
         return list_chapters
 
     def get_chapters(self, manga_id: str, write_data: bool = False) -> list:
-        print(f'procurando capitulos {manga_id}')
         chapters_list = []
         self.end = False
-
         def get_offset_json(this_offset):
             response = self.session.get(
                 f'https://mangalivre.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',

@@ -52,10 +52,13 @@ class Favorites:
             page.data['source'] = source
             page.go('/reader')
 
+
+
         def open_manga(info):
             list_chapters = ft.Column(height=8000, width=240, scroll='always')
             sources = [i for i in list(info.keys()) if i.endswith('_id') and info[i] != None]
             options = []
+            is_op = False
             for source in sources:
                 match source:
                     case 'md_id':
@@ -75,6 +78,16 @@ class Favorites:
                     case 'op_id':
                         text = 'OP Scans'
                 options.append(ft.dropdown.Option(source, text))
+                if info[source] in [
+                    '5/one-piece',
+                    'One-Piece',
+                    13,
+                    '13',
+                    'dkw',
+                    'a1c7c817-4e59-43b7-9365-09675a149a6f',
+                ] and not is_op:
+                    is_op = True
+                    options.append(ft.dropdown.Option('opex', 'One Piece Ex'))
             chapters_by_source = {}
             source_options = ft.Dropdown(
                 options=options,
@@ -90,11 +103,10 @@ class Favorites:
                 download_all.disabled = True
                 list_chapters.controls = [ft.Row([ft.ProgressRing(height=120, width=120)], alignment=ft.MainAxisAlignment.CENTER, width=230)]
                 page.update()
-                chapters = dl.get_chapters(source_options.value, info[source_options.value])
+                chapters = dl.get_chapters(source_options.value, info.get(source_options.value))
                 chapters_by_source[source_options.value] = chapters
                 list_chapters.controls = []
                 icon = ft.icons.REMOVE
-                
                 for chapter in chapters:
                     # if str(last_readed) == str(chapter['id_chapter']):
                     #     is_readed = True
@@ -102,7 +114,7 @@ class Favorites:
                     #     icon = ft.icons.CHECK
                     list_chapters.controls.append(
                         ft.ListTile(
-                            title=ft.Text(chapter['number'] if chapter['number'] else chapter['title']),
+                            title=ft.Text(chapter['number'] if chapter['number'] else chapter['title'], tooltip=chapter['title']),
                             trailing=ft.IconButton(icon, disabled=True),
                             on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters)
                         )

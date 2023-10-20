@@ -22,7 +22,6 @@ class MangaSeeDl(MangaDl):
 
     def search(self, query: str, pre_results: list[dict] = None):
         if not pre_results:
-            print('que')
             response = self.session.get('https://www.mangasee123.com/search?name=qualquercoisaliteralmente')
             if response.status_code != 200:
                 return False

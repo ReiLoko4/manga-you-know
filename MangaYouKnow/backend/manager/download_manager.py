@@ -82,7 +82,7 @@ class Downloader:
                     args=[manga, source, chapter]
                 )
             )
-            if i % 5 == 0:
+            if i % 5 == 0 or i == len(chapters) - 1:
                 threads.start()
                 threads.join()
                 threads = ThreadManager()

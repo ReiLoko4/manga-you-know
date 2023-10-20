@@ -36,7 +36,6 @@ class TCBScansDl(MangaDl):
         mangas = []
         for a in soup.find_all('a', {'href': True}):
             if '/mangas' in a['href'] and a.find('img'):
-                    print(a)
                     img = a.find('img')
                     mangas.append({
                         'id': str(a['href']).replace('/mangas/', ''),

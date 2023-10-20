@@ -1,13 +1,15 @@
+import json
 import requests
 from pathlib import Path
 from threading import Thread
 from bs4 import BeautifulSoup
+from backend.interfaces import MangaDl
 # from backend.database import DataBase
 # from backend.thread_manager import ThreadManager
 
 
 
-class OpexDl:
+class OpexDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -24,27 +26,46 @@ class OpexDl:
             'Sec-Fetch-User': '?1',
         })
 
-    def get_manga_chapters(self) -> list:
+    def search():
+        # Isn't needed
+        pass
+
+    def get_chapters(self, _=None) -> list:
         response =  self.session.get('https://onepieceex.net/mangas/')
         if not response:
             return False
-        list_chapters = []
+        chapters_list = []
         soup = BeautifulSoup(response.text, 'html.parser')
-        next = False
-        for a in soup.find_all('a'):
-            if a.get('class') == None:
-               continue
-            if 'online' in a.get('class') and not 'colorido' in a.get('class'):
-                if a['href'].split('/')[-3] == 'sbs':
-                    continue
-                if a['href'].split('/')[-1] == '?v=jump':
-                    continue
-                if a['href'].split('/')[-1] == '22' and not next:
-                    next = True
-                    continue
-                if next:
-                   list_chapters.append(a['href'].split('/')[-1])
-        return list_chapters
+        for li in soup.find_all('li', {'class': 'volume-capitulo'}):
+            a_list = li.find_all('a')
+            first_a = a_list[0]
+            span = li.find('span')
+            if not 'especiais' in first_a['href'] and not 'historias-de-capa' in first_a['href']:
+                chapters_list.append({
+                    'id': first_a['href'].split('/')[-1],
+                    'number': int(span.text.split('.')[0]),
+                    'title': span.text
+                })
+                if len(a_list) > 1:
+                    chapters_list.append({
+                        'id': f'{a_list[1]["href"].split("/")[-2]}/?v=jump',
+                        'number': f'{int(span.text.split(".")[0])} colorido',
+                        'title': span.text
+                    })
+        chapters_list.reverse()
+        return chapters_list
+    
+    def get_chapter_imgs(self, chapter_id):
+        response = self.session.get(f'https://onepieceex.net/mangas/leitor/{chapter_id}')
+        if not response:
+            return False
+        pages_dict = json.loads(json.loads(response.text.split('paginasLista = ')[1].split(';')[0]))
+        chapter_pages = []
+        for url in list(pages_dict.values()):
+            chapter_pages.append(
+                f'https://onepieceex.net/{url}'
+            )
+        return chapter_pages
     
     def get_manga_chapters_colored(self) -> list:
         response =  self.session.get('https://onepieceex.net/mangas/')

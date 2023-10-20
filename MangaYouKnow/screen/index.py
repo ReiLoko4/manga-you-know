@@ -15,7 +15,7 @@ class Index:
             ft.dropdown.Option('md', text='MangaDex'),
             ft.dropdown.Option('ml', text='MangaLivre'),
             ft.dropdown.Option('ms', text='MangaSee'),
-            # ft.dropdown.Option('mf', text='MangaFire'),
+            ft.dropdown.Option('mf', text='MangaFire'),
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),

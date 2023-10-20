@@ -102,7 +102,6 @@ class MangaReader:
         return self.content
 
     def next_chapter(self, _=None):
-        print('que porra')
         self.image_row.controls = [ft.ProgressRing(width=120, height=120)]
         self.page.update()
         self.chapters.reverse()
@@ -112,7 +111,6 @@ class MangaReader:
                 if len(self.chapters) == i + 1:
                     print('no more chapters')
                     return False
-                print(chapter, self.chapters[i + 1])
                 self.page.data['chapter_id'] = self.chapters[i + 1]['id']
                 chapter_id = self.chapters[i + 1]['id']
                 break
