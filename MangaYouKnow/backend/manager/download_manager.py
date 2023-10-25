@@ -3,6 +3,7 @@ from backend.interfaces import MangaDl
 from backend.manager import ThreadManager
 from threading import Thread
 from pathlib import Path
+import base64
 import requests
 
 
@@ -16,6 +17,7 @@ class Downloader:
             'ms': MangaSeeDl(),
             'ml': MangaLivreDl(),
             'mf': MangaFireDl(),
+            'mx': MangaNexusDl(),
             'op': OpScansDl(),
             'opex': OpexDl(),
             'tsct': TaoSectScanDl(),
@@ -44,14 +46,33 @@ class Downloader:
             return source.get_chapter_imgs(chapter_id)
         return False
     
+    def get_base64_images(self, pages: list[str]) -> list[str]:
+        images_b64 = []
+        threads = ThreadManager()
+        def get_base_64_image(url, index: int):
+            response = requests.get(url)
+            if response and 'image' in response.headers['content-type']:
+                images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
+        for i, image in enumerate(pages):
+            threads.add_thread(
+                Thread(
+                    target=get_base_64_image,
+                    args=(image, i)
+                )
+            )
+        threads.start()
+        threads.join()
+        images_b64.sort(key=lambda e: e[1])
+        return [i[0] for i in images_b64]
+
+    
     def download_chapter(self, manga: dict, source: str, chapter: dict) -> bool:
         manga_images = self.get_chapter_image_urls(source, chapter['id'])
         if manga_images:
             threads = ThreadManager()
             def download_page(url, path):
                 response = requests.get(url)
-                if response:
-                    if 'image' in response.headers['content-type']:
+                if response and 'image' in response.headers['content-type']:
                         with open(path, 'wb') as file:
                             file.write(response.content)
             folder = Path(f'mangas/{manga["folder_name"]}/{chapter["number"]}')

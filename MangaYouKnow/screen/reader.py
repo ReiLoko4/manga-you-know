@@ -121,25 +121,7 @@ class MangaReader:
         if not pages:
             print('errokkkkk')
             return False
-
-        images_b64 = []
-        def get_base_64_image(url, index: int):
-            response = requests.get(url)
-            images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
-        threads = ThreadManager()
-        for i, image in enumerate(pages):
-            threads.add_thread(
-                Thread(
-                    target=get_base_64_image,
-                    args=(image, i)
-                )
-            )
-        threads.start()
-        threads.join()
-        images_b64.sort(key=lambda e: e[1])
-        final_images = []
-        for image in images_b64:
-            final_images.append(image[0])
-        self.page.data['chapter_images'] = final_images
+        images_b64 = self.dl.get_base64_images(pages)
+        self.page.data['chapter_images'] = images_b64
         self.create_content()
         self.page.update()

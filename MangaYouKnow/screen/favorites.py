@@ -28,25 +28,8 @@ class Favorites:
             )
             page.update()
             pages = dl.get_chapter_image_urls(source, chapter_id)
-            images_b64 = []
-            def get_base_64_image(url, index: int):
-                response = requests.get(url)
-                images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
-            threads = ThreadManager()
-            for i, image in enumerate(pages):
-                threads.add_thread(
-                    Thread(
-                        target=get_base_64_image,
-                        args=(image, i)
-                    )
-                )
-            threads.start()
-            threads.join()
-            images_b64.sort(key=lambda e: e[1])
-            final_images = []
-            for image in images_b64:
-                final_images.append(image[0])
-            page.data['chapter_images'] = final_images
+            images_b64 = dl.get_base64_images(pages)
+            page.data['chapter_images'] = images_b64
             page.data['manga_chapters'] = chapters
             page.data['chapter_id'] = chapter_id
             page.data['source'] = source
@@ -69,6 +52,8 @@ class Favorites:
                         text = 'MangaSee'
                     case 'mf_id':
                         text = 'MangaFire'
+                    case 'mx_id':
+                        text = 'MangaNexus'
                     case 'gkk_id':
                         text = 'Gekkou Scans'
                     case 'tsct_id':
@@ -116,7 +101,8 @@ class Favorites:
                         ft.ListTile(
                             title=ft.Text(chapter['number'] if chapter['number'] else chapter['title'], tooltip=chapter['title']),
                             trailing=ft.IconButton(icon, disabled=True),
-                            on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters)
+                            leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(info, source, chapter)),
+                            on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters),
                         )
                     )
                 source_options.disabled = False
@@ -281,14 +267,13 @@ class Favorites:
 
             page.update()
 
-        self.content = ft.Container(
-            ft.Column(
+        self.content = ft.Row(
                 [
                     stack
                 ],
-            ),
-        )
-        self.content.scroll = ft.ScrollMode.ALWAYS
+                scroll='always',
+            )
+
         self.content.data = [update, resize]
 
     def return_content(self) -> ft.Row:

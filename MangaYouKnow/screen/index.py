@@ -16,6 +16,7 @@ class Index:
             ft.dropdown.Option('ml', text='MangaLivre'),
             ft.dropdown.Option('ms', text='MangaSee'),
             ft.dropdown.Option('mf', text='MangaFire'),
+            ft.dropdown.Option('mx', text='MangaNexus'),
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),
@@ -26,7 +27,7 @@ class Index:
             'ms'
         ]
 
-        results = ft.Column(width=470, spacing=0.7, data={'last_src': '', 'chapters': [] })
+        results = ft.Column(width=470, spacing=0.7, data={'last_src': '', 'chapters': []})
         card = ft.Card(ft.Container(results), color='gray', visible=False)
         search = ft.TextField(
             label='Pesquisar Mangás...',
@@ -53,6 +54,7 @@ class Index:
                     ml_id=manga['id'] if source_selector.value == 'ml' else None,
                     ms_id=manga['id'] if source_selector.value == 'ms' else None,
                     mf_id=manga['id'] if source_selector.value == 'mf' else None,
+                    mx_id=manga['id'] if source_selector.value == 'mx' else None,
                     gkk_id=manga['id'] if source_selector.value == 'gkk' else None,
                     tsct_id=manga['id'] if source_selector.value == 'tsct' else None,
                     tcb_id=manga['id'] if source_selector.value == 'tcb' else None,
@@ -104,7 +106,11 @@ class Index:
             )
             card.visible = True
             page.update()
-            response = downloader.search(source_selector.value, query, results.data['chapters'] if results.data['last_src'] == source_selector.value else None)
+            if results.data.get(f'{query} || {source_selector.value}'):
+                response = results.data[f'{query} || {source_selector.value}']
+            else:
+                response = downloader.search(source_selector.value, query, results.data['chapters'] if results.data['last_src'] == source_selector.value else None)
+                results.data[f'{query} || {source_selector.value}'] = response
             if query != search.value:
                     return False
             if source_selector.value in local_search:
@@ -179,7 +185,6 @@ class Index:
         index.controls.append(
             ft.Row([card], top=70, left=175)
         )
-
         self.content = ft.Column(
             [
                 ft.Stack([
@@ -187,7 +192,12 @@ class Index:
                     manga
                 ], width=1000, height=1000)
             ],
+            scroll='always',
+            # bgcolor=None
         )
+        #  = ft.Column(
+            
+        # )
 
     def return_content(self) -> ft.Row:
         return self.content

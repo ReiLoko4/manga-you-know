@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
 
 
-class MangaNexus(MangaDl):
+class MangaNexusDl(MangaDl):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({

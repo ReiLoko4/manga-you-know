@@ -20,15 +20,24 @@ class DataBase:
                 ml_id INTEGER UNIQUE,
                 ms_id TEXT UNIQUE,
                 mf_id TEXT UNIQUE,
+                mx_id TEXT UNIQUE,
                 tcb_id TEXT UNIQUE,
                 tsct_id TEXT UNIQUE,
                 op_id TEXT UNIQUE,
-                gkk_id TEXT UNIQUE,
-                last_chapter_readed_id TEXT,
-                last_chapter_readed_source TEXT,
-                last_chapter_readed_number TEXT
+                gkk_id TEXT UNIQUE
             );
         '''
+        self.columns = [
+            'md_id',
+            'ml_id',
+            'ms_id',
+            'mf_id',
+            'mx_id',
+            'tcb_id',
+            'tsct_id',
+            'op_id',
+            'gkk_id'
+        ]
         #  CREATE TABLE IF NOT EXISTS last (
         self.config = Path('database/config.json')
 
@@ -45,8 +54,16 @@ class DataBase:
             cur = sqlite3.connect(self.database).cursor()
             cur.execute(self.dump)
             cur.close()
+
+    def fix_database(self):
+        table_columns = self.execute_data('PRAGMA table_info(favorites);')
+        for column in self.columns:
+            if column not in [i['name'] for i in table_columns]:
+                self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} TEXT;')
+                self.execute_data(f'CREATE UNIQUE INDEX ta ON favorites({column});')
                 
     def get_database(self) -> list[dict]:
+        self.fix_database()
         cur = self.connect()
         cur.execute('SELECT * FROM favorites;')
         return [dict(i) for i in cur.fetchall()]
@@ -110,16 +127,18 @@ class DataBase:
             md_id: str=None,
             ms_id: str=None,
             mf_id: str=None,
+            mx_id: str=None,
             tcb_id: str=None,
             tsct_id: str=None,
             op_id: str=None,
             gkk_id: str=None
         ) -> bool:
+        self.fix_database()
         cur = self.connect()
         try:
             cur.execute(
-                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-                (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, tcb_id, tsct_id, op_id, gkk_id)
+                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id)
             )
             cur.connection.commit()
             return True
