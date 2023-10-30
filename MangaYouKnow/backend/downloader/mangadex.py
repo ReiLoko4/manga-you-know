@@ -54,12 +54,12 @@ class MangaDexDl(MangaDl):
             return False
         return response.json()
     
-    def get_chapters(self, manga_id, limit=500) -> dict | bool:
+    def get_chapters(self, manga_id, language='en', limit=500) -> dict | bool:
         offset = 0
         chapters_list = []
         while True:
             response = requests.get(
-                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]=en&order[chapter]=desc&order[volume]=desc',
+                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]={language}&order[chapter]=desc&order[volume]=desc',
                 params={'offset':offset}
             )
             if not response:
@@ -87,6 +87,7 @@ class MangaDexDl(MangaDl):
             f'https://api.mangadex.org/at-home/server/{chapter_id}?forcePort443=false',
         )
         if not response: 
+            print(response.url)
             return False
         chapter = response.json()
         chapter_imgs = []
@@ -94,7 +95,6 @@ class MangaDexDl(MangaDl):
             chapter_imgs.append(
                 f'{chapter["baseUrl"]}/data/{chapter["chapter"]["hash"]}/{img}'
             )
-        print(chapter_imgs)
         return chapter_imgs
     
     def download_chapter(self, chapter_id) -> bool:

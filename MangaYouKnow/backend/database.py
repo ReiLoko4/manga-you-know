@@ -7,7 +7,7 @@ class DataBase:
     def __init__(self):
         self.dir = Path('database')
         self.database = Path('database/data.db')
-        self.dump = '''
+        self.favorites_dump = '''
             CREATE TABLE IF NOT EXISTS favorites (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 name TEXT NOT NULL,
@@ -25,6 +25,14 @@ class DataBase:
                 tsct_id TEXT UNIQUE,
                 op_id TEXT UNIQUE,
                 gkk_id TEXT UNIQUE
+            );
+        '''
+        self.readed_dump = '''
+            CREATE TABLE IF NOT EXISTS readed (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                manga_id INTEGER NOT NULL,
+                chapter_id INTEGER NOT NULL,
+                source TEXT NOT NULL
             );
         '''
         self.columns = [
@@ -52,18 +60,18 @@ class DataBase:
             self.dir.mkdir(parents=True, exist_ok=True)
             self.database.touch()
             cur = sqlite3.connect(self.database).cursor()
-            cur.execute(self.dump)
+            cur.execute(self.favorites_dump)
             cur.close()
 
-    def fix_database(self):
+    def fix_favorites(self):
         table_columns = self.execute_data('PRAGMA table_info(favorites);')
         for column in self.columns:
             if column not in [i['name'] for i in table_columns]:
                 self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} TEXT;')
                 self.execute_data(f'CREATE UNIQUE INDEX ta ON favorites({column});')
-                
+    
     def get_database(self) -> list[dict]:
-        self.fix_database()
+        self.fix_favorites()
         cur = self.connect()
         cur.execute('SELECT * FROM favorites;')
         return [dict(i) for i in cur.fetchall()]
@@ -133,7 +141,7 @@ class DataBase:
             op_id: str=None,
             gkk_id: str=None
         ) -> bool:
-        self.fix_database()
+        self.fix_favorites()
         cur = self.connect()
         try:
             cur.execute(
@@ -172,19 +180,6 @@ class DataBase:
             return False
         return True
 
-    def set_last_read(self, manga_id:str, source: str, chapter:str, id_chapter:str) -> bool:
-        cur = self.connect()
-        try:
-            cur.execute(
-                'UPDATE favorites SET last_chapter_readed = JSON_INSERT(last_chapter_readed, "$[0]", JSON_OBJECT("source", ?, "chapter", ?, "release", ?)) WHERE id = ?;',
-                (source, chapter, id_chapter, manga_id)
-            )
-            cur.connection.commit()
-            cur.close()
-        except:
-            return False
-        return True
-
     def delete_manga(self, manga_id: int) -> bool:
         cur = self.connect()
         try:
@@ -197,7 +192,7 @@ class DataBase:
         except:
             return False
         return True
-    
+        
     def delete_manga_by_key(self, key: str, id: int | str) -> bool:
         database = self.get_database()
         id_row = None
@@ -213,11 +208,12 @@ class DataBase:
                 (id_row,)
             )
             cur.connection.commit()
-            cur.close()
+            return True   
         except:
             return False
-        return True
-        
+        finally:
+            cur.close()
+
     def is_favorite(self, key, content) -> bool:
         # cur = self.connect()
         # cur.execute(
@@ -232,40 +228,71 @@ class DataBase:
             if manga[key] == content:
                 return True
         return False
+        
+    def add_readed(self, source: str, manga_id:str, chapter_id:str) -> bool:
+        self.execute_data(self.readed_dump)
+        cur = self.connect()
+        try:
+            cur.execute(
+                'INSERT INTO readed (manga_id, chapter_id, source) VALUES (?, ?, ?);',
+                (manga_id, chapter_id, source)
+            )
+            cur.connection.commit()
+            return True
+        except Exception as e:
+            print(e)
+            return False
+        finally:
+            cur.close()
 
-    def add_data_chapters(self, manga_name:str, chapters:list[dict]):
-        manga_data_path = Path(f'mangas/{manga_name}/data/')
-        manga_data_path.mkdir(parents=True, exist_ok=True)
-        data_file = Path(f'{manga_data_path}/chapters.json')
-        data_file.touch(exist_ok=True)
-        with open(data_file, 'w', encoding='UTF-8') as file:
-            json.dump(chapters,file)
-        return True
-
-    def get_data_chapters(self, manga_name:str) -> list[dict] | bool:
-        manga_name = manga_name.replace(' ', '-').lower()
-        manga_chapters = Path(f'mangas/{manga_name}/data/chapters.json')
-        if not manga_chapters.exists(): return False
-        with open(manga_chapters, mode='r', encoding='utf-8') as file:
-            return json.load(file)
-    
-    def get_manga_info_by_key(self, key, content) -> dict | bool:
-        data = self.get_database()
-        for manga in data:
-            if str(manga[key]) == str(content):
-                return manga
+    def is_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
+        self.execute_data(self.readed_dump)
+        cur = self.connect()
+        cur.execute(
+            'SELECT * FROM readed WHERE source = ? AND manga_id = ? AND chapter_id = ?;',
+            (source, manga_id, chapter_id)
+        )
+        data = cur.fetchall()
+        cur.close()
+        if data:
+            return True
         return False
+
+    # all the code below is deprecated :)
+
+    # def add_data_chapters(self, manga_name:str, chapters:list[dict]):
+    #     manga_data_path = Path(f'mangas/{manga_name}/data/')
+    #     manga_data_path.mkdir(parents=True, exist_ok=True)
+    #     data_file = Path(f'{manga_data_path}/chapters.json')
+    #     data_file.touch(exist_ok=True)
+    #     with open(data_file, 'w', encoding='UTF-8') as file:
+    #         json.dump(chapters,file)
+    #     return True
+
+    # def get_data_chapters(self, manga_name:str) -> list[dict] | bool:
+    #     manga_name = manga_name.replace(' ', '-').lower()
+    #     manga_chapters = Path(f'mangas/{manga_name}/data/chapters.json')
+    #     if not manga_chapters.exists(): return False
+    #     with open(manga_chapters, mode='r', encoding='utf-8') as file:
+    #         return json.load(file)
     
-    # def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
-    #     chapters = self.get_data_chapters(manga_name)
-    #     for line in chapters: 
-    #         if line[0] == chapter: return line[1]
+    # def get_manga_info_by_key(self, key, content) -> dict | bool:
+    #     data = self.get_database()
+    #     for manga in data:
+    #         if str(manga[key]) == str(content):
+    #             return manga
     #     return False
     
-    def get_chapter_info(self, manga_id, id_release) -> dict | bool:
-        chapters = self.get_data_chapters(self.get_manga_info_by_key(manga_id)['folder_name'])
-        for chapter in chapters:
-            if str(chapter['releases'][list(chapter['releases'].keys())[0]]['id_release']) == str(id_release):
-                return chapter
-        return False
+    # # def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
+    # #     chapters = self.get_data_chapters(manga_name)
+    # #     for line in chapters: 
+    # #         if line[0] == chapter: return line[1]
+    # #     return False
+    
+    # def get_chapter_info(self, manga_id, id_release) -> dict | bool:
+    #     chapters = self.get_data_chapters(self.get_manga_info_by_key(manga_id)['folder_name'])
+    #     for chapter in chapters:
+    #         if str(chapter['releases'][list(chapter['releases'].keys())[0]]['id_release']) == str(id_release):
+    #             return chapter
+    #     return False
     

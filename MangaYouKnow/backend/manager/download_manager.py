@@ -34,10 +34,11 @@ class Downloader:
                 else source.search(query, pre_results)
         return False
 
-    def get_chapters(self, source: str, source_id: str) -> list[dict] | list | bool:
+    def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[dict] | list | bool:
         source = self.match_source(source)
         if source:
-            return source.get_chapters(source_id)
+            return source.get_chapters(manga_id) if not source_language \
+                else source.get_chapters(manga_id, source_language)
         return False
 
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list | list[dict] | bool:

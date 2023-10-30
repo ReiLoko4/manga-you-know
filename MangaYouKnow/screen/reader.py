@@ -16,6 +16,8 @@ class MangaReader:
 
     def create_content(self):
         self.page.banner.visible = False
+        if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id']):
+            self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id'])
         self.chapters = self.page.data['manga_chapters']
         self.pages = self.page.data['chapter_images']
         self.page.window_full_screen = True

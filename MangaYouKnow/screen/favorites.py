@@ -11,6 +11,17 @@ from backend.manager import Downloader, ThreadManager
 class Favorites:
     def __init__(self, page: ft.Page):
         dl = Downloader()
+        source_languages = {
+            'md_id': ['en', 'pt-br'],
+            'ml_id': ['pt-br'],
+            'ms_id': ['en'],
+            'mf_id': ['en'],
+            'mx_id': ['pt-br'],
+            'gkk_id': ['pt-br'],
+            'tsct_id': ['pt-br'],
+            'tcb_id': ['en'],
+            'op_id': ['en']
+        }
         database = DataBase()
         search = ft.TextField(
             label='Pesquisar Favoritos...',
@@ -31,11 +42,10 @@ class Favorites:
             images_b64 = dl.get_base64_images(pages)
             page.data['chapter_images'] = images_b64
             page.data['manga_chapters'] = chapters
+            page.data['manga_id'] = manga[source]
             page.data['chapter_id'] = chapter_id
             page.data['source'] = source
             page.go('/reader')
-
-
 
         def open_manga(info):
             list_chapters = ft.Column(height=8000, width=240, scroll='always')
@@ -79,17 +89,33 @@ class Favorites:
                 width=140,
                 value=sources[0]
             )
+            language_options = ft.Dropdown(
+                options=[ft.dropdown.Option(i, i) for i in source_languages[source_options.value]],
+                width=140,
+                value=source_languages[source_options.value][0]
+            )
+            if len(sources) == 1:
+                source_options.disabled = True
+            if len(source_languages[source_options.value]) == 1:
+                language_options.disabled = True
             def load_chapters(_=None):
-                if chapters_by_source.get(source_options.value):
-                    list_chapters.controls = chapters_by_source[source_options.value]
+                if len(language_options.options) != len(source_languages[source_options.value]):
+                    language_options.options = [ft.dropdown.Option(i, i) for i in source_languages[source_options.value]]
+                    language_options.value = source_languages[source_options.value][0]
+                    if len(source_languages[source_options.value]) == 1:
+                        language_options.disabled = True
+                if chapters_by_source.get(f'{source_options.value}_{language_options.value}'):
+                    list_chapters.controls = chapters_by_source[f'{source_options.value}_{language_options.value}']
                     page.update()
                     return
+                
                 source_options.disabled = True
+                language_options.disabled = True
                 download_all.disabled = True
                 list_chapters.controls = [ft.Row([ft.ProgressRing(height=120, width=120)], alignment=ft.MainAxisAlignment.CENTER, width=230)]
                 page.update()
-                chapters = dl.get_chapters(source_options.value, info.get(source_options.value))
-                chapters_by_source[source_options.value] = chapters
+                chapters = dl.get_chapters(source_options.value, info[source_options.value]) if len(source_languages[source_options.value]) == 1 \
+                    else dl.get_chapters(source_options.value, info[source_options.value], language_options.value) 
                 list_chapters.controls = []
                 icon = ft.icons.REMOVE
                 for chapter in chapters:
@@ -97,6 +123,8 @@ class Favorites:
                     #     is_readed = True
                     # if is_readed:
                     #     icon = ft.icons.CHECK
+                    if database.is_readed(source_options.value, info[source_options.value], chapter['id']):
+                        icon = ft.icons.CHECK
                     list_chapters.controls.append(
                         ft.ListTile(
                             title=ft.Text(chapter['number'] if chapter['number'] else chapter['title'], tooltip=chapter['title']),
@@ -105,7 +133,11 @@ class Favorites:
                             on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters),
                         )
                     )
-                source_options.disabled = False
+                chapters_by_source[f'{source_options.value}_{language_options.value}'] = list_chapters.controls
+                if len(sources) > 1:
+                    source_options.disabled = False
+                if len(source_languages[source_options.value]) > 1:
+                    language_options.disabled = False
                 download_all.disabled = False
                 page.update()
             download_all = ft.IconButton(
@@ -113,6 +145,7 @@ class Favorites:
                 tooltip='Baixar todos capítulos',
                 on_click=lambda e: dl.download_all_chapters(info, source_options.value, chapters_by_source[source_options.value]))
             source_options.on_change = load_chapters
+            language_options.on_change = load_chapters
             alert = ft.AlertDialog(
                 title=ft.Text(info['name'] if len(info['name']) < 40 else f'{info["name"][0:37]}...', tooltip=info['name']),
                 content=ft.Container(
@@ -120,7 +153,8 @@ class Favorites:
                         ft.Column([
                             ft.Container(ft.Image(info['cover'], height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
                             source_options,
-                            download_all
+                            language_options,
+                            download_all,
                         ]),
                         ft.Card(list_chapters, width=250)
                     ]), height=500, width=430
