@@ -143,7 +143,7 @@ class Favorites:
             download_all = ft.IconButton(
                 ft.icons.DOWNLOAD,
                 tooltip='Baixar todos capítulos',
-                on_click=lambda e: dl.download_all_chapters(info, source_options.value, chapters_by_source[source_options.value]))
+                on_click=lambda e: dl.download_all_chapters(info, source_options.value, chapters_by_source[f'{source_options.value}_{language_options.value}']))
             source_options.on_change = load_chapters
             language_options.on_change = load_chapters
             alert = ft.AlertDialog(
