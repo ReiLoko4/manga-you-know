@@ -104,18 +104,17 @@ class Favorites:
                     language_options.value = source_languages[source_options.value][0]
                     if len(source_languages[source_options.value]) == 1:
                         language_options.disabled = True
-                if chapters_by_source.get(f'{source_options.value}_{language_options.value}'):
-                    list_chapters.controls = chapters_by_source[f'{source_options.value}_{language_options.value}']
-                    page.update()
-                    return
-                
                 source_options.disabled = True
                 language_options.disabled = True
                 download_all.disabled = True
                 list_chapters.controls = [ft.Row([ft.ProgressRing(height=120, width=120)], alignment=ft.MainAxisAlignment.CENTER, width=230)]
                 page.update()
-                chapters = dl.get_chapters(source_options.value, info[source_options.value]) if len(source_languages[source_options.value]) == 1 \
-                    else dl.get_chapters(source_options.value, info[source_options.value], language_options.value) 
+                if chapters_by_source.get(f'{source_options.value}_{language_options.value}'):
+                    chapters = chapters_by_source[f'{source_options.value}_{language_options.value}']
+                else:
+                    chapters = dl.get_chapters(source_options.value, info[source_options.value]) if len(source_languages[source_options.value]) == 1 \
+                        else dl.get_chapters(source_options.value, info[source_options.value], language_options.value) 
+                    chapters_by_source[f'{source_options.value}_{language_options.value}'] = chapters
                 list_chapters.controls = []
                 icon = ft.icons.REMOVE
                 for chapter in chapters:
@@ -133,7 +132,6 @@ class Favorites:
                             on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters),
                         )
                     )
-                chapters_by_source[f'{source_options.value}_{language_options.value}'] = list_chapters.controls
                 if len(sources) > 1:
                     source_options.disabled = False
                 if len(source_languages[source_options.value]) > 1:
