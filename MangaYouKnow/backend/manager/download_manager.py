@@ -26,7 +26,7 @@ class Downloader:
 
     def match_source(self, source) -> MangaDl | object:
         return self.downloaders[source.replace('_id', '')]
-
+    
     def search(self, source: str, query: str, pre_results: list[dict] = None):
         source = self.match_source(source)
         if source:
@@ -37,8 +37,11 @@ class Downloader:
     def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[dict] | list | bool:
         source = self.match_source(source)
         if source:
-            return source.get_chapters(manga_id) if not source_language \
-                else source.get_chapters(manga_id, source_language)
+            try: 
+                return source.get_chapters(manga_id) if not source_language \
+                    else source.get_chapters(manga_id, source_language)
+            except Exception as e: 
+                print(e)
         return False
 
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list | list[dict] | bool:

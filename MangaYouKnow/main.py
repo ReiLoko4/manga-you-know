@@ -3,7 +3,7 @@ from screen.user_control.app_bar import NavBar
 from screen.router_manager import Router
 
 
-__version__ = '0.9.1b'
+__version__ = '0.9.2b'
 
 
 def __main__(page: ft.Page) -> ft.FletApp:
@@ -30,10 +30,6 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.data = {} 
     page.data['reader_container'] = router.reader
     page.go('/')
-    
-    # def resize(e:ft.ControlEvent):
-    #     page.update()
-    # page.on_resize = resize
     page.update()
 
 

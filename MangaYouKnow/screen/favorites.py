@@ -20,7 +20,8 @@ class Favorites:
             'gkk_id': ['pt-br'],
             'tsct_id': ['pt-br'],
             'tcb_id': ['en'],
-            'op_id': ['en']
+            'op_id': ['en'],
+            'opex': ['pt-br']
         }
         database = DataBase()
         search = ft.TextField(
@@ -42,12 +43,20 @@ class Favorites:
             images_b64 = dl.get_base64_images(pages)
             page.data['chapter_images'] = images_b64
             page.data['manga_chapters'] = chapters
-            page.data['manga_id'] = manga[source]
+            page.data['manga_id'] = manga[source] if source != 'opex' else source
             page.data['chapter_id'] = chapter_id
             page.data['source'] = source
             page.go('/reader')
 
+
         def open_manga(info):
+            def togle_readed(source, manga, chapter_id):
+                if database.is_readed(source, manga[source] if source != 'opex' else source, chapter_id):
+                    database.delete_readed(source, manga[source] if source != 'opex' else source, chapter_id)
+                else:
+                    database.add_readed(source, manga[source] if source != 'opex' else source, chapter_id)
+                load_chapters()
+                page.update()
             list_chapters = ft.Column(height=8000, width=240, scroll='always')
             sources = [i for i in list(info.keys()) if i.endswith('_id') and info[i] != None]
             options = []
@@ -99,11 +108,10 @@ class Favorites:
             if len(source_languages[source_options.value]) == 1:
                 language_options.disabled = True
             def load_chapters(_=None):
-                if len(language_options.options) != len(source_languages[source_options.value]):
-                    language_options.options = [ft.dropdown.Option(i, i) for i in source_languages[source_options.value]]
+                language_options.options = [ft.dropdown.Option(i, i) for i in source_languages[source_options.value]]
+                if len(source_languages[source_options.value]) == 1:
                     language_options.value = source_languages[source_options.value][0]
-                    if len(source_languages[source_options.value]) == 1:
-                        language_options.disabled = True
+                    language_options.disabled = True
                 source_options.disabled = True
                 language_options.disabled = True
                 download_all.disabled = True
@@ -112,35 +120,30 @@ class Favorites:
                 if chapters_by_source.get(f'{source_options.value}_{language_options.value}'):
                     chapters = chapters_by_source[f'{source_options.value}_{language_options.value}']
                 else:
-                    chapters = dl.get_chapters(source_options.value, info[source_options.value]) if len(source_languages[source_options.value]) == 1 \
+                    chapters = dl.get_chapters(source_options.value, info.get(source_options.value) if source_options.value != 'opex' else None) if len(source_languages[source_options.value]) == 1 \
                         else dl.get_chapters(source_options.value, info[source_options.value], language_options.value) 
                     chapters_by_source[f'{source_options.value}_{language_options.value}'] = chapters
                 list_chapters.controls = []
                 icon = ft.icons.REMOVE
                 for chapter in chapters:
-                    # if str(last_readed) == str(chapter['id_chapter']):
-                    #     is_readed = True
-                    # if is_readed:
-                    #     icon = ft.icons.CHECK
-                    if database.is_readed(source_options.value, info[source_options.value], chapter['id']):
+                    if database.is_readed(source_options.value, info.get(source_options.value) if source_options != 'opex' else source, chapter['id']):
                         icon = ft.icons.CHECK
                     list_chapters.controls.append(
                         ft.ListTile(
                             title=ft.Text(chapter['number'] if chapter['number'] else chapter['title'], tooltip=chapter['title']),
-                            trailing=ft.IconButton(icon, disabled=True),
+                            trailing=ft.IconButton(icon, on_click=lambda e, source=source_options.value, manga=info, chapter_id=chapter['id']: togle_readed(source, manga, chapter_id)),
                             leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(info, source, chapter)),
                             on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters),
                         )
                     )
-                if len(sources) > 1:
+                if len(source_options.options) > 1:
                     source_options.disabled = False
                 if len(source_languages[source_options.value]) > 1:
                     language_options.disabled = False
                 download_all.disabled = False
                 page.update()
-            download_all = ft.IconButton(
-                ft.icons.DOWNLOAD,
-                tooltip='Baixar todos capítulos',
+            download_all = ft.ElevatedButton(
+                text='Baixar tudo',
                 on_click=lambda e: dl.download_all_chapters(info, source_options.value, chapters_by_source[f'{source_options.value}_{language_options.value}']))
             source_options.on_change = load_chapters
             language_options.on_change = load_chapters
@@ -165,8 +168,8 @@ class Favorites:
 
         def edit_manga(info: dict):
             change_name = ft.TextField(label='Nome', value=info['name'])
+            change_cover = ft.TextField(label='Capa', value=info['cover'])
             def save(column, content):
-                # if database.set_manga(into['id']), key, content):
                 if database.set_manga(info['id'], column, content):
                     row_mangas.controls = load_mangas()
                     page.update()
@@ -175,10 +178,12 @@ class Favorites:
                 content=ft.Container(
                     ft.Column([
                         change_name,
+                        change_cover,
                     ])
                 ),
             )
             change_name.on_change = lambda e: save('name', e.control.value)
+            change_cover.on_change = lambda e: save('cover', e.control.value)
             page.dialog = edition
             edition.open = True
             page.update()
@@ -211,7 +216,6 @@ class Favorites:
 
         def load_mangas(query: str = None) -> list[ft.Card]:
             favorites = database.get_database()
-
             if query is not None:
                 favorites = [i for i in favorites if query.lower() in i['name'].lower()]
                 if len(favorites) == 0:
@@ -280,7 +284,7 @@ class Favorites:
                     count += 1
 
             stack.height = count * 435
-            row_mangas.controls = load_mangas()
+            row_mangas.controls = load_mangas(query=search.value if search.value != '' else None)
             page.update()
 
         def search_favorites(e):

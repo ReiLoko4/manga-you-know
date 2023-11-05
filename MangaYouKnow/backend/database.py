@@ -215,18 +215,37 @@ class DataBase:
             cur.close()
 
     def is_favorite(self, key, content) -> bool:
-        # cur = self.connect()
-        # cur.execute(
-        #     'SELECT * FROM favorites WHERE ? = ?;',
-        #     (key, content)
-        # )
-        # data = cur.fetchall()
-        # if data:
-        #     return True
         favorites = self.get_database()
         for manga in favorites:
             if manga[key] == content:
                 return True
+        return False
+    
+    def is_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
+        self.execute_data(self.readed_dump)
+        cur = self.connect()
+        cur.execute(
+            'SELECT * FROM readed WHERE source = ? AND manga_id = ? AND chapter_id = ?;',
+            (source, manga_id, chapter_id)
+        )
+        data = cur.fetchall()
+        cur.close()
+        if data:
+            return True
+        return False
+    
+    def is_one_readed(self, source: str, manga_id: str, chapters: list[dict]) -> bool:
+        self.execute_data(self.readed_dump)
+        cur = self.connect()
+        for chapter in chapters:
+            cur.execute(
+                'SELECT * FROM readed WHERE source = ? AND manga_id = ? AND chapter_id = ?;',
+                (source, manga_id, chapter['id'])
+            )
+            data = cur.fetchall()
+            if data:
+                return True
+        cur.close()
         return False
         
     def add_readed(self, source: str, manga_id:str, chapter_id:str) -> bool:
@@ -245,54 +264,19 @@ class DataBase:
         finally:
             cur.close()
 
-    def is_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
+    def delete_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
         self.execute_data(self.readed_dump)
         cur = self.connect()
-        cur.execute(
-            'SELECT * FROM readed WHERE source = ? AND manga_id = ? AND chapter_id = ?;',
-            (source, manga_id, chapter_id)
-        )
-        data = cur.fetchall()
-        cur.close()
-        if data:
+        try:
+            cur.execute(
+                'DELETE FROM readed WHERE source = ? AND manga_id = ? AND chapter_id = ?;',
+                (source, manga_id, chapter_id)
+            )
+            cur.connection.commit()
             return True
-        return False
+        except:
+            return False
+        finally:
+            cur.close()
 
-    # all the code below is deprecated :)
-
-    # def add_data_chapters(self, manga_name:str, chapters:list[dict]):
-    #     manga_data_path = Path(f'mangas/{manga_name}/data/')
-    #     manga_data_path.mkdir(parents=True, exist_ok=True)
-    #     data_file = Path(f'{manga_data_path}/chapters.json')
-    #     data_file.touch(exist_ok=True)
-    #     with open(data_file, 'w', encoding='UTF-8') as file:
-    #         json.dump(chapters,file)
-    #     return True
-
-    # def get_data_chapters(self, manga_name:str) -> list[dict] | bool:
-    #     manga_name = manga_name.replace(' ', '-').lower()
-    #     manga_chapters = Path(f'mangas/{manga_name}/data/chapters.json')
-    #     if not manga_chapters.exists(): return False
-    #     with open(manga_chapters, mode='r', encoding='utf-8') as file:
-    #         return json.load(file)
-    
-    # def get_manga_info_by_key(self, key, content) -> dict | bool:
-    #     data = self.get_database()
-    #     for manga in data:
-    #         if str(manga[key]) == str(content):
-    #             return manga
-    #     return False
-    
-    # # def get_chapter_id(self, manga_name:str, chapter:str) -> str or bool:
-    # #     chapters = self.get_data_chapters(manga_name)
-    # #     for line in chapters: 
-    # #         if line[0] == chapter: return line[1]
-    # #     return False
-    
-    # def get_chapter_info(self, manga_id, id_release) -> dict | bool:
-    #     chapters = self.get_data_chapters(self.get_manga_info_by_key(manga_id)['folder_name'])
-    #     for chapter in chapters:
-    #         if str(chapter['releases'][list(chapter['releases'].keys())[0]]['id_release']) == str(id_release):
-    #             return chapter
-    #     return False
     
