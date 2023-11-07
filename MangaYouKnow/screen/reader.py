@@ -25,7 +25,9 @@ class MangaReader:
         self.currently_page = ft.Text(f' 1/{self.pages_len}')
         self.panel = ft.Image(src_base64=self.pages[0], fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
         self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
-        self.btn_next_chapter.visible = False
+        self.btn_next_chapter.visible = True if self.pages_len == 1 \
+            and not self.chapters[0]['id'] == self.page.data['chapter_id'] else False
+
         is_second_time = False
         if self.content != None:
             is_second_time = True

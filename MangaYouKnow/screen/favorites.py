@@ -57,6 +57,14 @@ class Favorites:
                     database.add_readed(source, manga[source] if source != 'opex' else source, chapter_id)
                 load_chapters()
                 page.update()
+            chapter_search = ft.TextField(
+                label='Capítulo...',
+                width=240,
+                border_radius=20,
+                height=40,
+                border_color=ft.colors.GREY_700,
+                focused_border_color=ft.colors.BLUE_300
+            )
             list_chapters = ft.Column(height=8000, width=240, scroll='always')
             sources = [i for i in list(info.keys()) if i.endswith('_id') and info[i] != None]
             options = []
@@ -107,7 +115,7 @@ class Favorites:
                 source_options.disabled = True
             if len(source_languages[source_options.value]) == 1:
                 language_options.disabled = True
-            def load_chapters(_=None):
+            def load_chapters(query: str=None):
                 language_options.options = [ft.dropdown.Option(i, i) for i in source_languages[source_options.value]]
                 if len(source_languages[source_options.value]) == 1:
                     language_options.value = source_languages[source_options.value][0]
@@ -128,12 +136,16 @@ class Favorites:
                 for chapter in chapters:
                     if database.is_readed(source_options.value, info.get(source_options.value) if source_options != 'opex' else source, chapter['id']):
                         icon = ft.icons.CHECK
+                    if query is not None and chapter['number'] is not None:
+                        if str(query).lower() not in str(chapter['number']).lower():
+                            continue
                     list_chapters.controls.append(
                         ft.ListTile(
                             title=ft.Text(chapter['number'] if chapter['number'] else chapter['title'], tooltip=chapter['title']),
                             trailing=ft.IconButton(icon, on_click=lambda e, source=source_options.value, manga=info, chapter_id=chapter['id']: togle_readed(source, manga, chapter_id)),
                             leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(info, source, chapter)),
                             on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters),
+                            key=chapter['number']
                         )
                     )
                 if len(source_options.options) > 1:
@@ -145,8 +157,9 @@ class Favorites:
             download_all = ft.ElevatedButton(
                 text='Baixar tudo',
                 on_click=lambda e: dl.download_all_chapters(info, source_options.value, chapters_by_source[f'{source_options.value}_{language_options.value}']))
-            source_options.on_change = load_chapters
-            language_options.on_change = load_chapters
+            source_options.on_change = lambda e: load_chapters()
+            language_options.on_change = lambda e: load_chapters()
+            chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
             alert = ft.AlertDialog(
                 title=ft.Text(info['name'] if len(info['name']) < 40 else f'{info["name"][0:37]}...', tooltip=info['name']),
                 content=ft.Container(
@@ -157,7 +170,10 @@ class Favorites:
                             language_options,
                             download_all,
                         ]),
-                        ft.Card(list_chapters, width=250)
+                        ft.Column([
+                            chapter_search,
+                            ft.Card(list_chapters, width=250, height=420)
+                        ])
                     ]), height=500, width=430
                 )
             )
