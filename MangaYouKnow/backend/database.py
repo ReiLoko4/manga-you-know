@@ -5,8 +5,8 @@ from pathlib import Path
 
 class DataBase:
     def __init__(self):
-        self.dir = Path('database')
-        self.database = Path('database/data.db')
+        self.dir = Path('./database')
+        self.database = Path('./database/data.db')
         self.favorites_dump = '''
             CREATE TABLE IF NOT EXISTS favorites (
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

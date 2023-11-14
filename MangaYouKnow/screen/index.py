@@ -21,7 +21,7 @@ class Index:
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),
             # ft.dropdown.Option('op', text='OP Scans'),
-        ], value='md', width=120)
+        ], value='md', width=140)
 
         local_search = [
             'ms'
