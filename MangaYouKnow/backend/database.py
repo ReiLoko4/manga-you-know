@@ -234,6 +234,22 @@ class DataBase:
             return True
         return False
     
+    def is_each_readed(self, source: str, manga_id: str, chapters: list[dict]) -> list[bool]:
+        self.execute_data(self.readed_dump)
+        cur = self.connect()
+        readed = []
+        list_readed = cur.execute(
+            'SELECT * FROM readed WHERE source = ? AND manga_id = ?;',
+            (source, manga_id)
+        ).fetchall()
+        for chapter in chapters:
+            readed.append(
+                True if chapter['id'] in [i['chapter_id'] for i in list_readed]
+                    else False
+            )
+        cur.close()
+        return readed
+    
     def is_one_readed(self, source: str, manga_id: str, chapters: list[dict]) -> bool:
         self.execute_data(self.readed_dump)
         cur = self.connect()

@@ -50,12 +50,18 @@ class Favorites:
 
 
         def open_manga(info):
+            btn_is_readed_list = []
             def togle_readed(source, manga, chapter_id):
                 if database.is_readed(source, manga[source] if source != 'opex' else source, chapter_id):
                     database.delete_readed(source, manga[source] if source != 'opex' else source, chapter_id)
                 else:
                     database.add_readed(source, manga[source] if source != 'opex' else source, chapter_id)
-                load_chapters()
+                each_readed = database.is_each_readed(source, manga[source] if source != 'opex' else source, chapters_by_source[f'{source}_{language_options.value}'])
+                icon = ft.icons.REMOVE
+                for i, btn in enumerate(btn_is_readed_list):
+                    if each_readed[i]:
+                        icon = ft.icons.CHECK
+                    btn.icon = icon
                 page.update()
             chapter_search = ft.TextField(
                 label='Capítulo...',
@@ -115,7 +121,9 @@ class Favorites:
                 source_options.disabled = True
             if len(source_languages[source_options.value]) == 1:
                 language_options.disabled = True
+                
             def load_chapters(query: str=None):
+                btn_is_readed_list.clear()
                 language_options.options = [ft.dropdown.Option(i, i) for i in source_languages[source_options.value]]
                 if len(source_languages[source_options.value]) == 1:
                     language_options.value = source_languages[source_options.value][0]
@@ -123,7 +131,13 @@ class Favorites:
                 source_options.disabled = True
                 language_options.disabled = True
                 download_all.disabled = True
-                list_chapters.controls = [ft.Row([ft.ProgressRing(height=120, width=120)], alignment=ft.MainAxisAlignment.CENTER, width=230)]
+                list_chapters.controls = [
+                    ft.Row(
+                        [
+                            ft.ProgressRing(height=120, width=120)
+                        ], alignment=ft.MainAxisAlignment.CENTER, width=230
+                    )
+                ]
                 page.update()
                 if chapters_by_source.get(f'{source_options.value}_{language_options.value}'):
                     chapters = chapters_by_source[f'{source_options.value}_{language_options.value}']
@@ -132,17 +146,25 @@ class Favorites:
                         else dl.get_chapters(source_options.value, info[source_options.value], language_options.value) 
                     chapters_by_source[f'{source_options.value}_{language_options.value}'] = chapters
                 list_chapters.controls = []
+                is_each_readed = database.is_each_readed(
+                    source_options.value, 
+                    info.get(source_options.value) 
+                    if source_options.value != 'opex' else source, 
+                    chapters
+                )
                 icon = ft.icons.REMOVE
-                for chapter in chapters:
-                    if database.is_readed(source_options.value, info.get(source_options.value) if source_options != 'opex' else source, chapter['id']):
+                for i, chapter in enumerate(chapters):
+                    if is_each_readed[i]:
                         icon = ft.icons.CHECK
-                    if query is not None and chapter['number'] is not None:
+                    btn_read = ft.IconButton(icon, on_click=lambda e, source=source_options.value, manga=info, chapter_id=chapter['id']: togle_readed(source, manga, chapter_id))
+                    btn_is_readed_list.append(btn_read)
+                    if query and chapter['number']:
                         if str(query).lower() not in str(chapter['number']).lower():
                             continue
                     list_chapters.controls.append(
                         ft.ListTile(
                             title=ft.Text(chapter['number'] if chapter['number'] else chapter['title'], tooltip=chapter['title']),
-                            trailing=ft.IconButton(icon, on_click=lambda e, source=source_options.value, manga=info, chapter_id=chapter['id']: togle_readed(source, manga, chapter_id)),
+                            trailing=btn_read,
                             leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(info, source, chapter)),
                             on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters),
                             key=chapter['number']

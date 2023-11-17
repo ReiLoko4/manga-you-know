@@ -23,6 +23,13 @@ class Updater:
     def get_latest_release(self) -> dict:
         return requests.get(f'{self.endpoint}/releases/latest').json()
     
+    def is_downloaded(self, version: str) -> bool:
+        return Path(f'app/{version}.exe').exists()
+    
+    def set_version(self, version: str):
+        if self.app_meta.exists():
+            self.app_meta.write_text(json.dumps({'version': version}))
+    
     def download_release(self, download_url, tag_name, bar: ft.ProgressBar = None):
         if bar:
             bar.value = 0
