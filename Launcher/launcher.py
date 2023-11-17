@@ -36,7 +36,11 @@ def launch(page: ft.Page) -> ft.FletApp:
             def download_latest(_=None):
                 column.controls.append(ft.ProgressRing(height=40, color='red'))
                 page.update()
-                updater.download_release(latest_release['assets'][0]['browser_download_url'], latest_release['tag_name'])
+                latest_link = [
+                    i['browser_download_url'] for i in latest_release['assets'] \
+                        if latest_release['tag_name'] in i['browser_download_url']
+                ][0]
+                updater.download_release(latest_link, latest_release['tag_name'])
                 startfile(Path('app') / f'{latest_release["tag_name"]}.exe')
                 page.window_destroy()
             def cancel(_=None):
