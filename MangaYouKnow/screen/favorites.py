@@ -160,7 +160,9 @@ class Favorites:
                 if not chapters:
                     list_chapters.controls = [
                         ft.ListTile(
-                            title=ft.Text('Nenhum capítulo encontrado nesse idioma, jovem!'),
+                            title=ft.Text(
+                                'Nenhum capítulo encontrado nesse idioma, jovem!' if query == None else f'Nenhum resultado para "{query}"'
+                            ),
                         )
                     ]
                     if len(source_languages[source_options.value]) > 1:
