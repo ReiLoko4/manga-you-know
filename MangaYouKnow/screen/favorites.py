@@ -12,7 +12,7 @@ class Favorites:
         source_languages = {
             'md_id': [
                 'en', 'pt-br', 
-                'es', 'ja-ro'
+                'es', 'ja-ro',
                 'ko-ro', 'zh',
                 'es-la', 'zh-hk',
                 'zh-ro'
@@ -157,6 +157,18 @@ class Favorites:
                     chapters
                 )
                 icon = ft.icons.REMOVE
+                if not chapters:
+                    list_chapters.controls = [
+                        ft.ListTile(
+                            title=ft.Text('Nenhum capítulo encontrado nesse idioma, jovem!'),
+                        )
+                    ]
+                    if len(source_languages[source_options.value]) > 1:
+                        language_options.disabled = False
+                    if len(sources) > 1:
+                        source_options.disabled = False
+                    page.update()
+                    return
                 for i, chapter in enumerate(chapters):
                     if is_each_readed[i]:
                         icon = ft.icons.CHECK
