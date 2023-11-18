@@ -1,7 +1,6 @@
-from time import sleep
-
 import flet as ft
-
+from time import sleep
+from backend.models import Manga
 from backend.database import DataBase
 from backend.manager import Downloader
 
@@ -41,24 +40,22 @@ class Index:
         manga = ft.Row(visible=False)
         self.is_clicked = False
 
-        def togle_favorite(manga: dict, button: ft.IconButton, is_on_search: bool = False):
-            if connection_data.is_favorite(f'{source_selector.value}_id', manga['id']):
-                if connection_data.delete_manga_by_key(f'{source_selector.value}_id', manga['id']):
+        def togle_favorite(manga: Manga, button: ft.IconButton, is_on_search: bool = False):
+            if connection_data.is_favorite(f'{source_selector.value}_id', manga.id):
+                if connection_data.delete_manga_by_key(f'{source_selector.value}_id', manga.id):
                     button.icon = ft.icons.BOOKMARK_OUTLINE
             else:
                 if connection_data.add_manga(
-                    manga['name'],
-                    manga['folder_name'],
-                    manga['cover'],
-                    md_id=manga['id'] if source_selector.value == 'md' else None,
-                    ml_id=manga['id'] if source_selector.value == 'ml' else None,
-                    ms_id=manga['id'] if source_selector.value == 'ms' else None,
-                    mf_id=manga['id'] if source_selector.value == 'mf' else None,
-                    mx_id=manga['id'] if source_selector.value == 'mx' else None,
-                    gkk_id=manga['id'] if source_selector.value == 'gkk' else None,
-                    tsct_id=manga['id'] if source_selector.value == 'tsct' else None,
-                    tcb_id=manga['id'] if source_selector.value == 'tcb' else None,
-                    op_id=manga['id'] if source_selector.value == 'op' else None,
+                    manga,
+                    md_id=manga.id if source_selector.value == 'md' else None,
+                    ml_id=manga.id if source_selector.value == 'ml' else None,
+                    ms_id=manga.id if source_selector.value == 'ms' else None,
+                    mf_id=manga.id if source_selector.value == 'mf' else None,
+                    mx_id=manga.id if source_selector.value == 'mx' else None,
+                    gkk_id=manga.id if source_selector.value == 'gkk' else None,
+                    tsct_id=manga.id if source_selector.value == 'tsct' else None,
+                    tcb_id=manga.id if source_selector.value == 'tcb' else None,
+                    op_id=manga.id if source_selector.value == 'op' else None,
                 ):
                     button.icon = ft.icons.BOOKMARK_ROUNDED
             page.update()
@@ -69,15 +66,15 @@ class Index:
                 search.focus()
                 page.update()
 
-        def manga_page(info_manga):
+        def manga_page(info_manga: Manga):
             button_favorite = ft.IconButton(
-                ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite(f'{source_selector.value}_id', info_manga['id']) else ft.icons.BOOKMARK_OUTLINE,
+                ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite(f'{source_selector.value}_id', info_manga.id) else ft.icons.BOOKMARK_OUTLINE,
                 height=30)
             button_favorite.on_click = lambda e, info=info_manga, button=button_favorite: togle_favorite(info, button)
             manga_dialog = ft.AlertDialog(
-                title=ft.Text(info_manga['name'][0:30], tooltip=info_manga['name']),
+                title=ft.Text(info_manga.name[0:30], tooltip=info_manga.name),
                 content=ft.Row([
-                    ft.Image(src=info_manga['cover'], height=400, width=ft.ImageFit.FIT_HEIGHT, animate_size=300,
+                    ft.Image(src=info_manga.cover, height=400, width=ft.ImageFit.FIT_HEIGHT, animate_size=300,
                              border_radius=ft.border_radius.all(30)),
                 ]),
                 actions=[button_favorite]
@@ -121,7 +118,6 @@ class Index:
             list_favorites_id = [i[f'{source_selector.value}_id'] for i in favorites]
             card.visible = True
             results.controls.clear()
-            
             if not response:
                 results.controls.append(
                     ft.ListTile(
@@ -133,12 +129,12 @@ class Index:
                 )
             else:
                 for manga in response:
-                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga['id'] in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
+                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga.id in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
                     button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga, button, True)
                     results.controls.append(
                         ft.ListTile(
                             key='manga',
-                            title=ft.Text(f"{manga['name'][0:42]}..." if len(manga['name']) > 45 else manga['name'][0:50], tooltip=manga['name']),
+                            title=ft.Text(f'{manga.name[0:42]}...' if len(manga.name) > 45 else manga.name[0:50], tooltip=manga.name),
                             height=45,
                             trailing=button_favorite,
                             on_click=lambda e, info=manga: manga_page(info)

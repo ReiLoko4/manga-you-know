@@ -1,6 +1,7 @@
 import json
 import sqlite3
 from pathlib import Path
+from backend.models import Manga, Chapter
 
 
 class DataBase:
@@ -125,12 +126,7 @@ class DataBase:
 
     def add_manga(
             self, 
-            name: str,
-            folder_name: str,
-            cover: str,
-            description: str=None,
-            author: str=None,
-            score: float=None,
+            manga: Manga,
             ml_id: int=None,
             md_id: str=None,
             ms_id: str=None,
@@ -146,7 +142,7 @@ class DataBase:
         try:
             cur.execute(
                 'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-                (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id)
+                (manga.name, manga.folder_name, manga.cover, manga.description, manga.author, manga.grade, ml_id, md_id, ms_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id)
             )
             cur.connection.commit()
             return True
@@ -234,7 +230,7 @@ class DataBase:
             return True
         return False
     
-    def is_each_readed(self, source: str, manga_id: str, chapters: list[dict]) -> list[bool]:
+    def is_each_readed(self, source: str, manga_id: str, chapters: list[Chapter]) -> list[bool]:
         self.execute_data(self.readed_dump)
         cur = self.connect()
         readed = []
@@ -244,19 +240,19 @@ class DataBase:
         ).fetchall()
         for chapter in chapters:
             readed.append(
-                True if chapter['id'] in [i['chapter_id'] for i in list_readed]
+                True if chapter.id in [i['chapter_id'] for i in list_readed]
                     else False
             )
         cur.close()
         return readed
     
-    def is_one_readed(self, source: str, manga_id: str, chapters: list[dict]) -> bool:
+    def is_one_readed(self, source: str, manga_id: str, chapters: list[Chapter]) -> bool:
         self.execute_data(self.readed_dump)
         cur = self.connect()
         for chapter in chapters:
             cur.execute(
                 'SELECT * FROM readed WHERE source = ? AND manga_id = ? AND chapter_id = ?;',
-                (source, manga_id, chapter['id'])
+                (source, manga_id, chapter.id)
             )
             data = cur.fetchall()
             if data:

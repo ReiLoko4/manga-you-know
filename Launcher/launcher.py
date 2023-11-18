@@ -50,7 +50,7 @@ def launch(page: ft.Page) -> ft.FletApp:
             column.controls = [
                 ft.Text('Baixar nova versão?'),
                 ft.Text(f'Versão atual: {local_release}'),
-                ft.Text(f'Versão mais recente: {latest_release["tag_name"]}'),
+                ft.Text(f'Versão mais recente: {latest_release['tag_name']}'),
                 ft.Row([
                     yes_btn,
                     ft.ElevatedButton('Não', on_click=cancel)

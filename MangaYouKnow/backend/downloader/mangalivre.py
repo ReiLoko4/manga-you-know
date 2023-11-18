@@ -5,7 +5,9 @@ from bs4 import BeautifulSoup
 import flet as ft
 from backend.database import DataBase
 from backend.interfaces import MangaDl
+from backend.models import Manga, Chapter
 from backend.manager import ThreadManager
+
 
 class MangaLivreDl(MangaDl):
     def __init__(self):
@@ -26,7 +28,7 @@ class MangaLivreDl(MangaDl):
             'x-requested-with': 'XMLHttpRequest',
         })
 
-    def search(self, entry: str) -> list[dict]:
+    def search(self, entry: str) -> list[Manga] | bool:
         try:
             response = self.session.post(
                 'https://mangalivre.net/lib/search/series.json',
@@ -52,26 +54,29 @@ class MangaLivreDl(MangaDl):
             return False
         list_chapters = []
         for manga in response.json()['series']:
-            list_chapters.append({
-                'id': manga['id_serie'],
-                'name': manga['name'],
-                'folder_name': manga['link'].split('/')[-1],
-                'cover': manga['cover']
-            })
+            list_chapters.append(
+                Manga(
+                    id=manga['id_serie'],
+                    name=manga['name'],
+                    folder_name=manga['link'].split('/')[-1],
+                    cover=manga['cover']
+                )
+            )
         return list_chapters
 
-    def get_chapters(self, manga_id: str, write_data: bool = False) -> list:
+    def get_chapters(self, manga_id: str, write_data: bool = False) -> list[Chapter] | bool:
         chapters_list = []
         self.end = False
         def get_offset_json(this_offset):
             response = self.session.get(
                 f'https://mangalivre.net/series/chapters_list.json?page={this_offset}&id_serie={manga_id}',
             )
+            if not response:
+                return False
             if not response.json()['chapters'] or not response:
                 self.end = True
                 return
             chapters_list.append([response.json()['chapters'], this_offset])
-
         offset = 0
         threads = ThreadManager()
         while True:
@@ -211,10 +216,10 @@ class MangaLivreDl(MangaDl):
             chapter_info = id_release
             urls = self.get_chapter_imgs(chapter_info['id'])
         if not urls:
-            print(f'capitulo {chapter_info["number"]} com erro!')
+            print(f'capitulo {chapter_info['number']} com erro!')
             return False
         threads = ThreadManager()
-        chapter_path = Path(f'mangas/{manga_info["folder_name"]}/chapters/{chapter_info["number"]}/')
+        chapter_path = Path(f'mangas/{manga_info['folder_name']}/chapters/{chapter_info['number']}/')
         chapter_path.mkdir(parents=True, exist_ok=True)
         # self.pages_downloaded = 0 | Vou comentar, pois não sei se vai querer usar no futuro
         def download_manga_page(url: str, path: Path):
@@ -235,7 +240,7 @@ class MangaLivreDl(MangaDl):
         if progress_bar != None:
             progress_bar.value += float(progress_bar.data)
             progress_bar.update()
-        print(f'capítulo {chapter_info["number"]} baixado! ')
+        print(f'capítulo {chapter_info['number']} baixado! ')
         return True
 
     def download_list_of_manga_chapters(self, manga_id, chapters_list: list, simultaneous: int = 5):

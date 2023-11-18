@@ -1,7 +1,9 @@
 from requests import Session
 from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
+from backend.models import Manga, Chapter
 import json
+
 
 class MangaSeeDl(MangaDl):
     def __init__(self) -> None:
@@ -28,29 +30,31 @@ class MangaSeeDl(MangaDl):
             results = json.loads(response.text.split('vm.Directory = ')[1].split('\n')[0][:-2])
             mangas = []
             for manga in results:
-                mangas.append({
-                    'id': manga['i'],
-                    'name': manga['s'],
-                    'folder_name': manga['i'],
-                    'extra_name': manga['al'],
-                    'author': manga['a'],
-                    'cover': f'https://temp.compsci88.com/cover/{manga["i"]}.jpg',
-                    'grade': 0.0
-                })
+                mangas.append(
+                    Manga(
+                        id=manga['i'],
+                        name=manga['s'],
+                        folder_name=manga['i'],
+                        extra_name=manga['al'],
+                        author=manga['a'],
+                        cover=f'https://temp.compsci88.com/cover/{manga['i']}.jpg',
+                        grade=0.0
+                    )
+                )
         if pre_results:
             mangas = pre_results
         final_result = []
         for manga in mangas:
-            manga['grade'] = 0.0
-            if query.lower() in manga['name'].lower():
-                manga['grade'] += 1
-            if [i for i in manga['extra_name'] if query.lower() in i.lower()]:
-                manga['grade'] += 1
-            if [i for i in manga['author'] if query.lower() in i.lower()]:
-                manga['grade'] += 0.5
-            if manga['grade'] > 0:
+            manga.grade = 0.0
+            if query.lower() in manga.name.lower():
+                manga.grade += 1
+            if [i for i in manga.extra_name if query.lower() in i.lower()]:
+                manga.grade += 1
+            if [i for i in manga.author if query.lower() in i.lower()]:
+                manga.grade += 0.5
+            if manga.grade > 0:
                 final_result.append(manga)
-        final_result.sort(key=lambda x: x['grade'], reverse=True)
+        final_result.sort(key=lambda x: x.grade, reverse=True)
         return [final_result[:10], mangas]
     
     def get_chapters(self, manga_id: str):
@@ -62,12 +66,14 @@ class MangaSeeDl(MangaDl):
             for chapter in results:
                 index = ''
                 if int(chapter['Chapter'][0]) != 1:
-                    index = f'-index-{chapter["Chapter"][0]}'
-                chapters.append({
-                    'id': f'{manga_id}-chapter-{int(chapter["Chapter"][1:-1])}{index}{page}.html',
-                    'number': int(chapter['Chapter'][1:-1]),
-                    'title': chapter['ChapterName'],
-                })
+                    index = f'-index-{chapter['Chapter'][0]}'
+                chapters.append(
+                    Chapter(
+                        id=f'{manga_id}-chapter-{int(chapter['Chapter'][1:-1])}{index}{page}.html',
+                        number=int(chapter['Chapter'][1:-1]),
+                        title=chapter['ChapterName'],
+                    )
+                )
             return chapters
         return False
 

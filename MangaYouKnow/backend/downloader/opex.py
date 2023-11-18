@@ -4,9 +4,7 @@ from pathlib import Path
 from threading import Thread
 from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
-# from backend.database import DataBase
-# from backend.thread_manager import ThreadManager
-
+from backend.models import Chapter
 
 
 class OpexDl(MangaDl):
@@ -41,17 +39,21 @@ class OpexDl(MangaDl):
             first_a = a_list[0]
             span = li.find('span')
             if not 'especiais' in first_a['href'] and not 'historias-de-capa' in first_a['href']:
-                chapters_list.append({
-                    'id': first_a['href'].split('/')[-1],
-                    'number': int(span.text.split('.')[0]),
-                    'title': span.text
-                })
+                chapters_list.append(
+                    Chapter(
+                        id=first_a['href'].split('/')[-1],
+                        number=int(span.text.split('.')[0]),
+                        title=span.text
+                    )
+                )
                 if len(a_list) > 1:
-                    chapters_list.append({
-                        'id': f'{a_list[1]["href"].split("/")[-2]}/?v=jump',
-                        'number': f'{int(span.text.split(".")[0])} colorido',
-                        'title': span.text
-                    })
+                    chapters_list.append(
+                        Chapter(
+                            id=a_list[1]['href'].split('/')[-2],
+                            number=int(span.text.split('.')[0]),
+                            title=span.text
+                        )
+                    )
         chapters_list.reverse()
         return chapters_list
     
@@ -77,7 +79,7 @@ class OpexDl(MangaDl):
             if a.get('href') == None:
                continue
             if '?v=jump' in a.get('href'):
-                list_chapters.append(f'{a["href"].split("/")[-2]}/?v=jump')
+                list_chapters.append(f'{a['href'].split('/')[-2]}/?v=jump')
         return list_chapters
 
     def get_all_manga_chapters(self) -> list:
@@ -97,7 +99,7 @@ class OpexDl(MangaDl):
                     next = True
                     continue
                 if next:
-                   list_chapters.append(a['href'].split('/')[-1] if not '?v=jump' in a['href'] else f"{a['href'].split('/')[-2]}/?v=jump")
+                   list_chapters.append(a['href'].split('/')[-1] if not '?v=jump' in a['href'] else f'{a['href'].split('/')[-2]}/?v=jump')
         return list_chapters
 
     def get_sbs_chapters(self) -> list:
@@ -123,7 +125,7 @@ class OpexDl(MangaDl):
         imgs.pop(0)
         backslash_char = '\\'
         base_url = 'https://onepieceex.net/mangareader/mangas/' if with_base_url else ''
-        chapter = chapter if not '?v=jump' in chapter else f'{chapter.strip("?=vjump")}jump'
+        chapter = chapter if not '?v=jump' in chapter else f'{chapter.strip('?=vjump')}jump'
         for img in imgs:
             if (
                 'png' in img or

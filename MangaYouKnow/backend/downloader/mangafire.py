@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
+from backend.models import Manga, Chapter
 
 
 class MangaFireDl(MangaDl):
@@ -20,7 +21,7 @@ class MangaFireDl(MangaDl):
             'Alt-Used': 'mangafire.to',
         })
 
-    def search(self, entry: str) -> list[dict] | bool:
+    def search(self, entry: str) -> list[Manga] | bool:
         '''
         entry: a string with the query to search the manga you want
 
@@ -43,28 +44,17 @@ class MangaFireDl(MangaDl):
         soup = BeautifulSoup(response.content, 'html.parser')
         manga_lists = []
         for div in soup.find_all('div', {'class': 'inner'})[:-1]:
-            manga_lists.append({
-                'id': div.find('a', {'class': 'poster'})['href'].split('/')[-1].split('.')[-1],
-                'name': div.find('img')['alt'],
-                'folder_name': div.find('a', {'class': 'poster'})['href'].split('/')[-1],
-                'cover': div.find('img')['src']
-            })
+            manga_lists.append(
+                Manga(
+                    id=div.find('a', {'class': 'poster'})['href'].split('/')[-1].split('.')[-1],
+                    name=div.find('img')['alt'],
+                    folder_name=div.find('a', {'class': 'poster'})['href'].split('/')[-1],
+                    cover=div.find('img')['src']
+                )
+            )
         return manga_lists[:10]  # to keep igual to the other sources
 
-    # def get_chapters(self, manga_id) -> list[list[dict]] | bool:
-    #     '''
-    #     manga_id: name of the manga
-    #     lang: languague
-    #     '''
-    #     response = self.session.get(
-    #         f'https://mangafire.to/manga/{manga_id}'
-    #     )
-    #     if not response:
-    #         return False
-    #     return response.text
-    # Deprecated !!!
-
-    def get_chapters(self, manga_id, lang: str = 'PT-BR') -> list[dict] | bool:
+    def get_chapters(self, manga_id, lang: str = 'PT-BR') -> list[Chapter] | bool:
         '''
         manga_id: name of the manga
         lang: languague
@@ -78,11 +68,13 @@ class MangaFireDl(MangaDl):
         chapters_list = []
         for li in soup.find('ul').find_all('li'):
             a = li.find('a')
-            chapters_list.append({
-                'id': a['data-id'].replace('\\', '').replace('"', ''),
-                'number': a['data-number'].replace('\\', '').replace('"', ''),
-                'title': a['title'],
-            })
+            chapters_list.append(
+                Chapter(
+                    id=a['data-id'].replace('\\', '').replace('"', ''),
+                    number=a['data-number'].replace('\\', '').replace('"', ''),
+                    title=a['title'],
+                )
+            )
         return chapters_list
 
     def get_chapter_imgs(self, chapter_id: str, lang='pt-br') -> list | bool:

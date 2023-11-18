@@ -1,10 +1,11 @@
+import base64
+import requests
+from pathlib import Path
+from threading import Thread
 from backend.downloader import *
 from backend.interfaces import MangaDl
 from backend.manager import ThreadManager
-from threading import Thread
-from pathlib import Path
-import base64
-import requests
+from backend.models import Manga, Chapter
 
 
 
@@ -27,14 +28,14 @@ class Downloader:
     def match_source(self, source) -> MangaDl | object:
         return self.downloaders[source.replace('_id', '')]
     
-    def search(self, source: str, query: str, pre_results: list[dict] = None):
+    def search(self, source: str, query: str, pre_results: list[Manga] = None):
         source = self.match_source(source)
         if source:
             return source.search(query) if not pre_results \
                 else source.search(query, pre_results)
         return False
 
-    def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[dict] | list | bool:
+    def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
         source = self.match_source(source)
         if source:
             try: 
@@ -44,7 +45,7 @@ class Downloader:
                 print(e)
         return False
 
-    def get_chapter_image_urls(self, source: str, chapter_id: str) -> list | list[dict] | bool:
+    def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
         source = self.match_source(source)
         if source:
             return source.get_chapter_imgs(chapter_id)
@@ -70,8 +71,8 @@ class Downloader:
         return [i[0] for i in images_b64]
 
     
-    def download_chapter(self, manga: dict, source: str, chapter: dict) -> bool:
-        manga_images = self.get_chapter_image_urls(source, chapter['id'])
+    def download_chapter(self, manga: dict, source: str, chapter: Chapter) -> bool:
+        manga_images = self.get_chapter_image_urls(source, chapter.id)
         if manga_images:
             threads = ThreadManager()
             def download_page(url, path):
@@ -79,7 +80,7 @@ class Downloader:
                 if response and 'image' in response.headers['content-type']:
                         with open(path, 'wb') as file:
                             file.write(response.content)
-            folder = Path(f'mangas/{manga["folder_name"]}/{chapter["number"]}')
+            folder = Path(f'mangas/{manga['folder_name']}/{chapter.number}')
             folder.mkdir(parents=True, exist_ok=True)
             for i, image in enumerate(manga_images):
                 path = f'{folder}/{i:03d}.png'
@@ -94,7 +95,7 @@ class Downloader:
             return True
         return False
     
-    def download_all_chapters(self, manga: dict, source: str, chapters: list[dict]) -> bool:
+    def download_all_chapters(self, manga: dict, source: str, chapters: list[Chapter]) -> bool:
         chapters.reverse()
         threads = ThreadManager()
         if not chapters:

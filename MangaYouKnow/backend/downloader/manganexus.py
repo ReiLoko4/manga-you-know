@@ -2,6 +2,7 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
+from backend.models import Manga, Chapter
 
 
 class MangaNexusDl(MangaDl):
@@ -19,7 +20,7 @@ class MangaNexusDl(MangaDl):
             'Sec-Fetch-Site': 'same-origin',
         })
 
-    def search(self, query: str) -> list[dict] | bool:
+    def search(self, query: str) -> list[Manga] | bool:
         response = self.session.get(
             'https://manganexus.net/api/search',
             params={
@@ -30,16 +31,18 @@ class MangaNexusDl(MangaDl):
             return False
         manga_list = []
         for manga in response.json():
-            manga_list.append({
-                'id': manga['slug'],
-                'name': manga['name'],
-                'folder_name': manga['slug'],
-                'cover': manga['image'],
-                'author': manga['author'],
-            })
+            manga_list.append(
+                Manga(
+                    id=manga['slug'],
+                    name=manga['name'],
+                    folder_name=manga['slug'],
+                    cover=manga['image'],
+                    author=manga['author'],
+                )
+            )
         return manga_list
 
-    def get_chapters(self, chapter_id) -> list[dict] | bool:
+    def get_chapters(self, chapter_id) -> list[Chapter] | bool:
         response = self.session.get(
             f'https://manganexus.net/manga/{chapter_id}'
         )
@@ -49,13 +52,14 @@ class MangaNexusDl(MangaDl):
         chapters_list = []
         chapters = json.loads(soup.find('script', {'id': '__NEXT_DATA__'}).text)
         for chapter in chapters['props']['pageProps']['chapters']:
-            chapters_list.append({
-                'id': chapter['slug'],
-                'number': chapter['number'],
-                'title': chapter['name'],
-            })
+            chapters_list.append(
+                Chapter(
+                    id=chapter['slug'],
+                    number=chapter['number'],
+                    title=chapter['name'],
+                )
+            )
         return chapters_list
-
 
     def get_chapter_imgs(self, *args):
         pass

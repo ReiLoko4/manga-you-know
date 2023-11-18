@@ -1,18 +1,22 @@
 import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
-import requests
-import base64
-from threading import Thread
+from backend.models import Chapter
 from backend.database import DataBase
-from backend.manager import Downloader, ThreadManager
+from backend.manager import Downloader
 
 
 class Favorites:
     def __init__(self, page: ft.Page):
         dl = Downloader()
         source_languages = {
-            'md_id': ['en', 'pt-br'],
+            'md_id': [
+                'en', 'pt-br', 
+                'es', 'ja-ro'
+                'ko-ro', 'zh',
+                'es-la', 'zh-hk',
+                'zh-ro'
+            ],
             'ml_id': ['pt-br'],
             'ms_id': ['en'],
             'mf_id': ['en'],
@@ -49,7 +53,7 @@ class Favorites:
             page.go('/reader')
 
 
-        def open_manga(info):
+        def open_manga(info: dict):
             btn_is_readed_list = []
             def togle_readed(source, manga, chapter_id):
                 if database.is_readed(source, manga[source] if source != 'opex' else source, chapter_id):
@@ -140,7 +144,7 @@ class Favorites:
                 ]
                 page.update()
                 if chapters_by_source.get(f'{source_options.value}_{language_options.value}'):
-                    chapters = chapters_by_source[f'{source_options.value}_{language_options.value}']
+                    chapters: list[Chapter] = chapters_by_source[f'{source_options.value}_{language_options.value}']
                 else:
                     chapters = dl.get_chapters(source_options.value, info.get(source_options.value) if source_options.value != 'opex' else None) if len(source_languages[source_options.value]) == 1 \
                         else dl.get_chapters(source_options.value, info[source_options.value], language_options.value) 
@@ -156,18 +160,18 @@ class Favorites:
                 for i, chapter in enumerate(chapters):
                     if is_each_readed[i]:
                         icon = ft.icons.CHECK
-                    btn_read = ft.IconButton(icon, on_click=lambda e, source=source_options.value, manga=info, chapter_id=chapter['id']: togle_readed(source, manga, chapter_id))
+                    btn_read = ft.IconButton(icon, on_click=lambda e, source=source_options.value, manga=info, chapter_id=chapter.id: togle_readed(source, manga, chapter_id))
                     btn_is_readed_list.append(btn_read)
-                    if query and chapter['number']:
-                        if str(query).lower() not in str(chapter['number']).lower():
+                    if query and chapter.number:
+                        if str(query).lower() not in str(chapter.number).lower():
                             continue
                     list_chapters.controls.append(
                         ft.ListTile(
-                            title=ft.Text(chapter['number'] if chapter['number'] else chapter['title'], tooltip=chapter['title']),
+                            title=ft.Text(chapter.number if chapter.number else chapter.title, tooltip=chapter.title),
                             trailing=btn_read,
                             leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(info, source, chapter)),
-                            on_click=lambda e, source=source_options.value, chapter_id=chapter['id']: read(source, info, chapter_id, chapters),
-                            key=chapter['number']
+                            on_click=lambda e, source=source_options.value, chapter_id=chapter.id: read(source, info, chapter_id, chapters),
+                            key=chapter.number if chapter.number else chapter.title
                         )
                     )
                 if len(source_options.options) > 1:
@@ -183,7 +187,7 @@ class Favorites:
             language_options.on_change = lambda e: load_chapters()
             chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
             alert = ft.AlertDialog(
-                title=ft.Text(info['name'] if len(info['name']) < 40 else f'{info["name"][0:37]}...', tooltip=info['name']),
+                title=ft.Text(info['name'] if len(info['name']) < 40 else f'{info['name'][0:37]}...', tooltip=info['name']),
                 content=ft.Container(
                     ft.Row([
                         ft.Column([
@@ -267,7 +271,7 @@ class Favorites:
                 ft.Card(
                     ft.Row([
                         ft.Column([
-                            ft.Container(ft.Text(i['name'] if len(i['name']) < 25 else f'{i["name"][0:20]}...', tooltip=i['name']),
+                            ft.Container(ft.Text(i['name'] if len(i['name']) < 25 else f'{i['name'][0:20]}...', tooltip=i['name']),
                                          margin=margin.only(left=5, top=5)),
                             ft.Row([ft.Image(i['cover'], height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10)],
                                    width=180, alignment=ft.MainAxisAlignment.CENTER),
