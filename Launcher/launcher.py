@@ -36,12 +36,12 @@ def launch(page: ft.Page) -> ft.FletApp:
             def download_latest(_=None):
                 column.controls.append(ft.ProgressRing(height=40, color='red'))
                 page.update()
-                latest_link = [
+                latest_url = [
                     i['browser_download_url'] for i in latest_release['assets'] \
-                        if latest_release['tag_name'] in i['browser_download_url']
+                        if latest_release['tag_name'] in i['browser_download_url'] and 'MangaYouKnow' in i['browser_download_url']
                 ][0]
-                updater.download_release(latest_link, latest_release['tag_name'])
-                startfile(Path('app') / f'{latest_release["tag_name"]}.exe')
+                updater.download_release(latest_url, latest_release['tag_name'])
+                startfile(Path('app') / f'{latest_release['tag_name']}.exe')
                 page.window_destroy()
             def cancel(_=None):
                 startfile(Path('app') / f'{local_release}.exe')
@@ -67,24 +67,29 @@ def launch(page: ft.Page) -> ft.FletApp:
             startfile(Path('app') / f'{local_release}.exe')
             page.window_destroy()
             return
-    progress_bar = ft.ProgressBar(visible=False, height=30, color='red')
+    progress_bar = ft.ProgressBar(height=30)
     def download(_=None):
-        progress_bar.visible = True
-        updater.download_release(options_releases.data[options_releases.value]['assets'][0]['browser_download_url'], 
-            options_releases.value, progress_bar)
+        column_ex.controls.append(ft.ProgressRing(height=40, color='red'))
+        page.update()
+        release_url = [
+            i['browser_download_url'] for i in options_releases.data[options_releases.value]['assets'] \
+                if options_releases.value in i['browser_download_url'] and 'MangaYouKnow' in i['browser_download_url']
+        ][0]
+        updater.download_release(release_url, 
+            options_releases.value,)
         startfile(Path('app') / f'{options_releases.value}.exe')
         page.window_destroy()
 
     download_btn = ft.ElevatedButton('Download', on_click=download)
+    column_ex = ft.Column(
+        [options_releases, download_btn],
+        alignment=ft.MainAxisAlignment.CENTER,
+        height=500, 
+    )
     page.add(
         ft.Row([
-            ft.Column([
-                options_releases,
-                ft.Row([
-                download_btn,
-                progress_bar])
-            ], alignment=ft.MainAxisAlignment.CENTER, height=500
-            )], alignment=ft.MainAxisAlignment.CENTER
+                column_ex
+            ], alignment=ft.MainAxisAlignment.CENTER
         )
     )
     page.update()

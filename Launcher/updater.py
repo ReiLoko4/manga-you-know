@@ -30,9 +30,9 @@ class Updater:
         if self.app_meta.exists():
             self.app_meta.write_text(json.dumps({'version': version}))
     
-    def download_release(self, download_url, tag_name, bar: ft.ProgressBar = None):
+    def download_release(self, download_url: str, tag_name: str, bar: ft.ProgressBar = None):
         if bar:
-            bar.value = 0
+            bar.value = 0.0
         with requests.get(download_url, stream=True) as response, \
 	        open(f'app/{tag_name}.exe', 'wb') as file:
             total = int(response.headers.get('content-length'))
