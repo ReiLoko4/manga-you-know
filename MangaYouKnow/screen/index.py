@@ -7,25 +7,24 @@ from backend.manager import Downloader
 
 class Index:
     def __init__(self, page: ft.Page):
-
         connection_data = DataBase()
         downloader = Downloader()
         source_selector = ft.Dropdown(options=[
             ft.dropdown.Option('md', text='MangaDex'),
             ft.dropdown.Option('ml', text='MangaLivre'),
             ft.dropdown.Option('ms', text='MangaSee'),
+            ft.dropdown.Option('mc', text='MangasChan'),
             ft.dropdown.Option('mf', text='MangaFire'),
             ft.dropdown.Option('mx', text='MangaNexus'),
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),
             # ft.dropdown.Option('op', text='OP Scans'),
-        ], value='md', width=140)
+        ], value='md', width=130)
 
         local_search = [
             'ms'
         ]
-
         results = ft.Column(width=470, spacing=0.7, data={'last_src': '', 'chapters': []})
         card = ft.Card(ft.Container(results), color='gray', visible=False)
         search = ft.TextField(
@@ -35,7 +34,6 @@ class Index:
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300,
         )
-
         index = ft.Stack(width=1300, height=1000)
         manga = ft.Row(visible=False)
         self.is_clicked = False
@@ -50,6 +48,7 @@ class Index:
                     md_id=manga.id if source_selector.value == 'md' else None,
                     ml_id=manga.id if source_selector.value == 'ml' else None,
                     ms_id=manga.id if source_selector.value == 'ms' else None,
+                    mc_id=manga.id if source_selector.value == 'mc' else None,
                     mf_id=manga.id if source_selector.value == 'mf' else None,
                     mx_id=manga.id if source_selector.value == 'mx' else None,
                     gkk_id=manga.id if source_selector.value == 'gkk' else None,

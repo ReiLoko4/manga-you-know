@@ -1,5 +1,4 @@
 from requests import Session
-from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
 import json
@@ -77,7 +76,7 @@ class MangaSeeDl(MangaDl):
             return chapters
         return False
 
-    def get_chapter_imgs(self, chapter_id):
+    def get_chapter_imgs(self, chapter_id: str):
         response = self.session.get(f'https://mangasee123.com/read-online/{chapter_id}')
         if response.status_code == 200:
             dominy = response.text.split('vm.CurPathName = "')[1].split('"')[0]

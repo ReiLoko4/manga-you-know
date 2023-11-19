@@ -19,6 +19,7 @@ class Favorites:
             ],
             'ml_id': ['pt-br'],
             'ms_id': ['en'],
+            'mc_id': ['pt-br'], 
             'mf_id': ['en'],
             'mx_id': ['pt-br'],
             'gkk_id': ['pt-br'],
@@ -87,6 +88,8 @@ class Favorites:
                         text = 'MangaLivre'
                     case 'ms_id':
                         text = 'MangaSee'
+                    case 'mc_id':
+                        text = 'MangasChan'
                     case 'mf_id':
                         text = 'MangaFire'
                     case 'mx_id':

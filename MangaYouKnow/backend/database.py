@@ -20,6 +20,7 @@ class DataBase:
                 md_id TEXT UNIQUE,
                 ml_id INTEGER UNIQUE,
                 ms_id TEXT UNIQUE,
+                mc_id TEXT UNIQUE,
                 mf_id TEXT UNIQUE,
                 mx_id TEXT UNIQUE,
                 tcb_id TEXT UNIQUE,
@@ -39,6 +40,7 @@ class DataBase:
         self.columns = [
             'md_id',
             'ml_id',
+            'mc_id',
             'ms_id',
             'mf_id',
             'mx_id',
@@ -47,7 +49,6 @@ class DataBase:
             'op_id',
             'gkk_id'
         ]
-        #  CREATE TABLE IF NOT EXISTS last (
         self.config = Path('database/config.json')
 
     def connect(self) -> sqlite3.Cursor:
@@ -130,6 +131,7 @@ class DataBase:
             ml_id: int=None,
             md_id: str=None,
             ms_id: str=None,
+            mc_id: str=None,
             mf_id: str=None,
             mx_id: str=None,
             tcb_id: str=None,
@@ -141,8 +143,8 @@ class DataBase:
         cur = self.connect()
         try:
             cur.execute(
-                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-                (manga.name, manga.folder_name, manga.cover, manga.description, manga.author, manga.grade, ml_id, md_id, ms_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id)
+                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mc_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                (manga.name, manga.folder_name, manga.cover, manga.description, manga.author, manga.grade, ml_id, md_id, ms_id, mc_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id)
             )
             cur.connection.commit()
             return True

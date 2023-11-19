@@ -16,6 +16,7 @@ class Downloader:
             'gkk': GekkouDl(),
             'md': MangaDexDl(),
             'ms': MangaSeeDl(),
+            'mc': MangasChanDl(),
             'ml': MangaLivreDl(),
             'mf': MangaFireDl(),
             'mx': MangaNexusDl(),

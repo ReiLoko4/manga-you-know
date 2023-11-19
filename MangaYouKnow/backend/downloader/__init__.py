@@ -3,6 +3,7 @@ from .gekkou import GekkouDl
 from .mangadex import MangaDexDl
 from .mangalivre import MangaLivreDl
 from .mangasee import MangaSeeDl
+from .mangaschan import MangasChanDl
 from .mangafire import MangaFireDl
 from .manganexus import MangaNexusDl
 from .op import OpScansDl

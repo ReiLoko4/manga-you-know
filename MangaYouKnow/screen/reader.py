@@ -1,9 +1,8 @@
 import flet as ft
-import base64
-import requests
-from threading import Thread
+from backend.models import Chapter
 from backend.database import DataBase
-from backend.manager import ThreadManager, Downloader
+from backend.manager import Downloader
+from backend.utilities import EnableBackwardIterator
 
 
 class MangaReader:
@@ -18,15 +17,16 @@ class MangaReader:
         self.page.banner.visible = False
         if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id']):
             self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id'])
-        self.chapters = self.page.data['manga_chapters']
+        self.chapters: list[Chapter] = self.page.data['manga_chapters']
         self.pages = self.page.data['chapter_images']
-        self.page.window_full_screen = True
         self.pages_len = len(self.pages)
+        self.pages = EnableBackwardIterator(iter(self.pages))
+        self.page.window_full_screen = True
         self.currently_page = ft.Text(f' 1/{self.pages_len}')
-        self.panel = ft.Image(src_base64=self.pages[0], fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
+        self.panel = ft.Image(src_base64=self.pages.next(), fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
         self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
         self.btn_next_chapter.visible = True if self.pages_len == 1 \
-            and not self.chapters[0]['id'] == self.page.data['chapter_id'] else False
+            and not self.chapters[0].id == self.page.data['chapter_id'] else False
 
         is_second_time = False
         if self.content != None:
@@ -45,37 +45,49 @@ class MangaReader:
                 alignment=ft.MainAxisAlignment.END,
             )
         ])
-        def next(e=None):
-            for i, img in enumerate(self.pages):
-                if self.panel.src_base64 == img:
-                    if self.pages_len > i + 1:
-                        self.panel.src_base64 = self.pages[i + 1]
-                        self.panel.height = self.page.height
-                        self.currently_page.value = f'{i + 2}/{self.pages_len}'
-                        if self.pages_len == i + 2:
-                        #     self.db.set_manga(self.page.data['id'], 'id_last_readed', self.page.data['id_chapter'])
-                            if not self.chapters[0]['id'] == self.page.data['chapter_id']:
-                                self.btn_next_chapter.visible = True
-                    break
+        def next_page(e=None):
+            if self.pages.i == self.pages_len:
+                return
+            self.panel.src_base64 = self.pages.next()
+            self.panel.height = self.page.height
+            self.currently_page.value = f'{self.pages.i}/{self.pages_len}'
+            if self.pages.i == self.pages_len and \
+                not self.chapters[0].id == self.page.data['chapter_id']:
+                self.btn_next_chapter.visible = True
+            # for i, img in enumerate(self.pages):
+            #     if self.panel.src_base64 == img:
+            #         if self.pages_len > i + 1:
+            #             self.panel.src_base64 = self.pages[i + 1]
+            #             self.panel.height = self.page.height
+            #             self.currently_page.value = f'{i + 2}/{self.pages_len}'
+            #             if self.pages_len == i + 2:
+            #                 if not self.chapters[0].id == self.page.data['chapter_id']:
+            #                     self.btn_next_chapter.visible = True
+            #         break
             self.page.update()
 
-        def previous(e=None):
-            for i, img in enumerate(self.pages):
-                if self.panel.src_base64 == img:
-                    if i != 0:
-                        self.panel.src_base64 = self.pages[i - 1]
-                        self.panel.height = self.page.height
-                        self.currently_page.value = f'{i}/{self.pages_len}'
-                    break
+        def prev_page(e=None):
+            if self.pages.i == 1:
+                return
+            self.panel.src_base64 = self.pages.prev()
+            self.panel.height = self.page.height
+            self.currently_page.value = f'{self.pages.i}/{self.pages_len}'
+            # for i, img in enumerate(self.pages):
+            #     if self.panel.src_base64 == img:
+            #         if i != 0:
+            #             self.panel.src_base64 = self.pages[i - 1]
+            #             self.panel.height = self.page.height
+            #             self.currently_page.value = f'{i}/{self.pages_len}'
+            #         break
             self.page.update()
 
         keybinds = self.db.get_config()['keybinds']
 
         def on_key(e: ft.KeyboardEvent):
             if e.key == keybinds['next-page']:
-                next()
+                next_page()
             if e.key == keybinds['previous-page']:
-                previous()
+                prev_page()
             if e.key == keybinds['full-screen']:
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
@@ -111,12 +123,12 @@ class MangaReader:
         self.chapters.reverse()
         chapter_id = None
         for i, chapter in enumerate(self.chapters):
-            if chapter['id'] == self.page.data['chapter_id']:
+            if chapter.id == self.page.data['chapter_id']:
                 if len(self.chapters) == i + 1:
                     print('no more chapters')
                     return False
-                self.page.data['chapter_id'] = self.chapters[i + 1]['id']
-                chapter_id = self.chapters[i + 1]['id']
+                self.page.data['chapter_id'] = self.chapters[i + 1].id
+                chapter_id = self.chapters[i + 1].id
                 break
         self.chapters.reverse()
         if chapter_id == None:
