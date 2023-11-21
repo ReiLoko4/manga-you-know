@@ -26,7 +26,8 @@ class Favorites:
             'tsct_id': ['pt-br'],
             'tcb_id': ['en'],
             'op_id': ['en'],
-            'opex': ['pt-br']
+            'opex': ['pt-br'],
+            'lmorg_id': ['pt-br'],
         }
         database = DataBase()
         search = ft.TextField(
@@ -102,10 +103,13 @@ class Favorites:
                         text = 'TCB Scans'
                     case 'op_id':
                         text = 'OP Scans'
+                    case 'lmorg_id':
+                        text = 'LerManga.org'
                 options.append(ft.dropdown.Option(source, text))
                 if info[source] in [
                     '5/one-piece',
                     'One-Piece',
+                    'one-piece',
                     13,
                     '13',
                     'dkw',

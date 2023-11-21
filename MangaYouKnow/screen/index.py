@@ -19,8 +19,9 @@ class Index:
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),
+            ft.dropdown.Option('lmorg', text='LerManga.org'),
             # ft.dropdown.Option('op', text='OP Scans'),
-        ], value='md', width=130)
+        ], value='md', width=140)
 
         local_search = [
             'ms'
@@ -55,6 +56,7 @@ class Index:
                     tsct_id=manga.id if source_selector.value == 'tsct' else None,
                     tcb_id=manga.id if source_selector.value == 'tcb' else None,
                     op_id=manga.id if source_selector.value == 'op' else None,
+                    lmorg_id=manga.id if source_selector.value == 'lmorg' else None,
                 ):
                     button.icon = ft.icons.BOOKMARK_ROUNDED
             page.update()

@@ -23,7 +23,8 @@ class Downloader:
             'op': OpScansDl(),
             'opex': OpexDl(),
             'tsct': TaoSectScanDl(),
-            'tcb': TCBScansDl()
+            'tcb': TCBScansDl(),
+            'lmorg': LermangaOrgDl()
         }
 
     def match_source(self, source) -> MangaDl | object:

@@ -1,7 +1,7 @@
+import json
 from requests import Session
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
-import json
 
 
 class MangaSeeDl(MangaDl):
@@ -93,5 +93,3 @@ class MangaSeeDl(MangaDl):
                 )
             return chapter_imgs
         return False
-
-# print(MangaSeeDl().search('one piece'))

@@ -26,7 +26,8 @@ class DataBase:
                 tcb_id TEXT UNIQUE,
                 tsct_id TEXT UNIQUE,
                 op_id TEXT UNIQUE,
-                gkk_id TEXT UNIQUE
+                gkk_id TEXT UNIQUE,
+                lmorg_id TEXT UNIQUE
             );
         '''
         self.readed_dump = '''
@@ -47,7 +48,8 @@ class DataBase:
             'tcb_id',
             'tsct_id',
             'op_id',
-            'gkk_id'
+            'gkk_id',
+            'lmorg_id'
         ]
         self.config = Path('database/config.json')
 
@@ -137,14 +139,15 @@ class DataBase:
             tcb_id: str=None,
             tsct_id: str=None,
             op_id: str=None,
-            gkk_id: str=None
+            gkk_id: str=None,
+            lmorg_id: str=None
         ) -> bool:
         self.fix_favorites()
         cur = self.connect()
         try:
             cur.execute(
-                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mc_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-                (manga.name, manga.folder_name, manga.cover, manga.description, manga.author, manga.grade, ml_id, md_id, ms_id, mc_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id)
+                'INSERT INTO favorites (name, folder_name, cover, description, author, score, ml_id, md_id, ms_id, mc_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id, lmorg_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                (manga.name, manga.folder_name, manga.cover, manga.description, manga.author, manga.grade, ml_id, md_id, ms_id, mc_id, mf_id, mx_id, tcb_id, tsct_id, op_id, gkk_id, lmorg_id)
             )
             cur.connection.commit()
             return True
