@@ -52,19 +52,17 @@ class TCBScansDl(MangaDl):
         response = self.session.get(f'https://tcbscans.com/mangas/{manga_id}')
         if not response:
             return False
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = BeautifulSoup(response.content, 'html.parser')
         chapters_list = []
-        for a in soup.find_all('a'):
-            if a.get('href') == None:
-                continue       
-            if '/chapters/' in a['href']:
-                chapters_list.append(
-                    Chapter(
-                        id=str(a['href']).replace('/chapters/', ''),
-                        number=int(a.find_all('div')[0].text.split(' ')[-1]),
-                        title=a.find_all('div')[1].text,
-                    )
+        for a in soup.find('div', {'class': 'col-span-2'}).find_all('a', {'href': True}):
+            divs = a.find_all('div')
+            chapters_list.append(
+                Chapter(
+                    id=str(a['href']).replace('/chapters/', ''),
+                    number=divs[0].split(' ')[-1],
+                    title=divs[1].text,
                 )
+            )
         return chapters_list
         
     def get_chapter_imgs(self, chapter_id: str) -> list[str] | bool:

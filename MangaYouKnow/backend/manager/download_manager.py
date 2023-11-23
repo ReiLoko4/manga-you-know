@@ -27,30 +27,30 @@ class Downloader:
             'lmorg': LermangaOrgDl()
         }
 
-    def match_source(self, source) -> MangaDl | object:
+    def match_source(self, source: str) -> MangaDl:
         return self.downloaders[source.replace('_id', '')]
     
     def search(self, source: str, query: str, pre_results: list[Manga] = None):
-        source = self.match_source(source)
-        if source:
-            return source.search(query) if not pre_results \
-                else source.search(query, pre_results)
+        dl = self.match_source(source)
+        if dl:
+            return dl.search(query) if not pre_results \
+                else dl.search(query, pre_results)
         return False
 
-    def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
-        source = self.match_source(source)
-        if source:
+    def get_chapters(self, dl: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
+        dl: MangaDl = self.match_source(dl)
+        if dl:
             try: 
-                return source.get_chapters(manga_id) if not source_language \
-                    else source.get_chapters(manga_id, source_language)
+                return dl.get_chapters(manga_id) if not source_language \
+                    else dl.get_chapters(manga_id, source_language)
             except Exception as e: 
                 print(e)
         return False
 
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
-        source = self.match_source(source)
-        if source:
-            return source.get_chapter_imgs(chapter_id)
+        dl: MangaDl = self.match_source(source)
+        if dl:
+            return dl.get_chapter_imgs(chapter_id)
         return False
     
     def get_base64_images(self, pages: list[str]) -> list[str]:
@@ -58,6 +58,7 @@ class Downloader:
         threads = ThreadManager()
         def get_base_64_image(url, index: int):
             response = requests.get(url)
+            print(response.status_code, url)
             if response and 'image' in response.headers['content-type']:
                 images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
         for i, image in enumerate(pages):

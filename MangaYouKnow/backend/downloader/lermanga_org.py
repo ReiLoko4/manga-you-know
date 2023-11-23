@@ -1,4 +1,4 @@
-from requests import Session
+from requests import Session, get
 from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
@@ -62,11 +62,16 @@ class LermangaOrgDl(MangaDl):
             pages = []
             chpt_split = chapter_id.split('-capitulo-')
             base_url = f'https://img.lermanga.org/{chapter_id[0].upper()}/{chpt_split[0]}/capitulo-{chpt_split[1]}/'
-            for option in soup.find('div', {'class': 'nvs slc'}).find_all('option', {'selected': False}):
+            options = soup.find('div', {'class': 'nvs slc'}).find_all('option', {'selected': False})
+            for option in options:
                 pages.append(
-                    base_url + str(int(option['value']) + 1) + '.jpg'
+                    base_url + option['value'] + '.jpg'
                 )
-            print(pages)
+            img_test = get(pages[0])
+            if img_test.status_code != 200:
+                return [base_url + str(option['value']).zfill(2) + '.png'  for option in options]
+                # I don't found a way to discover the image extension, 
+                # so I'm just trying to change it to png when jpg don't response.
             return pages
         return False
     
