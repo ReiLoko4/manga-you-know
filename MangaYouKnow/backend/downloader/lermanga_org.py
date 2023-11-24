@@ -1,4 +1,4 @@
-from requests import Session, get
+from requests import Session
 from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
@@ -59,19 +59,13 @@ class LermangaOrgDl(MangaDl):
         response = self.session.get(f'https://lermanga.org/capitulos/{chapter_id}')
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
-            pages = []
-            chpt_split = chapter_id.split('-capitulo-')
-            base_url = f'https://img.lermanga.org/{chapter_id[0].upper()}/{chpt_split[0]}/capitulo-{chpt_split[1]}/'
-            options = soup.find('div', {'class': 'nvs slc'}).find_all('option', {'selected': False})
-            for option in options:
-                pages.append(
-                    base_url + option['value'] + '.jpg'
-                )
-            img_test = get(pages[0])
-            if img_test.status_code != 200:
-                return [base_url + str(option['value']).zfill(2) + '.png'  for option in options]
-                # I don't found a way to discover the image extension, 
-                # so I'm just trying to change it to png when jpg don't response.
-            return pages
+            link = soup.find('link', {'rel': 'alternate', 'type': 'application/json', 'href': True})
+            if link:
+                response = self.session.get(link['href'])
+                if response.status_code == 200:
+                    s = response.json()['content']['rendered']
+                    s = s.replace('<p>', '').replace('</p>', '').replace('\n', '').replace('\\', '').replace(' ', '')
+                    return s.split('<br/>')
+                # well, there's a lot of replaces, but actually I won :)
         return False
     

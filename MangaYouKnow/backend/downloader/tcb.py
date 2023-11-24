@@ -59,7 +59,7 @@ class TCBScansDl(MangaDl):
             chapters_list.append(
                 Chapter(
                     id=str(a['href']).replace('/chapters/', ''),
-                    number=divs[0].split(' ')[-1],
+                    number=divs[0].text.split(' ')[-1],
                     title=divs[1].text,
                 )
             )
