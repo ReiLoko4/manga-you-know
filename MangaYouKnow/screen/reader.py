@@ -14,6 +14,7 @@ class MangaReader:
         self.create_content()
 
     def create_content(self):
+        self.page.title = f'{self.page.data['manga_name']} - {self.page.data['chapter_title']}' 
         self.page.banner.visible = False
         if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id']):
             self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id'])
@@ -54,16 +55,6 @@ class MangaReader:
             if self.pages.i == self.pages_len and \
                 not self.chapters[0].id == self.page.data['chapter_id']:
                 self.btn_next_chapter.visible = True
-            # for i, img in enumerate(self.pages):
-            #     if self.panel.src_base64 == img:
-            #         if self.pages_len > i + 1:
-            #             self.panel.src_base64 = self.pages[i + 1]
-            #             self.panel.height = self.page.height
-            #             self.currently_page.value = f'{i + 2}/{self.pages_len}'
-            #             if self.pages_len == i + 2:
-            #                 if not self.chapters[0].id == self.page.data['chapter_id']:
-            #                     self.btn_next_chapter.visible = True
-            #         break
             self.page.update()
 
         def prev_page(e=None):
@@ -72,13 +63,6 @@ class MangaReader:
             self.panel.src_base64 = self.pages.prev()
             self.panel.height = self.page.height
             self.currently_page.value = f'{self.pages.i}/{self.pages_len}'
-            # for i, img in enumerate(self.pages):
-            #     if self.panel.src_base64 == img:
-            #         if i != 0:
-            #             self.panel.src_base64 = self.pages[i - 1]
-            #             self.panel.height = self.page.height
-            #             self.currently_page.value = f'{i}/{self.pages_len}'
-            #         break
             self.page.update()
 
         keybinds = self.db.get_config()['keybinds']
@@ -97,6 +81,7 @@ class MangaReader:
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
             if e.key == keybinds['return-home']:
+                self.page.title = f'MangaYouKnow {self.page.data['version']}' 
                 self.page.go('/favorites')
                 self.page.scroll = ft.ScrollMode.ADAPTIVE
                 self.page.window_full_screen = False
@@ -128,6 +113,7 @@ class MangaReader:
                     print('no more chapters')
                     return False
                 self.page.data['chapter_id'] = self.chapters[i + 1].id
+                self.page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
                 chapter_id = self.chapters[i + 1].id
                 break
         self.chapters.reverse()

@@ -38,19 +38,21 @@ class Favorites:
             focused_border_color=ft.colors.BLUE_300
         )
 
-        def read(source, manga, chapter_id, chapters: list[dict]):
+        def read(source, manga, chapter: Chapter, chapters: list[dict]):
             page.dialog.content = ft.Container(
                 ft.Column([
                     ft.ProgressRing(height=120, width=120),
                 ])
             )
             page.update()
-            pages = dl.get_chapter_image_urls(source, chapter_id)
+            pages = dl.get_chapter_image_urls(source, chapter.id)
             images_b64 = dl.get_base64_images(pages)
             page.data['chapter_images'] = images_b64
             page.data['manga_chapters'] = chapters
+            page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
+            page.data['manga_name'] = manga['name']
             page.data['manga_id'] = manga[source] if source != 'opex' else source
-            page.data['chapter_id'] = chapter_id
+            page.data['chapter_id'] = chapter.id
             page.data['source'] = source
             page.go('/reader')
 
@@ -191,7 +193,7 @@ class Favorites:
                             title=ft.Text(chapter.number if chapter.number else chapter.title, tooltip=chapter.title),
                             trailing=btn_read,
                             leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(info, source, chapter)),
-                            on_click=lambda e, source=source_options.value, chapter_id=chapter.id: read(source, info, chapter_id, chapters),
+                            on_click=lambda e, source=source_options.value, chapter=chapter: read(source, info, chapter, chapters),
                             key=chapter.number if chapter.number else chapter.title
                         )
                     )

@@ -27,18 +27,18 @@ class Downloader:
             'lmorg': LermangaOrgDl()
         }
 
-    def match_source(self, source: str) -> MangaDl:
+    def __match_source__(self, source: str) -> MangaDl:
         return self.downloaders[source.replace('_id', '')]
     
     def search(self, source: str, query: str, pre_results: list[Manga] = None):
-        dl = self.match_source(source)
+        dl = self.__match_source__(source)
         if dl:
             return dl.search(query) if not pre_results \
                 else dl.search(query, pre_results)
         return False
 
     def get_chapters(self, dl: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
-        dl: MangaDl = self.match_source(dl)
+        dl: MangaDl = self.__match_source__(dl)
         if dl:
             try: 
                 return dl.get_chapters(manga_id) if not source_language \
@@ -48,7 +48,7 @@ class Downloader:
         return False
 
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
-        dl: MangaDl = self.match_source(source)
+        dl: MangaDl = self.__match_source__(source)
         if dl:
             return dl.get_chapter_imgs(chapter_id)
         return False

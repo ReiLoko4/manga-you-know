@@ -29,6 +29,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
     )
     page.data = {} 
     page.data['reader_container'] = router.reader
+    page.data['version'] = __version__
     page.go('/')
     page.update()
     

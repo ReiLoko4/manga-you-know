@@ -1,7 +1,9 @@
 import json
 import sqlite3
+# import sqlalchemy as db
 from pathlib import Path
 from backend.models import Manga, Chapter
+from backend.tables import Favorites, favorite_columns
 
 
 class DataBase:
@@ -38,19 +40,7 @@ class DataBase:
                 source TEXT NOT NULL
             );
         '''
-        self.columns = [
-            'md_id',
-            'ml_id',
-            'mc_id',
-            'ms_id',
-            'mf_id',
-            'mx_id',
-            'tcb_id',
-            'tsct_id',
-            'op_id',
-            'gkk_id',
-            'lmorg_id'
-        ]
+        self.columns = favorite_columns
         self.config = Path('database/config.json')
 
     def connect(self) -> sqlite3.Cursor:
