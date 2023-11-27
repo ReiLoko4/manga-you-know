@@ -7,7 +7,7 @@ from backend.manager import Downloader
 
 
 class Favorites:
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page) -> None:
         dl = Downloader()
         source_languages = {
             'md_id': [
@@ -38,7 +38,7 @@ class Favorites:
             focused_border_color=ft.colors.BLUE_300
         )
 
-        def read(source, manga, chapter: Chapter, chapters: list[dict]):
+        def read(source, manga, chapter: Chapter, chapters: list[dict]) -> None:
             page.dialog.content = ft.Container(
                 ft.Column([
                     ft.ProgressRing(height=120, width=120),
@@ -56,8 +56,13 @@ class Favorites:
             page.data['source'] = source
             page.go('/reader')
 
+        def togle_notify(e: ft.ControlEvent, manga: dict) -> None:
+            if e.control.value:
+                database.add_notify(manga['id'])
+                return
+            database.delete_notify(manga['id'])
 
-        def open_manga(info: dict):
+        def open_manga(info: dict) -> None:
             btn_is_readed_list = []
             def togle_readed(source, manga, chapter_id):
                 if database.is_readed(source, manga[source] if source != 'opex' else source, chapter_id):
@@ -134,8 +139,8 @@ class Favorites:
                 source_options.disabled = True
             if len(source_languages[source_options.value]) == 1:
                 language_options.disabled = True
-                
-            def load_chapters(query: str=None):
+            
+            def load_chapters(query: str=None) -> None:
                 btn_is_readed_list.clear()
                 language_options.options = [ft.dropdown.Option(i, i) for i in source_languages[source_options.value]]
                 if len(source_languages[source_options.value]) == 1:
@@ -206,6 +211,14 @@ class Favorites:
             download_all = ft.ElevatedButton(
                 text='Baixar tudo',
                 on_click=lambda e: dl.download_all_chapters(info, source_options.value, chapters_by_source[f'{source_options.value}_{language_options.value}']))
+            switch = ft.Switch(
+                value=database.is_notify(info['id']),
+                width=50,
+                height=30,
+                label='Notificações',
+                label_position=ft.LabelPosition.RIGHT,
+            )
+            switch.on_change=lambda e: togle_notify(e, info)
             source_options.on_change = lambda e: load_chapters()
             language_options.on_change = lambda e: load_chapters()
             chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
@@ -217,6 +230,7 @@ class Favorites:
                             ft.Container(ft.Image(info['cover'], height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
                             source_options,
                             language_options,
+                            switch,
                             download_all,
                         ]),
                         ft.Column([

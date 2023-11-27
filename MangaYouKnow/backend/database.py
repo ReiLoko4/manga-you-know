@@ -170,6 +170,29 @@ class DataBase:
         except:
             return False
 
+    def is_notify(self, manga_id: int) -> bool:
+        con = self.connect()
+        data = con.execute(db.select(Favorite).where(Favorite.id == manga_id))
+        return data.fetchone()._mapping['notify']
+    
+    def add_notify(self, manga_id: int) -> bool:
+        con = self.connect()
+        try:
+            con.execute(db.update(Favorite).where(Favorite.id == manga_id).values({'notify': True}))
+        except Exception as e:
+            print(e)
+            return False
+        return True
+    
+    def delete_notify(self, manga_id: int) -> bool:
+        con = self.connect()
+        try:
+            con.execute(db.update(Favorite).where(Favorite.id == manga_id).values({'notify': False}))
+        except Exception as e:
+            print(e)
+            return False
+        return True
+
     def is_favorite(self, key, content) -> bool:
         favorites = self.get_database()
         for manga in favorites:
@@ -216,6 +239,16 @@ class DataBase:
                 return True
         con.close()
         return False
+    
+    def get_last_readed(self, source: str, manga_id: str) -> str | bool:
+        con = self.connect()
+        data = con.execute(db.select(Readed).where(
+            Readed.manga_id == manga_id
+            and Readed.source == source
+        ).order_by(db.desc(Readed.chapter_id))).fetchone()
+        if not data:
+            return False
+        return data._mapping['chapter_id']
         
     def add_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
         con = self.connect()
