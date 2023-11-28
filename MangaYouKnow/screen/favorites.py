@@ -149,6 +149,7 @@ class Favorites:
                 source_options.disabled = True
                 language_options.disabled = True
                 download_all.disabled = True
+                if not query: chapter_search.disabled = True
                 list_chapters.controls = [
                     ft.Row(
                         [
@@ -207,6 +208,7 @@ class Favorites:
                 if len(source_languages[source_options.value]) > 1:
                     language_options.disabled = False
                 download_all.disabled = False
+                chapter_search.disabled = False
                 page.update()
             download_all = ft.ElevatedButton(
                 text='Baixar tudo',

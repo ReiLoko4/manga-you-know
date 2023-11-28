@@ -35,21 +35,13 @@ def NavBar(page: ft.Page) -> ft.NavigationRail:
             )
         ]
     )
-
-    def change_route(e):
-        match e.control.selected_index:
-            case 0:
-                page.go('/')
-            case 1:
-                page.go('/favorites')
-            case 2:
-                page.go('/configs')
-            case 3:
-                page.go('/about')
-        
-
-    NavBar.on_change = change_route
-
+    routes = {
+        0: '/',
+        1: '/favorites',
+        2: '/configs',
+        3: '/about'
+    }
+    NavBar.on_change = lambda e: page.go(routes[e.control.selected_index])
     return NavBar
 
     # Code inspiration by CodingJQ

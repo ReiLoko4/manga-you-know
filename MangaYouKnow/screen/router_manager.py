@@ -37,7 +37,8 @@ class Router:
         self.reader.visible = False
 
     def route_change(self, route: ft.RouteChangeEvent):
-        self.page.scroll_to(delta=0)
+        self.page.on_scroll
+        self.page.scroll_to(0)
         if route.route == '/reader':
             self.page.dialog.open = False
             self.page.scroll = False

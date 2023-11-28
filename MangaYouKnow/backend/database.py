@@ -108,7 +108,7 @@ class DataBase:
                 'folder_name': manga.folder_name,
                 'cover': manga.cover,
                 'description': manga.description,
-                'author': manga.author,
+                'author': manga.author[0] if manga.author else 'Desconhecido',
                 'score': manga.grade,
                 'notify': False,
                 'ml_id': ml_id,
