@@ -1,5 +1,4 @@
 import json
-import sqlite3
 import sqlalchemy as db
 from pathlib import Path
 from backend.models import Manga, Chapter
@@ -42,9 +41,14 @@ class DataBase:
                 self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} TEXT;')
                 self.execute_data(f'CREATE UNIQUE INDEX ta ON favorites({column});')
     
-    def get_database(self) -> list[dict]:
+    def get_database(self, mark_id: str = None) -> list[dict]:
         self.fix_favorites()
         con = self.connect()
+        if mark_id:
+            data = con.execute(
+                db.select(Favorite).join(MarkFavorite, Favorite.id == MarkFavorite.favorite_id)
+            )
+            return [i._mapping for i in data.fetchall()]
         data = con.execute(db.select(Favorite))
         return [i._mapping for i in data.fetchall()]
 
@@ -275,4 +279,50 @@ class DataBase:
         except:
             return False
 
+    def add_mark(self, name: str) -> bool:
+        con = self.connect()
+        try:
+            con.execute(db.insert(Mark), [{
+                'name': name
+            }])
+            return True
+        except Exception as e:
+            print(e)
+            return False
     
+    def get_marks(self) -> list[dict]:
+        con = self.connect()
+        data = con.execute(db.select(Mark))
+        return [i._mapping for i in data.fetchall()]
+    
+    def delete_mark(self, mark_id: int) -> bool:
+        con = self.connect()
+        try:
+            con.execute(db.delete(Mark).where(Mark.id == mark_id))
+            return True
+        except:
+            return False
+        
+    def add_mark_favorite(self, mark_id: int, favorite_id: int) -> bool:
+        con = self.connect()
+        try:
+            con.execute(db.insert(MarkFavorite), [{
+                'mark_id': mark_id,
+                'favorite_id': favorite_id
+            }])
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
+    def delete_mark_favorite(self, mark_id: int, favorite_id: int) -> bool:
+        con = self.connect()
+        try:
+            con.execute(db.delete(MarkFavorite).where(
+                MarkFavorite.mark_id == mark_id
+                and MarkFavorite.favorite_id == favorite_id
+            ))
+            return True
+        except Exception as e: 
+            print(e)
+            return False

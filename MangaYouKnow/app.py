@@ -3,7 +3,7 @@ from screen.user_control.app_bar import NavBar
 from screen.utilities.router_manager import Router
 
 
-__version__ = '0.9.2b'
+__version__ = '0.9.3b'
 
 
 def __main__(page: ft.Page) -> ft.FletApp:

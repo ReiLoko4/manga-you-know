@@ -37,7 +37,95 @@ class Favorites:
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300
         )
-
+        mark_selector = ft.Dropdown(
+            options=[
+                ft.dropdown.Option('all', 'Todos'),
+            ],
+            width=140,
+            value='all'
+        )
+        mark_selector.options.extend([ft.dropdown.Option(i['id'], i['name']) for i in database.get_marks()])
+        mark_add = ft.IconButton(
+            ft.icons.ADD_ROUNDED,
+            icon_color=ft.colors.WHITE,
+            bgcolor=ft.colors.GREY_700,
+        )
+        def mark_add_click(_=None):
+            name_field = ft.TextField(label='Nome')
+            def save(_=None):
+                if database.add_mark(name_field.value):
+                    mark_selector.options.append(ft.dropdown.Option(name_field.value, name_field.value))
+                    alert.open = False
+                    saved_marks = database.get_marks()
+                    mark_selector.options = [
+                        ft.dropdown.Option('all', 'Todos'),
+                    ]
+                    mark_selector.options.extend([ft.dropdown.Option(i['id'], i['name']) for i in saved_marks])
+                    column_marks.controls = [
+                        ft.ListTile(
+                            title=ft.Text(
+                                i['name'],
+                            ),
+                            trailing= ft.IconButton(
+                                ft.icons.HIGHLIGHT_REMOVE,
+                                on_click=lambda e, mark_id=i['id']: delete_mark(mark_id)
+                            )
+                        )
+                        for i in saved_marks
+                    ] if saved_marks else [ft.Text('Nenhuma marcação salva', bgcolor=ft.colors.GREY_700)]
+                    page.update()
+            saved_marks = database.get_marks()
+            def delete_mark(mark_id: int):
+                if not database.delete_mark(mark_id):
+                    return
+                mark_selector.options = [
+                    ft.dropdown.Option('all', 'Todos'),
+                ]
+                saved_marks = database.get_marks()
+                mark_selector.options.extend([ft.dropdown.Option(i['id'], i['name']) for i in saved_marks])
+                column_marks.controls = [
+                    ft.ListTile(
+                        title=ft.Text(
+                            i['name'],
+                        ),
+                        trailing= ft.IconButton(
+                            ft.icons.HIGHLIGHT_REMOVE,
+                            on_click=lambda e, mark_id=i['id']: delete_mark(mark_id)
+                        )
+                    )
+                    for i in saved_marks
+                ] if saved_marks else [ft.Text('Nenhuma marcação salva', bgcolor=ft.colors.GREY_700)]
+                page.update()
+            column_marks = ft.Column(
+                [
+                    ft.ListTile(
+                            title=ft.Text(
+                                i['name'],
+                            ),
+                            trailing= ft.IconButton(
+                                ft.icons.HIGHLIGHT_REMOVE,
+                                on_click=lambda e, mark_id=i['id']: delete_mark(mark_id)
+                            )
+                    )
+                    for i in saved_marks
+                ] if saved_marks else [ft.Text('Nenhuma marcação salva', bgcolor=ft.colors.GREY_700)],
+            )
+            alert = ft.AlertDialog(
+                title=ft.Text('Editar marcações'),
+                content=ft.Container(
+                    ft.Column([
+                        name_field,
+                        ft.ElevatedButton('Criar marcação', on_click=save),
+                        ft.Card(
+                            column_marks
+                        )
+                    ])
+                )
+            )
+            page.dialog = alert
+            alert.open = True
+            page.update()
+        mark_add.on_click = mark_add_click
         def read(source, manga, chapter: Chapter, chapters: list[dict]) -> None:
             page.dialog.content = ft.Container(
                 ft.Column([
@@ -296,17 +384,24 @@ class Favorites:
             page.update()
 
         def load_mangas(query: str = None) -> list[ft.Card]:
-            favorites = database.get_database()
-            page.data['last_favorites'] = favorites
+            favorites = database.get_database(None if mark_selector.value == 'all' else mark_selector.value)
+            if mark_selector.value == 'all':
+                page.data['last_favorites'] = favorites
             if query is not None:
                 favorites = [i for i in favorites if query.lower() in i['name'].lower()]
-                if len(favorites) == 0:
+                if not len(favorites):
                     return [
                         ft.Card(
-                            content=ft.Text(f'Não existe nenhum mangá que contenha "{query}" nos seus favoritos')
+                            content=ft.Text(f'Não existe nenhum manga que contenha "{query}" nos seus favoritos')
                         )
                     ]
-
+            if mark_selector.value != 'all':
+                if not len(favorites):
+                    return [
+                        ft.Card(
+                            content=ft.Text(f'Não existe nenhum manga com esta marcação nos seus favoritos')
+                        )
+                    ]
             return [
                 ft.Card(
                     ft.Row([
@@ -330,7 +425,10 @@ class Favorites:
                 )
                 for i in favorites
             ]
-
+        def load_marks() -> list[ft.ListTile]:
+            row_mangas.controls = load_mangas()
+            page.update()
+        mark_selector.on_change = lambda e: load_marks()
         row_mangas = ft.Row(
             load_mangas(),
             wrap=True,
@@ -346,7 +444,11 @@ class Favorites:
         # page.on_resize = resize
         favorites = database.get_database()
         stack = ft.Stack([
-            ft.Row([ft.Container(search, padding=10)], alignment=ft.MainAxisAlignment.CENTER),
+            ft.Row([
+                ft.Container(search, padding=10),
+                ft.Container(ft.Row([mark_selector, mark_add]), width=250, padding=10),
+            ], alignment=ft.MainAxisAlignment.CENTER
+            ),
             ft.Divider(height=170, color='white'),
             row_mangas
         ],
