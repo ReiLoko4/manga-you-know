@@ -1,6 +1,6 @@
 import flet as ft
 from screen.user_control.app_bar import NavBar
-from screen.router_manager import Router
+from screen.utilities.router_manager import Router
 
 
 __version__ = '0.9.2b'
@@ -12,6 +12,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.window_min_width = 770
     page.window_min_height = 600
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
+    page.data = {} 
     router = Router(page)
     page.on_route_change = router.route_change
     page.banner = NavBar(page)
@@ -27,7 +28,6 @@ def __main__(page: ft.Page) -> ft.FletApp:
             router.reader
         ])
     )
-    page.data = {} 
     page.data['reader_container'] = router.reader
     page.data['version'] = __version__
     page.go('/')

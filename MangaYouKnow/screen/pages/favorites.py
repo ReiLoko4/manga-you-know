@@ -297,6 +297,7 @@ class Favorites:
 
         def load_mangas(query: str = None) -> list[ft.Card]:
             favorites = database.get_database()
+            page.data['last_favorites'] = favorites
             if query is not None:
                 favorites = [i for i in favorites if query.lower() in i['name'].lower()]
                 if len(favorites) == 0:
@@ -354,17 +355,17 @@ class Favorites:
         )
 
         def update(e=None):
-            if not e == None:
+            if e:
                 row_mangas.width = e
                 stack.width = e
             favorites = database.get_database()
-
             count = 0
             for num in range(len(favorites)):
                 if num % 3 == 0:
                     count += 1
-
             stack.height = count * 435
+            if page.data['last_favorites'] == favorites:
+                return
             row_mangas.controls = load_mangas(query=search.value if search.value != '' else None)
             page.update()
 

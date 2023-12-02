@@ -1,6 +1,6 @@
 import flet as ft
 
-from screen import Index, Favorites, Configs, MangaReader, About
+from screen.pages import Index, Favorites, Configs, MangaReader, About
 
 
 class Router:
@@ -37,7 +37,6 @@ class Router:
         self.reader.visible = False
 
     def route_change(self, route: ft.RouteChangeEvent):
-        self.page.on_scroll
         self.page.scroll_to(0)
         if route.route == '/reader':
             self.page.dialog.open = False
