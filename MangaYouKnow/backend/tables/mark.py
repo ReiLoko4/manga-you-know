@@ -7,7 +7,7 @@ Base = declarative_base()
 
 class Mark(Base):
     __tablename__ = 'marks'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True, unique=True, )
     name = Column(String, nullable=False)
 
     def __init__(

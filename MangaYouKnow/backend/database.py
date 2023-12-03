@@ -13,7 +13,8 @@ class DataBase:
         self.database = Path('./database/data.db')
         self.engine = db.create_engine(
             'sqlite:///database/data.db', 
-            execution_options={'isolation_level': 'AUTOCOMMIT'}
+            execution_options={'isolation_level': 'AUTOCOMMIT'},
+            pool_size=20, max_overflow=0, pool_timeout=30, pool_recycle=1800
         )
         self.columns = favorite_columns
         self.config = Path('database/config.json')
@@ -46,7 +47,11 @@ class DataBase:
         con = self.connect()
         if mark_id:
             data = con.execute(
-                db.select(Favorite).join(MarkFavorite, Favorite.id == MarkFavorite.favorite_id)
+                db.select(Favorite).join(
+                    MarkFavorite, Favorite.id == MarkFavorite.favorite_id
+                ).where(
+                    MarkFavorite.mark_id == mark_id
+                )
             )
             return [i._mapping for i in data.fetchall()]
         data = con.execute(db.select(Favorite))
@@ -207,9 +212,9 @@ class DataBase:
     def is_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
         con = self.connect()
         data = con.execute(db.select(Readed).where(
-            Readed.chapter_id == chapter_id
-            and Readed.manga_id == manga_id
-            and Readed.source == source
+            Readed.chapter_id == chapter_id,
+            Readed.manga_id == manga_id,
+            Readed.source == source
         ))
         if data.fetchall():
             return True
@@ -219,8 +224,8 @@ class DataBase:
         con = self.connect()
         readed = []
         list_readed = con.execute(db.select(Readed).where(
-            Readed.manga_id == manga_id
-            and Readed.source == source
+            Readed.manga_id == manga_id,
+            Readed.source == source
         )).fetchall()
         if not list_readed:
             return [False for _ in range(len(chapters))]
@@ -235,9 +240,9 @@ class DataBase:
         con = self.connect()
         for chapter in chapters:
             data = con.execute(db.select(Readed).where(
-                Readed.chapter_id == chapter.id
-                and Readed.manga_id == manga_id
-                and Readed.source == source
+                Readed.chapter_id == chapter.id,
+                Readed.manga_id == manga_id,
+                Readed.source == source
             ))
             if data.fetchall():
                 return True
@@ -247,8 +252,8 @@ class DataBase:
     def get_last_readed(self, source: str, manga_id: str) -> str | bool:
         con = self.connect()
         data = con.execute(db.select(Readed).where(
-            Readed.manga_id == manga_id
-            and Readed.source == source
+            Readed.manga_id == manga_id,
+            Readed.source == source
         ).order_by(db.desc(Readed.chapter_id))).fetchone()
         if not data:
             return False
@@ -271,9 +276,9 @@ class DataBase:
         con = self.connect()
         try:
             con.execute(db.delete(Readed).where(
-                Readed.chapter_id == chapter_id
-                and Readed.manga_id == manga_id
-                and Readed.source == source
+                Readed.chapter_id == chapter_id,
+                Readed.manga_id == manga_id,
+                Readed.source == source
             ))
             return True
         except:
@@ -295,15 +300,21 @@ class DataBase:
         data = con.execute(db.select(Mark))
         return [i._mapping for i in data.fetchall()]
     
+    def get_mark(self, mark_id: int) -> dict | bool:
+        con = self.connect()
+        data = con.execute(db.select(Mark).where(Mark.id == mark_id))
+        return data.fetchone()._mapping if data else False
+    
     def delete_mark(self, mark_id: int) -> bool:
         con = self.connect()
         try:
             con.execute(db.delete(Mark).where(Mark.id == mark_id))
+            con.execute(db.delete(MarkFavorite).where(MarkFavorite.mark_id == mark_id))
             return True
         except:
             return False
         
-    def add_mark_favorite(self, mark_id: int, favorite_id: int) -> bool:
+    def add_mark_favorite(self, favorite_id: int, mark_id: int) -> bool:
         con = self.connect()
         try:
             con.execute(db.insert(MarkFavorite), [{
@@ -315,12 +326,31 @@ class DataBase:
             print(e)
             return False
 
-    def delete_mark_favorite(self, mark_id: int, favorite_id: int) -> bool:
+    def edit_mark(self, mark_id: int, name: str) -> bool:
+        con = self.connect()
+        try:
+            con.execute(db.update(Mark).where(Mark.id == mark_id).values({'name': name}))
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
+    def is_marked(self, favorite_id: int, mark_id: int) -> bool:
+        con = self.connect()
+        data = con.execute(db.select(MarkFavorite).where(
+            MarkFavorite.mark_id == mark_id, 
+            MarkFavorite.favorite_id == favorite_id
+        ))
+        if data.fetchall():
+            return True
+        return False
+    
+    def delete_mark_favorite(self, favorite_id: int, mark_id: int) -> bool:
         con = self.connect()
         try:
             con.execute(db.delete(MarkFavorite).where(
-                MarkFavorite.mark_id == mark_id
-                and MarkFavorite.favorite_id == favorite_id
+                MarkFavorite.mark_id == mark_id,
+                MarkFavorite.favorite_id == favorite_id
             ))
             return True
         except Exception as e: 

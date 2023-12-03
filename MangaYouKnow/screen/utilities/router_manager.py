@@ -1,6 +1,5 @@
 import flet as ft
-
-from screen.pages import Index, Favorites, Configs, MangaReader, About
+from screen.pages import *
 
 
 class Router:
