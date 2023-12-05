@@ -1,6 +1,6 @@
 from requests import Session
 from bs4 import BeautifulSoup
-from backend.downloader import *
+from backend.downloaders import *
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
 

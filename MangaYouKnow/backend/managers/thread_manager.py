@@ -36,3 +36,6 @@ class ThreadManager(Thread):
 
     def delete_all_threads(self):
         self.threads = []
+
+    def __repr__(self) -> str:
+        return f'ThreadManager(threads={self.threads})'

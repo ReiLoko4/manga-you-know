@@ -1,7 +1,7 @@
 import flet as ft
 from backend.models import Chapter
 from backend.database import DataBase
-from backend.manager import Downloader
+from backend.managers import Downloader
 from backend.utilities import EnableBackwardIterator
 
 

@@ -2,7 +2,7 @@ import flet as ft
 from time import sleep
 from backend.models import Manga
 from backend.database import DataBase
-from backend.manager import Downloader
+from backend.managers import Downloader
 
 
 class Index:
@@ -19,7 +19,7 @@ class Index:
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
             ft.dropdown.Option('tcb', text='TCB'),
-            ft.dropdown.Option('lmorg', text='LerManga.org'),
+            # ft.dropdown.Option('lmorg', text='LerManga.org'),
             # ft.dropdown.Option('op', text='OP Scans'),
         ], value='md', width=140)
 

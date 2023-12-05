@@ -2,9 +2,9 @@ import base64
 import requests
 from pathlib import Path
 from threading import Thread
-from backend.downloader import *
+from backend.downloaders import *
 from backend.interfaces import MangaDl
-from backend.manager import ThreadManager
+from backend.managers import ThreadManager
 from backend.models import Manga, Chapter
 
 
