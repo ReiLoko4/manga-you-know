@@ -1,13 +1,13 @@
 import flet as ft
 from backend.models import Chapter
 from backend.database import DataBase
-from backend.managers import Downloader
+from backend.managers import DownloadManager
 from screen.components import MangasCard
 
 
 class Favorites:
     def __init__(self, page: ft.Page) -> None:
-        dl = Downloader()
+        dl: DownloadManager = page.data['dl']
         source_languages = {
             'md_id': [
                 'en', 'pt-br', 
@@ -118,7 +118,7 @@ class Favorites:
             alert.open = True
             page.update()
         mark_add.on_click = mark_add_click
-        def read(source, manga, chapter: Chapter, chapters: list[dict]) -> None:
+        def read(source, manga, chapter: Chapter, chapters: list[dict], language: str=None) -> None:
             page.dialog.content = ft.Container(
                 ft.Column([
                     ft.ProgressRing(height=120, width=120),
@@ -126,14 +126,17 @@ class Favorites:
             )
             page.update()
             pages = dl.get_chapter_image_urls(source, chapter.id)
-            images_b64 = dl.get_base64_images(pages)
+            images_b64 = dl.get_base64_images(source, chapter.id, pages)
             page.data['chapter_images'] = images_b64
             page.data['manga_chapters'] = chapters
             page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
             page.data['manga_name'] = manga['name']
-            page.data['manga_id'] = manga[source] if source != 'opex' else source
+            page.data['manga_id'] = manga['id']
+            page.data['manga_source_id'] = manga[source] if source != 'opex' else source
             page.data['chapter_id'] = chapter.id
             page.data['source'] = source
+            if language:
+                page.data['language'] = language
             page.go('/reader')
 
         def remove_manga(manga_id):
@@ -223,11 +226,9 @@ class Favorites:
             page.update()
 
         search.on_change = search_favorites
-
         def resize(e):
             row_mangas.width = float(e.control.width) - 90
             stack.width = float(e.control.width) - 90
-
             page.update()
 
         self.content = ft.Row(
@@ -236,7 +237,6 @@ class Favorites:
                 ],
                 scroll='always',
             )
-
         self.content.data = [update, resize]
 
     def return_content(self) -> ft.Row:

@@ -18,6 +18,19 @@ class DataBase:
         )
         self.columns = favorite_columns
         self.config = Path('database/config.json')
+        self.ids = {
+            'ml_id': Favorite.ml_id,
+            'md_id': Favorite.md_id,
+            'ms_id': Favorite.ms_id,
+            'mc_id': Favorite.mc_id,
+            'mf_id': Favorite.mf_id,
+            'mx_id': Favorite.mx_id,
+            'tcb_id': Favorite.tcb_id,
+            'tsct_id': Favorite.tsct_id,
+            'op_id': Favorite.op_id,
+            'gkk_id': Favorite.gkk_id,
+            'lmorg_id': Favorite.lmorg_id
+        }
 
     def connect(self) -> db.Connection:
         self.create_database()
@@ -31,6 +44,8 @@ class DataBase:
         ReadedBase.metadata.create_all(self.engine, checkfirst=True)
         MarkBase.metadata.create_all(self.engine, checkfirst=True)
         MarkFavoriteBase.metadata.create_all(self.engine, checkfirst=True)
+        # columns = self.execute_data('PRAGMA TABLE_INFO(readed);')
+        # if not 'language' in [i['name'] for i in columns]:
 
     def fix_favorites(self):
         table_columns = self.execute_data('PRAGMA TABLE_INFO(favorites);')
@@ -161,23 +176,13 @@ class DataBase:
         return True
         
     def delete_manga_by_key(self, key: str, id: int | str) -> bool:
-        database = self.get_database()
-        id_row = None
-        for manga in database:
-            if manga[key] == id:
-                id_row = manga['id']
-                break
-        if not id_row: return False
-        cur = self.connect()
+        con = self.connect()
         try:
-            cur.execute(
-                'DELETE FROM favorites WHERE id = ?;',
-                (id_row,)
-            )
-            cur.connection.commit()
-            return True   
-        except:
+            con.execute(db.delete(Favorite).where(self.ids[key] == id))
+        except Exception as e:
+            print(e)
             return False
+        return True
 
     def is_notify(self, manga_id: int) -> bool:
         con = self.connect()
@@ -203,28 +208,30 @@ class DataBase:
         return True
 
     def is_favorite(self, key, content) -> bool:
-        favorites = self.get_database()
-        for manga in favorites:
-            if manga[key] == content:
-                return True
-        return False
+        con = self.connect()
+        data = con.execute(db.select(Favorite).where(
+            self.ids[key] == content
+        )).fetchall()
+        return True if data else False
     
-    def is_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
+    def is_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str) -> bool:
         con = self.connect()
         data = con.execute(db.select(Readed).where(
             Readed.chapter_id == chapter_id,
             Readed.manga_id == manga_id,
+            Readed.manga_source_id == manga_source_id,
             Readed.source == source
         ))
         if data.fetchall():
             return True
         return False
     
-    def is_each_readed(self, source: str, manga_id: str, chapters: list[Chapter]) -> list[bool]:
+    def is_each_readed(self, source: str, manga_id: str, manga_source_id: str, chapters: list[Chapter]) -> list[bool]:
         con = self.connect()
         readed = []
         list_readed = con.execute(db.select(Readed).where(
             Readed.manga_id == manga_id,
+            Readed.manga_source_id == manga_source_id,
             Readed.source == source
         )).fetchall()
         if not list_readed:
@@ -236,12 +243,13 @@ class DataBase:
             )
         return readed
     
-    def is_one_readed(self, source: str, manga_id: str, chapters: list[Chapter]) -> bool:
+    def is_one_readed(self, source: str, manga_id: str, manga_source_id: str, chapters: list[Chapter]) -> bool:
         con = self.connect()
         for chapter in chapters:
             data = con.execute(db.select(Readed).where(
                 Readed.chapter_id == chapter.id,
                 Readed.manga_id == manga_id,
+                Readed.manga_source_id == manga_source_id,
                 Readed.source == source
             ))
             if data.fetchall():
@@ -249,21 +257,31 @@ class DataBase:
         con.close()
         return False
     
-    def get_last_readed(self, source: str, manga_id: str) -> str | bool:
+    def get_last_readed(self, manga_id: str) -> dict | bool:
+        con = self.connect()
+        data = con.execute(db.select(Readed).where(
+            Readed.manga_id == manga_id
+        ).order_by(db.desc(Readed.chapter_id))).fetchone()
+        if not data:
+            return False
+        return data._mapping
+
+    def get_last_readed_by_source(self, source: str, manga_id: str) -> dict | bool:
         con = self.connect()
         data = con.execute(db.select(Readed).where(
             Readed.manga_id == manga_id,
             Readed.source == source
-        ).order_by(db.desc(Readed.chapter_id))).fetchone()
+        ).order_by(db.desc(Readed.chapter_id)))
         if not data:
             return False
-        return data._mapping['chapter_id']
-        
-    def add_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
+        return data.fetchone()._mapping
+    
+    def add_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str) -> bool:
         con = self.connect()
         try:
             con.execute(db.insert(Readed),[{
-                'manga_id': manga_id, 
+                'manga_id': manga_id,
+                'manga_source_id': manga_source_id,
                 'chapter_id': chapter_id,
                 'source': source 
             }])
@@ -272,12 +290,13 @@ class DataBase:
             print(e)
             return False
 
-    def delete_readed(self, source: str, manga_id: str, chapter_id: str) -> bool:
+    def delete_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str) -> bool:
         con = self.connect()
         try:
             con.execute(db.delete(Readed).where(
                 Readed.chapter_id == chapter_id,
                 Readed.manga_id == manga_id,
+                Readed.manga_source_id == manga_source_id,
                 Readed.source == source
             ))
             return True

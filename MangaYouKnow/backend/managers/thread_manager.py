@@ -3,7 +3,7 @@ from time import sleep
 
 
 class ThreadManager(Thread):
-    def __init__(self, threads: list = None):
+    def __init__(self, threads: list[Thread] = None):
         super().__init__()
         self.threads = threads if threads is not None else []
 

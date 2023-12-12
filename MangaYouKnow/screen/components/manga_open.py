@@ -1,10 +1,9 @@
 import flet as ft
 from backend.database import DataBase
-from backend.managers import Downloader
+from backend.managers import DownloadManager
 from backend.models import Chapter
 
 
-dl = Downloader()
 database = DataBase()
 
 def MangaOpen(
@@ -14,13 +13,14 @@ def MangaOpen(
         togle_notify: callable,
         page: ft.Page,
     ) -> ft.AlertDialog:
+    dl: DownloadManager = page.data['dl']
     btn_is_readed_list = []
     def togle_readed(source, manga, chapter_id):
-        if database.is_readed(source, manga[source] if source != 'opex' else source, chapter_id):
-            database.delete_readed(source, manga[source] if source != 'opex' else source, chapter_id)
+        if database.is_readed(source, manga['id'], manga[source] if source != 'opex' else source, chapter_id):
+            database.delete_readed(source, manga['id'], manga[source] if source != 'opex' else source, chapter_id)
         else:
-            database.add_readed(source, manga[source] if source != 'opex' else source, chapter_id)
-        each_readed = database.is_each_readed(source, manga[source] if source != 'opex' else source, chapters_by_source[f'{source}_{language_options.value}'])
+            database.add_readed(source, manga['id'], manga[source] if source != 'opex' else source, chapter_id)
+        each_readed = database.is_each_readed(source, manga['id'], manga[source] if source != 'opex' else source, chapters_by_source[f'{source}_{language_options.value}'])
         icon = ft.icons.REMOVE
         for i, btn in enumerate(btn_is_readed_list):
             if each_readed[i]:
@@ -118,6 +118,7 @@ def MangaOpen(
         list_chapters.controls = []
         is_each_readed = database.is_each_readed(
             source_options.value, 
+            manga_info['id'],
             manga_info.get(source_options.value) 
             if source_options.value != 'opex' else source, 
             chapters
@@ -150,7 +151,7 @@ def MangaOpen(
                     title=ft.Text(chapter.number if chapter.number else chapter.title, tooltip=chapter.title),
                     trailing=btn_read,
                     leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(manga_info, source, chapter)),
-                    on_click=lambda e, source=source_options.value, chapter=chapter: read(source, manga_info, chapter, chapters),
+                    on_click=lambda e, source=source_options.value, chapter=chapter: read(source, manga_info, chapter, chapters, language_options.value if len(source_languages[source_options.value]) > 1 else None),
                     key=chapter.number if chapter.number else chapter.title
                 )
             )
@@ -175,8 +176,11 @@ def MangaOpen(
     source_options.on_change = lambda e: load_chapters()
     language_options.on_change = lambda e: load_chapters()
     chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
+    def close(_=None):
+        alert.open = False
+        page.update()
     alert = ft.AlertDialog(
-        title=ft.Text(manga_info['name'] if len(manga_info['name']) < 40 else f'{manga_info['name'][0:37]}...', tooltip=manga_info['name']),
+        title=ft.Row([ft.Text(manga_info['name'] if len(manga_info['name']) < 40 else f'{manga_info['name'][0:37]}...', tooltip=manga_info['name']), ft.IconButton(ft.icons.CLOSE, on_click=close)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
         content=ft.Container(
             ft.Row([
                 ft.Column([

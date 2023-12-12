@@ -4,12 +4,12 @@ from pathlib import Path
 from threading import Thread
 from backend.downloaders import *
 from backend.interfaces import MangaDl
-from backend.managers import ThreadManager
-from backend.models import Manga, Chapter
+from backend.constants import DataType
+from backend.models import Manga, Chapter, Data
+from backend.managers import ThreadManager, StorageManager
 
 
-
-class Downloader:
+class DownloadManager:
     def __init__(self) -> None:
         self.downloaders = {
             'aoashi': AoAshiDl(),
@@ -26,34 +26,53 @@ class Downloader:
             'tcb': TCBScansDl(),
             'lmorg': LermangaOrgDl()
         }
+        self.storage = StorageManager()
 
     def __match_source__(self, source: str) -> MangaDl:
         return self.downloaders[source.replace('_id', '')]
     
     def search(self, source: str, query: str, pre_results: list[Manga] = None):
+        search_data = Data(DataType.SEARCH, query, source)
+        if not self.storage.is_ten_minutes_old(search_data):
+            return self.storage.get_data(search_data)
         dl = self.__match_source__(source)
         if dl:
-            return dl.search(query) if not pre_results \
+            search_data.data = dl.search(query) if not pre_results \
                 else dl.search(query, pre_results)
+            self.storage.add_data(search_data)
+            return search_data.data
         return False
 
-    def get_chapters(self, dl: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
-        dl: MangaDl = self.__match_source__(dl)
-        if dl:
+    def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
+        chapters_data = Data(DataType.CHAPTERS, manga_id, source, language=source_language)
+        if not self.storage.is_ten_minutes_old(chapters_data):
+            return self.storage.get_data(chapters_data)
+        source: MangaDl = self.__match_source__(source)
+        if source:
             try: 
-                return dl.get_chapters(manga_id) if not source_language \
-                    else dl.get_chapters(manga_id, source_language)
+                chapters_data.data = source.get_chapters(manga_id) if not source_language \
+                    else source.get_chapters(manga_id, source_language) 
+                self.storage.add_data(chapters_data)
+                return chapters_data.data
             except Exception as e: 
                 print(e)
         return False
 
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
+        images_data = Data(DataType.IMAGES, chapter_id, source)
+        if not self.storage.is_ten_minutes_old(images_data):
+            return self.storage.get_data(images_data)
         dl: MangaDl = self.__match_source__(source)
         if dl:
-            return dl.get_chapter_imgs(chapter_id)
+            images_data.data = dl.get_chapter_imgs(chapter_id)
+            self.storage.add_data(images_data)
+            return images_data.data
         return False
     
-    def get_base64_images(self, pages: list[str]) -> list[str]:
+    def get_base64_images(self,  source, chapter_id, pages: list[str],) -> list[str]:
+        b64_data = Data(DataType.IMAGES_B64, chapter_id, source)
+        if not self.storage.is_ten_minutes_old(b64_data):
+            return self.storage.get_data(b64_data)
         images_b64 = []
         threads = ThreadManager()
         def get_base_64_image(url, index: int):
@@ -71,8 +90,9 @@ class Downloader:
         threads.start()
         threads.join()
         images_b64.sort(key=lambda e: e[1])
-        return [i[0] for i in images_b64]
-
+        b64_data.data = [i[0] for i in images_b64]
+        self.storage.add_data(b64_data)
+        return b64_data.data
     
     def download_chapter(self, manga: dict, source: str, chapter: Chapter) -> bool:
         manga_images = self.get_chapter_image_urls(source, chapter.id)

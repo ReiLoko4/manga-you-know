@@ -18,17 +18,12 @@ class Router:
         }
         self.body = ft.Container(content=self.routes['/'])
         self.update = {
-            '/': index,
-            '/favorites': favorites.data,
-            '/configs': configs
-        }
-        self.update = {
-            '/': index,
+            '/': index.data[0],
             '/favorites': favorites.data[0],
             '/configs': configs
         }
         self.resize = {
-            '/': index,
+            '/': index.data[1],
             '/favorites': favorites.data[1],
             '/configs': configs
         }
@@ -52,6 +47,6 @@ class Router:
             self.page.banner.visible = True
         self.body.content = self.routes[route.route]
         self.body.update()
-        if route.route == '/favorites':
+        if route.route == '/favorites' or route.route == '/':
             self.update[route.route](self.page.width - 90)
             self.page.on_resize = self.resize[route.route]

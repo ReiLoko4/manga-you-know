@@ -2,13 +2,14 @@ import flet as ft
 from time import sleep
 from backend.models import Manga
 from backend.database import DataBase
-from backend.managers import Downloader
+from backend.managers import DownloadManager
+from screen.components import MangasCardNotify
 
 
 class Index:
     def __init__(self, page: ft.Page):
         connection_data = DataBase()
-        downloader = Downloader()
+        downloader: DownloadManager = page.data['dl']
         source_selector = ft.Dropdown(options=[
             ft.dropdown.Option('md', text='MangaDex'),
             ft.dropdown.Option('ml', text='MangaLivre'),
@@ -27,7 +28,7 @@ class Index:
             'ms'
         ]
         results = ft.Column(width=470, spacing=0.7, data={'last_src': '', 'chapters': []})
-        card = ft.Card(ft.Container(results), color='gray', visible=False)
+        results_card = ft.Card(ft.Container(results), color='gray', visible=False)
         search = ft.TextField(
             label='Pesquisar Mangás...',
             width=500,
@@ -82,6 +83,7 @@ class Index:
             )
             manga_dialog.open = True
             page.dialog = manga_dialog
+            page.update()
 
         def search_mangas(e: ft.ControlEvent = None):
             query = e
@@ -89,7 +91,7 @@ class Index:
                 query = e.control.value
             if len(query) == 0:
                 results.controls.clear()
-                card.visible = False
+                results_card.visible = False
                 page.update()
                 return False
             results.controls.clear()
@@ -102,13 +104,9 @@ class Index:
                     height=55
                 )
             )
-            card.visible = True
+            results_card.visible = True
             page.update()
-            if results.data.get(f'{query} || {source_selector.value}'):
-                response = results.data[f'{query} || {source_selector.value}']
-            else:
-                response = downloader.search(source_selector.value, query, results.data['chapters'] if results.data['last_src'] == source_selector.value else None)
-                results.data[f'{query} || {source_selector.value}'] = response
+            response = downloader.search(source_selector.value, query, results.data['chapters'] if results.data['last_src'] == source_selector.value else None)
             if query != search.value:
                     return False
             if source_selector.value in local_search:
@@ -117,7 +115,7 @@ class Index:
                 results.data['last_src'] = source_selector.value
             favorites = connection_data.get_database()
             list_favorites_id = [i[f'{source_selector.value}_id'] for i in favorites]
-            card.visible = True
+            results_card.visible = True
             results.controls.clear()
             if not response:
                 results.controls.append(
@@ -143,20 +141,20 @@ class Index:
                     )
                 if len(search.value) == 0:
                     results.controls.clear()
-                    card.visible = False
+                    results_card.visible = False
             page.update()
 
         def out_search(e):
             sleep(0.1)
             if self.is_clicked:
                 return
-            card.visible = False
+            results_card.visible = False
             page.update()
 
         def focus_search(e):
             if len(results.controls) != 0:
                 if results.controls[0].key == 'manga':
-                    card.visible = True
+                    results_card.visible = True
                     page.update()
         def togle_visible(_:ft.ControlEvent=None):
             page.update()
@@ -164,37 +162,68 @@ class Index:
                 search.focus()
                 search_mangas(search.value)
         source_selector.on_change = togle_visible
-
         search.on_change = search_mangas
         search.on_blur = out_search
         search.on_focus = focus_search
+        favorites_row = ft.Row(
+            wrap=True,
+            width=page.width - 90,
+            height=10000,
+            top=170
+        )
         index.controls.append(
+            favorites_row
+        )
+        index.controls.append(
+            ft.Column([
             ft.ResponsiveRow([
                 ft.Column([ft.Container(bgcolor='white', width=300)], col=2),
-                ft.Column([ft.Container(search, padding=10)], col=6),
+                ft.Column([ft.Container(search, padding=5)], col=6),
                 ft.Column([ft.Container(ft.Row([source_selector]), width=250, padding=10)], col=4),
-            ], alignment=ft.MainAxisAlignment.CENTER, columns=12
-            )
+            ], alignment=ft.MainAxisAlignment.CENTER, columns=12),
+            ft.ResponsiveRow([
+                ft.Column([ft.Container(bgcolor='white', width=300)], col=2),
+                ft.Column([ft.Container(results_card, padding=5)], col=6),
+                ft.Column([ft.Container(width=250, padding=10)], col=4),
+            ], alignment=ft.MainAxisAlignment.CENTER, columns=12),
+            ], spacing=0.3)
         )
-        index.controls.append(
-            ft.Row([], top=100)
-        )
-        index.controls.append(
-            ft.Row([card], top=70, left=175)
-        )
+        stack = ft.Stack([
+            index,
+            manga
+        ], width=1000, height=1000)
         self.content = ft.Column(
-            [
-                ft.Stack([
-                    index,
-                    manga
-                ], width=1000, height=1000)
-            ],
+            [stack],
             scroll='always',
-            # bgcolor=None
         )
-        #  = ft.Column(
-            
-        # )
+        def update(e):
+            if e:
+                favorites_row.width = e
+                stack.width = e
+                index.width = e
+                self.content.width = e
+            favorites = MangasCardNotify(connection_data, page)
+            count = 0
+            for num in range(len(favorites)):
+                if num % 3 == 0:
+                    count += 1
+            stack.height = count * 435
+            index.height = count * 435
+            favorites_row.height = count * 435
+            if page.data['last_favorites'] == favorites:
+                return
+            favorites_row.controls = favorites
+            page.update()
+
+        def resize(e):
+            favorites_row.width = float(e.control.width) - 90
+            index.width = float(e.control.width) - 90
+            stack.width = float(e.control.width) - 90
+            self.content.width = float(e.control.width) - 90
+            page.update()
+
+        favorites_row.controls = MangasCardNotify(connection_data, page)
+        self.content.data = [update, resize]
 
     def return_content(self) -> ft.Row:
         return self.content

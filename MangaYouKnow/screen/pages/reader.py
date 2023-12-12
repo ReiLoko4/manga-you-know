@@ -1,7 +1,7 @@
 import flet as ft
 from backend.models import Chapter
 from backend.database import DataBase
-from backend.managers import Downloader
+from backend.managers import DownloadManager
 from backend.utilities import EnableBackwardIterator
 
 
@@ -9,15 +9,15 @@ class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = DataBase()
-        self.dl = Downloader()
+        self.dl: DownloadManager = page.data['dl']
         self.content = None
         self.create_content()
 
     def create_content(self):
         self.page.title = f'{self.page.data['manga_name']} - {self.page.data['chapter_title']}' 
         self.page.banner.visible = False
-        if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id']):
-            self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['chapter_id'])
+        if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id']):
+            self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id'])
         self.chapters: list[Chapter] = self.page.data['manga_chapters']
         self.pages = self.page.data['chapter_images']
         self.pages_len = len(self.pages)
@@ -28,7 +28,6 @@ class MangaReader:
         self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
         self.btn_next_chapter.visible = True if self.pages_len == 1 \
             and not self.chapters[0].id == self.page.data['chapter_id'] else False
-
         is_second_time = False
         if self.content != None:
             is_second_time = True
@@ -123,7 +122,7 @@ class MangaReader:
         if not pages:
             print('errokkkkk')
             return False
-        images_b64 = self.dl.get_base64_images(pages)
+        images_b64 = self.dl.get_base64_images(self.page.data['source'], chapter_id, pages)
         self.page.data['chapter_images'] = images_b64
         self.create_content()
         self.page.update()
