@@ -221,8 +221,6 @@ class Index:
             stack.width = float(e.control.width) - 90
             self.content.width = float(e.control.width) - 90
             page.update()
-
-        favorites_row.controls = MangasCardNotify(connection_data, page)
         self.content.data = [update, resize]
 
     def return_content(self) -> ft.Row:

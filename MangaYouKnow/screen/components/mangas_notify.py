@@ -38,7 +38,7 @@ def verify_chapters(manga: dict, text: ft.Text, page: ft.Page):
             break
         count += 1
     if count == 0:
-        text.value = f'+{len(chapters)}'
+        text.value = f'Em dia!'
         page.update()
         return
     text.value = f'+{count}'
