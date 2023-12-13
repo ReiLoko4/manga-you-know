@@ -1,4 +1,5 @@
-import requests
+from functools import cache
+from requests import Session
 from bs4 import BeautifulSoup
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
@@ -6,7 +7,7 @@ from backend.models import Manga, Chapter
 
 class TCBScansDl(MangaDl):
     def __init__(self):
-        self.session = requests.Session()
+        self.session = Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -20,15 +21,8 @@ class TCBScansDl(MangaDl):
             'Sec-Fetch-Site': 'same-origin',
             'Sec-Fetch-User': '?1',
         })
-
-    def search(self, query: str) -> list[Manga] | bool:
-        mangas: list[Manga] = self.get_mangas()
-        sorted_mangas = []
-        for manga in mangas:
-            if query.lower() in manga.name.lower():
-                sorted_mangas.append(manga)
-        return sorted_mangas[:10]
-
+        
+    @cache
     def get_mangas(self) -> list[Manga] | bool:
         response = self.session.get('https://tcbscans.com/projects')
         if not response:
@@ -47,7 +41,15 @@ class TCBScansDl(MangaDl):
                         )
                     )
         return mangas
-    
+
+    def search(self, query: str) -> list[Manga] | bool:
+        mangas: list[Manga] = self.get_mangas()
+        sorted_mangas = []
+        for manga in mangas:
+            if query.lower() in manga.name.lower():
+                sorted_mangas.append(manga)
+        return sorted_mangas[:10]
+
     def get_chapters(self, manga_id: str) -> list[Chapter] | bool:
         response = self.session.get(f'https://tcbscans.com/mangas/{manga_id}')
         if not response:

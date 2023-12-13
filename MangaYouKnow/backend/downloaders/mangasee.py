@@ -1,4 +1,5 @@
 import json
+from functools import cache
 from requests import Session
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
@@ -21,28 +22,32 @@ class MangaSeeDl(MangaDl):
             'Sec-Fetch-User': '?1',
         })
 
-    def search(self, query: str, pre_results: list[dict] = None):
-        if not pre_results:
-            response = self.session.get('https://www.mangasee123.com/search?name=qualquercoisaliteralmente')
-            if response.status_code != 200:
-                return False
-            results = json.loads(response.text.split('vm.Directory = ')[1].split('\n')[0][:-2])
-            mangas = []
-            for manga in results:
-                mangas.append(
-                    Manga(
-                        id=manga['i'],
-                        name=manga['s'],
-                        folder_name=manga['i'],
-                        extra_name=manga['al'],
-                        author=manga['a'],
-                        cover=f'https://temp.compsci88.com/cover/{manga['i']}.jpg',
-                        grade=0.0
-                    )
+    @cache
+    def get_mangas(self) -> list[Manga] | bool:
+        response = self.session.get('https://www.mangasee123.com/search?name=qualquercoisaliteralmente')
+        if response.status_code != 200:
+            return False
+        results = json.loads(response.text.split('vm.Directory = ')[1].split('\n')[0][:-2])
+        mangas = []
+        for manga in results:
+            mangas.append(
+                Manga(
+                    id=manga['i'],
+                    name=manga['s'],
+                    folder_name=manga['i'],
+                    extra_name=manga['al'],
+                    author=manga['a'],
+                    cover=f'https://temp.compsci88.com/cover/{manga['i']}.jpg',
+                    grade=0.0
                 )
-        if pre_results:
-            mangas = pre_results
-        final_result = []
+            )
+        return mangas
+
+    def search(self, query: str):
+        mangas: list[Manga] = self.get_mangas()
+        if not mangas:
+            return False
+        sorted_mangas = []
         for manga in mangas:
             manga.grade = 0.0
             if query.lower() in manga.name.lower():
@@ -52,9 +57,9 @@ class MangaSeeDl(MangaDl):
             if [i for i in manga.author if query.lower() in i.lower()]:
                 manga.grade += 0.5
             if manga.grade > 0:
-                final_result.append(manga)
-        final_result.sort(key=lambda x: x.grade, reverse=True)
-        return [final_result[:10], mangas]
+                sorted_mangas.append(manga)
+        sorted_mangas.sort(key=lambda x: x.grade, reverse=True)
+        return sorted_mangas[:10]
     
     def get_chapters(self, manga_id: str):
         response = self.session.get(f'https://www.mangasee123.com/manga/{manga_id}')

@@ -23,10 +23,6 @@ class Index:
             # ft.dropdown.Option('lmorg', text='LerManga.org'),
             # ft.dropdown.Option('op', text='OP Scans'),
         ], value='md', width=140)
-
-        local_search = [
-            'ms'
-        ]
         results = ft.Column(width=470, spacing=0.7, data={'last_src': '', 'chapters': []})
         results_card = ft.Card(ft.Container(results), color='gray', visible=False)
         search = ft.TextField(
@@ -106,13 +102,9 @@ class Index:
             )
             results_card.visible = True
             page.update()
-            response = downloader.search(source_selector.value, query, results.data['chapters'] if results.data['last_src'] == source_selector.value else None)
+            response = downloader.search(source_selector.value, query)
             if query != search.value:
                     return False
-            if source_selector.value in local_search:
-                results.data['chapters'] = response[1]
-                response = response[0]
-                results.data['last_src'] = source_selector.value
             favorites = connection_data.get_database()
             list_favorites_id = [i[f'{source_selector.value}_id'] for i in favorites]
             results_card.visible = True
