@@ -126,7 +126,7 @@ class Favorites:
             )
             page.update()
             pages = dl.get_chapter_image_urls(source, chapter.id)
-            images_b64 = dl.get_base64_images(source, chapter.id, pages)
+            images_b64 = dl.get_base64_images(pages)
             page.data['chapter_images'] = images_b64
             page.data['manga_chapters'] = chapters
             page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
@@ -172,7 +172,8 @@ class Favorites:
             alignment=ft.MainAxisAlignment.START
         )
         def load_mangas_by_mark():
-            row_mangas.controls = load_mangas(search.value if search.value != '' else None)
+            search.value = ''
+            row_mangas.controls = load_mangas()
             page.update()
         def load_mangas(query: str = None) -> list[ft.Card]:
             return MangasCard(

@@ -1,4 +1,4 @@
-from threading import Thread
+from backend.utilities import ThreadWithReturnValue as Thread
 from time import sleep
 
 
@@ -14,6 +14,13 @@ class ThreadManager(Thread):
         for thread in self.threads:
             thread.start()
 
+    def start_and_join_by_num(self, num: int = 5):
+        for i in range(0, len(self.threads), num):
+            for thread in self.threads[i:i + num]:
+                thread.start()
+            for thread in self.threads[i:i + num]:
+                thread.join()
+
     def start_and_join(self):
         for thread in self.threads:
             thread.start()
@@ -24,9 +31,12 @@ class ThreadManager(Thread):
             thread.start()
             sleep(secs)
 
-    def join(self):
+    def join(self) -> list[any] | None:
+        values = []
         for thread in self.threads:
-            thread.join()
+            values.append(thread.join())
+        if values:
+            return values
 
     def get_len(self):
         return len(self.threads)

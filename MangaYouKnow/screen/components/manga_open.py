@@ -177,6 +177,7 @@ def MangaOpen(
     language_options.on_change = lambda e: load_chapters()
     chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
     def close(_=None):
+        list_chapters.controls = []
         alert.open = False
         page.update()
     alert = ft.AlertDialog(

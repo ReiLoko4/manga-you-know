@@ -11,13 +11,13 @@ class DataBase:
     def __init__(self):
         self.dir = Path('./database')
         self.database = Path('./database/data.db')
+        self.config = Path('database/config.json')
         self.engine = db.create_engine(
             'sqlite:///database/data.db', 
             execution_options={'isolation_level': 'AUTOCOMMIT'},
-            pool_size=20, max_overflow=0, pool_timeout=30, pool_recycle=1800
+            pool_size=2000, max_overflow=0, pool_timeout=30000, pool_recycle=1800
         )
         self.columns = favorite_columns
-        self.config = Path('database/config.json')
         self.ids = {
             'ml_id': Favorite.ml_id,
             'md_id': Favorite.md_id,

@@ -1,8 +1,11 @@
 import base64
-import requests
 from pathlib import Path
-from threading import Thread
+from functools import cache
+from requests import Session
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from backend.downloaders import *
+from backend.utilities import ThreadWithReturnValue as Thread
 from backend.interfaces import MangaDl
 from backend.constants import DataType
 from backend.models import Manga, Chapter, Data
@@ -11,6 +14,11 @@ from backend.managers import ThreadManager, StorageManager
 
 class DownloadManager:
     def __init__(self) -> None:
+        self.session = Session()
+        retry = Retry(connect=3, backoff_factor=0.5)
+        adapter = HTTPAdapter(max_retries=retry)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
         self.downloaders = {
             'aoashi': AoAshiDl(),
             'gkk': GekkouDl(),
@@ -58,55 +66,51 @@ class DownloadManager:
                 print(e)
         return False
 
+    @cache
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
-        images_data = Data(DataType.IMAGES, chapter_id, source)
-        if not self.storage.is_ten_minutes_old(images_data):
-            return self.storage.get_data(images_data)
         dl: MangaDl = self.__match_source__(source)
         if dl:
-            images_data.data = dl.get_chapter_imgs(chapter_id)
-            self.storage.add_data(images_data)
-            return images_data.data
+            return dl.get_chapter_imgs(chapter_id)
         return False
     
-    def get_base64_images(self,  source, chapter_id, pages: list[str],) -> list[str]:
-        b64_data = Data(DataType.IMAGES_B64, chapter_id, source)
-        if not self.storage.is_ten_minutes_old(b64_data):
-            return self.storage.get_data(b64_data)
-        images_b64 = []
+    @cache
+    def get_image_content(self, url: str) -> bytes | None:
+        response = self.session.get(url)
+        print(response.status_code, url)
+        if response and 'image' in response.headers['content-type']:
+            return response.content
+    
+    @cache
+    def get_base_64_image(self, url: str) -> str | None:
+        response = self.get_image_content(url)
+        if response:
+            return base64.b64encode(response).decode('utf-8')
+
+    def get_base64_images(self, pages: list[str]) -> list[str]:
         threads = ThreadManager()
-        def get_base_64_image(url, index: int):
-            response = requests.get(url)
-            print(response.status_code, url)
-            if response and 'image' in response.headers['content-type']:
-                images_b64.append([base64.b64encode(response.content).decode('utf-8'), index])
-        for i, image in enumerate(pages):
+        for image in pages:
             threads.add_thread(
                 Thread(
-                    target=get_base_64_image,
-                    args=(image, i)
+                    target=self.get_base_64_image,
+                    args=[image]
                 )
             )
         threads.start()
-        threads.join()
-        images_b64.sort(key=lambda e: e[1])
-        b64_data.data = [i[0] for i in images_b64]
-        self.storage.add_data(b64_data)
-        return b64_data.data
+        return [i for i in threads.join() if i]
     
     def download_chapter(self, manga: dict, source: str, chapter: Chapter) -> bool:
         manga_images = self.get_chapter_image_urls(source, chapter.id)
         if manga_images:
             threads = ThreadManager()
-            def download_page(url, path):
-                response = requests.get(url)
-                if response and 'image' in response.headers['content-type']:
-                        with open(path, 'wb') as file:
-                            file.write(response.content)
+            def download_page(url: str, path: Path):
+                response = self.get_image_content(url)
+                if response:
+                    with open(path, 'wb') as file:
+                        file.write(response)
             folder = Path(f'mangas/{manga['folder_name']}/{chapter.number}')
             folder.mkdir(parents=True, exist_ok=True)
             for i, image in enumerate(manga_images):
-                path = f'{folder}/{i:03d}.png'
+                path = folder / f'{i:03d}.png'
                 threads.add_thread(
                     Thread(
                         target=download_page,
@@ -118,7 +122,7 @@ class DownloadManager:
             return True
         return False
     
-    def download_all_chapters(self, manga: dict, source: str, chapters: list[Chapter]) -> bool:
+    def download_all_chapters(self, manga: dict, source: str, chapters: list[Chapter], num: int = 5) -> bool:
         chapters.reverse()
         threads = ThreadManager()
         if not chapters:
@@ -131,9 +135,6 @@ class DownloadManager:
                     args=[manga, source, chapter]
                 )
             )
-            if i % 5 == 0 or i == len(chapters) - 1:
-                threads.start()
-                threads.join()
-                threads = ThreadManager()
+        threads.start_and_join_by_num(num)
         print('finished.')
         return True

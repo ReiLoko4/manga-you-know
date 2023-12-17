@@ -122,7 +122,7 @@ class MangaReader:
         if not pages:
             print('errokkkkk')
             return False
-        images_b64 = self.dl.get_base64_images(self.page.data['source'], chapter_id, pages)
+        images_b64 = self.dl.get_base64_images(pages)
         self.page.data['chapter_images'] = images_b64
         self.create_content()
         self.page.update()

@@ -1,5 +1,7 @@
+from enum import Enum
 
-class DataType:
+
+class DataType(Enum):
     SEARCH = 'search'
     CHAPTERS = 'chapters'
     IMAGES = 'images'

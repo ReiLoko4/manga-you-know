@@ -43,7 +43,7 @@ class MangaSeeDl(MangaDl):
             )
         return mangas
 
-    def search(self, query: str):
+    def search(self, query: str) -> list[Manga] | bool:
         mangas: list[Manga] = self.get_mangas()
         if not mangas:
             return False
@@ -52,16 +52,16 @@ class MangaSeeDl(MangaDl):
             manga.grade = 0.0
             if query.lower() in manga.name.lower():
                 manga.grade += 1
-            if [i for i in manga.extra_name if query.lower() in i.lower()]:
+            if True in map(lambda x: query.lower() in x.lower(), manga.extra_name):
                 manga.grade += 1
-            if [i for i in manga.author if query.lower() in i.lower()]:
+            if True in map(lambda x: query.lower() in x.lower(), manga.author):
                 manga.grade += 0.5
             if manga.grade > 0:
                 sorted_mangas.append(manga)
         sorted_mangas.sort(key=lambda x: x.grade, reverse=True)
         return sorted_mangas[:10]
     
-    def get_chapters(self, manga_id: str):
+    def get_chapters(self, manga_id: str) -> list[Chapter] | bool:
         response = self.session.get(f'https://www.mangasee123.com/manga/{manga_id}')
         if response.status_code == 200:
             results = json.loads(response.text.split('vm.Chapters = ')[1].split('\n')[0][:-2])
@@ -74,14 +74,15 @@ class MangaSeeDl(MangaDl):
                 chapters.append(
                     Chapter(
                         id=f'{manga_id}-chapter-{int(chapter['Chapter'][1:-1])}{index}{page}.html',
-                        number=int(chapter['Chapter'][1:-1]),
+                        number=int(chapter['Chapter'][1:-1]) if chapter['Chapter'][-1] == '0' 
+                            else f'{int(chapter['Chapter'][1:-1])}.{chapter['Chapter'][-1]}', 
                         title=chapter['ChapterName'],
                     )
                 )
             return chapters
         return False
 
-    def get_chapter_imgs(self, chapter_id: str):
+    def get_chapter_imgs(self, chapter_id: str) -> list[str] | bool:
         response = self.session.get(f'https://mangasee123.com/read-online/{chapter_id}')
         if response.status_code == 200:
             dominy = response.text.split('vm.CurPathName = "')[1].split('"')[0]
