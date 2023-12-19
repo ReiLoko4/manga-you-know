@@ -36,6 +36,16 @@ class Favorites:
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300
         )
+        def reset_field_value(e):
+            if not search.value:
+                return
+            search.value = ''
+            row_mangas.controls = load_mangas()
+            page.update()	
+        reset_search = ft.IconButton(
+            ft.icons.HIGHLIGHT_REMOVE_OUTLINED,
+            on_click=reset_field_value
+        )
         mark_selector = ft.Dropdown(
             options=[
                 ft.dropdown.Option('all', 'Todos'),
@@ -151,12 +161,12 @@ class Favorites:
                 page.update()
 
             confirmation = ft.AlertDialog(
-                title=ft.Text('Tem certeza?'),
+                title=ft.Row([ft.Text('Tem certeza?')], alignment=ft.MainAxisAlignment.CENTER),
                 actions=[ft.Row([
                     ft.IconButton(ft.icons.CHECK_CIRCLE_OUTLINED, tooltip='Confirmar', on_click=delete),
                     ft.IconButton(ft.icons.CANCEL_OUTLINED, tooltip='Cancelar', on_click=cancel)
                 ],
-                    width=180, alignment=ft.MainAxisAlignment.CENTER
+                    width=210, alignment=ft.MainAxisAlignment.SPACE_AROUND
                 )
 
                 ],
@@ -172,8 +182,7 @@ class Favorites:
             alignment=ft.MainAxisAlignment.START
         )
         def load_mangas_by_mark():
-            search.value = ''
-            row_mangas.controls = load_mangas()
+            row_mangas.controls = load_mangas(search.value if search.value else None)
             page.update()
         def load_mangas(query: str = None) -> list[ft.Card]:
             return MangasCard(
@@ -193,6 +202,7 @@ class Favorites:
         stack = ft.Stack([
             ft.Row([
                 ft.Container(search, padding=10),
+                reset_search,
                 ft.Container(ft.Row([mark_selector, mark_add]), width=250, padding=10),
             ], alignment=ft.MainAxisAlignment.CENTER
             ),

@@ -56,7 +56,7 @@ class MangaSeeDl(MangaDl):
                 manga.grade += 1
             if True in map(lambda x: query.lower() in x.lower(), manga.author):
                 manga.grade += 0.5
-            if manga.grade > 0:
+            if manga.grade:
                 sorted_mangas.append(manga)
         sorted_mangas.sort(key=lambda x: x.grade, reverse=True)
         return sorted_mangas[:10]

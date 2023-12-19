@@ -34,6 +34,7 @@ class MangaDexDl(MangaDl):
                     id=manga['id'],
                     name=title_name,
                     folder_name=manga['id'],
+                    extra_name=manga['attributes']['altTitles'],
                     description=manga['attributes']['description'].get('en'),
                     cover=f'https://mangadex.org/covers/{manga['id']}/{id_filename}'
                 )

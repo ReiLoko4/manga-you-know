@@ -48,5 +48,5 @@ class Router:
         self.body.content = self.routes[route.route]
         self.body.update()
         if route.route == '/favorites' or route.route == '/':
-            self.update[route.route](self.page.width - 90)
+            self.update[route.route](self.page.width - 80)
             self.page.on_resize = self.resize[route.route]
