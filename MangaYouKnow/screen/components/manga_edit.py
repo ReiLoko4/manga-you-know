@@ -1,5 +1,6 @@
 import flet as ft
 from backend.database import DataBase
+from screen.constants import Language
 
 
 database = DataBase()
@@ -35,7 +36,7 @@ def MangaEdit(
     def save(column, content):
         if content == manga_info[column]:
             return
-        if database.set_manga(manga_info['id'], column, content):
+        if database.set_favorite(manga_info['id'], column, content):
             row_mangas.controls = load_mangas(search.value if search.value != '' else None)
             page.update()
     edition = ft.AlertDialog(

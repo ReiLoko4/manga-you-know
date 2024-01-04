@@ -12,10 +12,10 @@ class Index:
         downloader: DownloadManager = page.data['dl']
         source_selector = ft.Dropdown(options=[
             ft.dropdown.Option('md', text='MangaDex'),
-            ft.dropdown.Option('ml', text='MangaLivre'),
+            # ft.dropdown.Option('ml', text='MangaLivre'),
             ft.dropdown.Option('ms', text='MangaSee'),
             ft.dropdown.Option('mc', text='MangasChan'),
-            ft.dropdown.Option('mf', text='MangaFire'),
+            # ft.dropdown.Option('mf', text='MangaFire'),
             ft.dropdown.Option('mx', text='MangaNexus'),
             ft.dropdown.Option('gkk', text='Gekkou'),
             ft.dropdown.Option('tsct', text='Taosect'),
@@ -38,10 +38,10 @@ class Index:
 
         def togle_favorite(manga: Manga, button: ft.IconButton, is_on_search: bool = False):
             if connection_data.is_favorite(f'{source_selector.value}_id', manga.id):
-                if connection_data.delete_manga_by_key(f'{source_selector.value}_id', manga.id):
+                if connection_data.delete_favorite_by_key(f'{source_selector.value}_id', manga.id):
                     button.icon = ft.icons.BOOKMARK_OUTLINE
             else:
-                if connection_data.add_manga(
+                if connection_data.add_favorite(
                     manga,
                     md_id=manga.id if source_selector.value == 'md' else None,
                     ml_id=manga.id if source_selector.value == 'ml' else None,
@@ -105,7 +105,7 @@ class Index:
             response = downloader.search(source_selector.value, query)
             if query != search.value:
                     return False
-            favorites = connection_data.get_database()
+            favorites = connection_data.get_favorites()
             list_favorites_id = [i[f'{source_selector.value}_id'] for i in favorites]
             results_card.visible = True
             results.controls.clear()
@@ -194,7 +194,7 @@ class Index:
                 stack.width = e
                 index.width = e
                 self.content.width = e
-            favorites = MangasCardNotify(connection_data, page)
+            favorites = MangasCardNotify(favorites_row, connection_data, page)
             count = 0
             for num in range(len(favorites)):
                 if num % 3 == 0:

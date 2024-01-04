@@ -2,10 +2,13 @@ import flet as ft
 from screen.user_control.app_bar import NavBar
 from screen.utilities.router_manager import Router
 from backend.managers import DownloadManager
+from backend.database import DataBase
 
 
 __version__ = '0.9.3b'
 
+
+database = DataBase()
 
 def __main__(page: ft.Page) -> ft.FletApp:
     page.title = f'MangaYouKnow {__version__}'
@@ -13,6 +16,7 @@ def __main__(page: ft.Page) -> ft.FletApp:
     page.window_min_width = 770
     page.window_min_height = 600
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
+    database.init_database()
     page.data = {} 
     page.data['dl'] = DownloadManager()
     router = Router(page)

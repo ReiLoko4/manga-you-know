@@ -166,7 +166,7 @@ class MangaLivreDl(MangaDl):
         manga_bd.append(nome)
         manga_bd.append(last_read)
         manga_bd.append(manga_path)
-        self.connection_data.add_manga(manga_bd)
+        self.connection_data.add_favorite(manga_bd)
         return True
 
     def download_manga_cover(self, manga_name: str, manga_id: str) -> list | bool:

@@ -1,5 +1,6 @@
 import base64
 from pathlib import Path
+from cachetools import cached, TTLCache
 from functools import cache
 from requests import Session
 from urllib3.util.retry import Retry
@@ -7,8 +8,7 @@ from requests.adapters import HTTPAdapter
 from backend.downloaders import *
 from backend.utilities import ThreadWithReturnValue as Thread
 from backend.interfaces import MangaDl
-from backend.constants import DataType
-from backend.models import Manga, Chapter, Data
+from backend.models import Manga, Chapter
 from backend.managers import ThreadManager, StorageManager
 
 
@@ -34,34 +34,25 @@ class DownloadManager:
             'tcb': TCBScansDl(),
             'lmorg': LermangaOrgDl()
         }
-        self.storage = StorageManager()
 
     def __match_source__(self, source: str) -> MangaDl:
         return self.downloaders[source.replace('_id', '')]
     
+    @cache
     def search(self, source: str, query: str, pre_results: list[Manga] = None):
-        search_data = Data(DataType.SEARCH, query, source)
-        if not self.storage.is_ten_minutes_old(search_data):
-            return self.storage.get_data(search_data)
         dl = self.__match_source__(source)
         if dl:
-            search_data.data = dl.search(query) if not pre_results \
+            return dl.search(query) if not pre_results \
                 else dl.search(query, pre_results)
-            self.storage.add_data(search_data)
-            return search_data.data
         return False
 
+    @cached(TTLCache(maxsize=1024, ttl=600))
     def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
-        chapters_data = Data(DataType.CHAPTERS, manga_id, source, language=source_language)
-        if not self.storage.is_ten_minutes_old(chapters_data):
-            return self.storage.get_data(chapters_data)
         source: MangaDl = self.__match_source__(source)
         if source:
             try: 
-                chapters_data.data = source.get_chapters(manga_id) if not source_language \
+                return source.get_chapters(manga_id) if not source_language \
                     else source.get_chapters(manga_id, source_language) 
-                self.storage.add_data(chapters_data)
-                return chapters_data.data
             except Exception as e: 
                 print(e)
         return False

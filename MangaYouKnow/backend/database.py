@@ -40,12 +40,23 @@ class DataBase:
         if not self.database.exists():
             self.dir.mkdir(parents=True, exist_ok=True)
             self.database.touch()
-        FavoriteBase.metadata.create_all(self.engine, checkfirst=True)
-        ReadedBase.metadata.create_all(self.engine, checkfirst=True)
-        MarkBase.metadata.create_all(self.engine, checkfirst=True)
-        MarkFavoriteBase.metadata.create_all(self.engine, checkfirst=True)
-        # columns = self.execute_data('PRAGMA TABLE_INFO(readed);')
-        # if not 'language' in [i['name'] for i in columns]:
+            FavoriteBase.metadata.create_all(self.engine, checkfirst=True)
+            ReadedBase.metadata.create_all(self.engine, checkfirst=True)
+            MarkBase.metadata.create_all(self.engine, checkfirst=True)
+            MarkFavoriteBase.metadata.create_all(self.engine, checkfirst=True)
+
+    def init_database(self):
+        self.create_database()
+        self.fix_favorites()
+        self.fix_readed()
+    
+    def fix_readed(self):
+        table_columns = self.execute_data('PRAGMA TABLE_INFO(readed);')
+        for column in ['manga_source_id', 'language']:
+            if column not in [i['name'] for i in table_columns]:
+                self.execute_data(f'ALTER TABLE readed ADD COLUMN {column} TEXT;')
+                if column == 'manga_source_id':
+                    self.execute_data(f'CREATE UNIQUE INDEX manga_source_id ON readed({column});')
 
     def fix_favorites(self):
         table_columns = self.execute_data('PRAGMA TABLE_INFO(favorites);')
@@ -57,8 +68,7 @@ class DataBase:
                 self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} TEXT;')
                 self.execute_data(f'CREATE UNIQUE INDEX ta ON favorites({column});')
     
-    def get_database(self, mark_id: str = None) -> list[dict]:
-        self.fix_favorites()
+    def get_favorites(self, mark_id: str = None) -> list[dict]:
         con = self.connect()
         if mark_id:
             data = con.execute(
@@ -73,7 +83,6 @@ class DataBase:
         return [i._mapping for i in data.fetchall()]
 
     def get_database_notify_on(self) -> list[dict]:
-        self.fix_favorites()
         con = self.connect()
         data = con.execute(db.select(Favorite).where(Favorite.notify == True)).fetchall()
         return [i._mapping for i in data]
@@ -115,7 +124,7 @@ class DataBase:
             print(e)
             return False
 
-    def add_manga(
+    def add_favorite(
             self, manga: Manga,
             ml_id: int=None, md_id: str=None,
             ms_id: str=None, mc_id: str=None,
@@ -124,7 +133,6 @@ class DataBase:
             op_id: str=None, gkk_id: str=None,
             lmorg_id: str=None
         ) -> bool:
-        self.fix_favorites()
         try:
             self.engine.connect().execute(
                 db.insert(Favorite), [{
@@ -152,12 +160,12 @@ class DataBase:
             print(e)
             return False
     
-    def get_manga(self, favorite_id: int) -> dict | bool:
+    def get_favorite(self, favorite_id: int) -> dict | bool:
         con = self.connect()
         data = con.execute(db.select(Favorite).where(Favorite.id == favorite_id))
         return data.fetchone()._mapping if data else False
 
-    def set_manga(self, manga_id: str, column: str, content: any) -> bool:
+    def set_favorite(self, manga_id: str, column: str, content: any) -> bool:
         cur = self.connect()
         try:
             cur.execute(db.update(Favorite).where(Favorite.id == manga_id).values({column: content}))
@@ -166,19 +174,21 @@ class DataBase:
             return False
         return True
 
-    def delete_manga(self, manga_id: int) -> bool:
+    def delete_favorite(self, manga_id: int) -> bool:
         con = self.connect()
         try:
             con.execute(db.delete(Favorite).where(Favorite.id == manga_id))
+            con.execute(db.delete(MarkFavorite).where(MarkFavorite.favorite_id == manga_id))
         except Exception as e:
             print(e)
             return False
         return True
         
-    def delete_manga_by_key(self, key: str, id: int | str) -> bool:
+    def delete_favorite_by_key(self, key: str, id: int | str) -> bool:
         con = self.connect()
         try:
             con.execute(db.delete(Favorite).where(self.ids[key] == id))
+            con.execute(db.delete(MarkFavorite).where(self.ids[key] == id))
         except Exception as e:
             print(e)
             return False
@@ -214,13 +224,14 @@ class DataBase:
         )).fetchall()
         return True if data else False
     
-    def is_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str) -> bool:
+    def is_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str, language: str = None) -> bool:
         con = self.connect()
         data = con.execute(db.select(Readed).where(
-            Readed.chapter_id == chapter_id,
             Readed.manga_id == manga_id,
+            Readed.chapter_id == chapter_id,
             Readed.manga_source_id == manga_source_id,
-            Readed.source == source
+            Readed.source == source,
+            Readed.language == language 
         ))
         if data.fetchall():
             return True
@@ -276,28 +287,30 @@ class DataBase:
             return False
         return data.fetchone()._mapping
     
-    def add_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str) -> bool:
+    def add_readed(self, source: str, manga_id: str, manga_source_id, chapter_id: str, language: str = None) -> bool:
         con = self.connect()
         try:
             con.execute(db.insert(Readed),[{
                 'manga_id': manga_id,
                 'manga_source_id': manga_source_id,
                 'chapter_id': chapter_id,
-                'source': source 
+                'source': source,
+                'language': language
             }])
             return True
         except Exception as e:
             print(e)
             return False
 
-    def delete_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str) -> bool:
+    def delete_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str, language: str = None) -> bool:
         con = self.connect()
         try:
             con.execute(db.delete(Readed).where(
                 Readed.chapter_id == chapter_id,
                 Readed.manga_id == manga_id,
                 Readed.manga_source_id == manga_source_id,
-                Readed.source == source
+                Readed.source == source,
+                Readed.language == language
             ))
             return True
         except:

@@ -2,32 +2,14 @@ import flet as ft
 from backend.models import Chapter
 from backend.database import DataBase
 from backend.managers import DownloadManager
+from screen.constants import Language
 from screen.components import MangasCard
 
 
 class Favorites:
     def __init__(self, page: ft.Page) -> None:
         dl: DownloadManager = page.data['dl']
-        source_languages = {
-            'md_id': [
-                'en', 'pt-br', 
-                'es', 'ja-ro',
-                'ko-ro', 'zh',
-                'es-la', 'zh-hk',
-                'zh-ro'
-            ],
-            'ml_id': ['pt-br'],
-            'ms_id': ['en'],
-            'mc_id': ['pt-br'], 
-            'mf_id': ['en'],
-            'mx_id': ['pt-br'],
-            'gkk_id': ['pt-br'],
-            'tsct_id': ['pt-br'],
-            'tcb_id': ['en'],
-            'op_id': ['en'],
-            'opex': ['pt-br'],
-            'lmorg_id': ['pt-br'],
-        }
+        source_languages = Language.LANGUAGE
         database = DataBase()
         search = ft.TextField(
             label='Pesquisar Favoritos...',
@@ -151,7 +133,7 @@ class Favorites:
 
         def remove_manga(manga_id):
             def delete(_=None):
-                if database.delete_manga(int(manga_id)):
+                if database.delete_favorite(int(manga_id)):
                     row_mangas.controls = load_mangas()
                     confirmation.open = False
                     page.update()
@@ -191,14 +173,16 @@ class Favorites:
                 mark_selector,
                 search,
                 load_mangas_by_mark,
+                load_mangas,
                 read,
                 remove_manga,
                 page,
                 query=query
             )
+        # page.data['load_mangas'] = load_mangas
         row_mangas.controls = load_mangas()
         mark_selector.on_change = lambda e: load_mangas_by_mark()
-        favorites = database.get_database()
+        favorites = database.get_favorites()
         stack = ft.Stack([
             ft.Row([
                 ft.Container(search, padding=10),
@@ -217,7 +201,7 @@ class Favorites:
             if e:
                 row_mangas.width = e
                 stack.width = e
-            favorites = database.get_database()
+            favorites = database.get_favorites()
             count = 0
             for num in range(len(favorites)):
                 if num % 3 == 0:

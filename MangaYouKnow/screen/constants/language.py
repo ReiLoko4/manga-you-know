@@ -1,7 +1,6 @@
-from enum import Enum
 
 
-class Language(Enum):
+class Language:
     LANGUAGE = {
         'md_id': [
             'pt-br', 'en', 

@@ -36,7 +36,9 @@ class MangaReader:
             alignment=ft.MainAxisAlignment.CENTER
         )
         self.content = ft.Stack([
-            self.image_row,                
+            ft.Row([
+                self.image_row,                
+            ], alignment=ft.MainAxisAlignment.CENTER),
             ft.Row(
                 [
                     self.btn_next_chapter,
