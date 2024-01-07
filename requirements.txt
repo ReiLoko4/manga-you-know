@@ -1,5 +1,6 @@
 bs4
+cachetools
 flet
-requests
 pyperclip
+requests
 sqlalchemy
