@@ -9,7 +9,7 @@ from backend.downloaders import *
 from backend.utilities import ThreadWithReturnValue as Thread
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter
-from backend.managers import ThreadManager, StorageManager
+from backend.managers import ThreadManager
 
 
 class DownloadManager:

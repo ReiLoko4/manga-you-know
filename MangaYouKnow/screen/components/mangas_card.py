@@ -20,7 +20,6 @@ def MangasCard(
         search: ft.TextField,
         load_mangas_by_mark: callable,
         load_mangas: callable,
-        read: callable,
         remove_manga: callable,
         page: ft.Page,
         query: str = None,
@@ -66,7 +65,7 @@ def MangasCard(
                             width=180, alignment=ft.MainAxisAlignment.CENTER),
                     ft.Container(
                         ft.Row([
-                            ft.IconButton(ft.icons.MENU_BOOK, on_click=lambda e, info=i: MangaOpen(info, source_languages, read, togle_notify, page)),
+                            ft.IconButton(ft.icons.MENU_BOOK, on_click=lambda e, info=i: MangaOpen(info, source_languages, togle_notify, page)),
                             ft.IconButton(ft.icons.EDIT_SQUARE, on_click=lambda e, info=i: MangaEdit(info, row_mangas, load_mangas_by_mark, load_mangas, search, page)),
                             ft.IconButton(ft.icons.HIGHLIGHT_REMOVE, on_click=lambda e, info=i: remove_manga(info['id']))
                         ], alignment=ft.MainAxisAlignment.CENTER, width=180), padding=padding.only(top=-5))

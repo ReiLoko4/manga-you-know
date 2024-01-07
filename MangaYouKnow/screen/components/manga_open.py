@@ -6,14 +6,58 @@ from backend.models import Chapter
 
 database = DataBase()
 
+
 def MangaOpen(
         manga_info: dict,
         source_languages: dict,
-        read: callable,
         togle_notify: callable,
         page: ft.Page,
+        is_index: bool = False,
+        cards_row: ft.Row = None,
+        mangas_card_notify: callable = None
     ) -> ft.AlertDialog:
     dl: DownloadManager = page.data['dl']
+    manga_title = ft.Text(manga_info['name'] if len(manga_info['name']) < 35 else f'{manga_info['name'][0:33]}...', tooltip=manga_info['name'])
+    def read(source, manga, chapter: Chapter, chapters: list[dict], language: str=None) -> None:
+        manga_title.value = manga_info['name'] if len(manga_info['name']) < 25 else f'{manga_info['name'][0:22]}...'
+        status = ft.Text('Buscando as imagens...', weight=ft.FontWeight.W_500)
+        page.dialog.content = ft.Container(
+            ft.Column([
+                ft.Row([
+                    ft.Image(manga['cover'], height=200, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10),
+                    ft.Text(f'Capítulo {chapter.number} - {chapter.title}' if chapter.title else f'Capítulo {chapter.number}', size=20, weight=ft.FontWeight.BOLD),
+                ]),
+                ft.Container(height=5),
+                ft.Divider(height=5, color=ft.colors.GREY_700, thickness=2),
+                ft.Container(height=5),
+                ft.Row([
+                    ft.ProgressRing(height=140, width=140),
+                ],  alignment=ft.MainAxisAlignment.CENTER),
+                ft.Row([status], expand=True,alignment=ft.MainAxisAlignment.CENTER),
+                ft.Text('Pressione F4 para sair do capítulo', size=15, weight=ft.FontWeight.BOLD)
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        )
+        page.update()
+        pages = dl.get_chapter_image_urls(source, chapter.id)
+        status.value = 'Baixando as imagens...'
+        page.update()
+        images_b64 = dl.get_base64_images(pages)
+        status.value = 'Pronto!'
+        page.update()
+        page.data['chapter_images'] = images_b64
+        page.data['manga_chapters'] = chapters
+        page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
+        page.data['manga_name'] = manga['name']
+        page.data['manga_id'] = manga['id']
+        page.data['manga_source_id'] = manga[source] if source != 'opex' else source
+        page.data['chapter_id'] = chapter.id
+        page.data['source'] = source
+        if language:
+            page.data['language'] = language
+        page.data['is_index'] = False
+        if is_index:
+            page.data['is_index'] = True
+        page.go('/reader')
     btn_is_readed_list = []
     def togle_readed(source, manga, chapter_id, language: str=None):
         if database.is_readed(source, manga['id'], manga[source] if source != 'opex' else source, chapter_id, language if language else None):
@@ -26,6 +70,8 @@ def MangaOpen(
             if each_readed[i]:
                 icon = ft.icons.CHECK
             btn.icon = icon
+        if is_index:
+            cards_row.controls = mangas_card_notify(cards_row, page)
         page.update()
     chapter_search = ft.TextField(
         label='Capítulo...',
@@ -162,7 +208,7 @@ def MangaOpen(
         download_all.disabled = False
         chapter_search.disabled = False
         last_readed = database.get_last_readed(manga_info['id'])
-        list_chapters.scroll_to(key=last_readed['chapter_id'] if last_readed else None)
+        # list_chapters.scroll_to(key=last_readed['chapter_id'] if last_readed else None)
         page.update()
     download_all = ft.ElevatedButton(
         text='Baixar tudo',
@@ -183,7 +229,7 @@ def MangaOpen(
         alert.open = False
         page.update()
     alert = ft.AlertDialog(
-        title=ft.Row([ft.Text(manga_info['name'] if len(manga_info['name']) < 40 else f'{manga_info['name'][0:37]}...', tooltip=manga_info['name']), ft.IconButton(ft.icons.CLOSE, on_click=close)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+        title=ft.Row([manga_title, ft.IconButton(ft.icons.CLOSE, on_click=close)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
         content=ft.Container(
             ft.Row([
                 ft.Column([

@@ -16,7 +16,7 @@ class GekkouDl(MangaDl):
             'Origin': 'https://gekkou.com.br',
             'Alt-Used': 'gekkou.com.br',
             'Connection': 'keep-alive',
-            'Referer': 'https://gekkou.com.br/',
+            'Referer': 'https://gekkou.site/',
             'Sec-Fetch-Dest': 'empty',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin',
@@ -24,7 +24,7 @@ class GekkouDl(MangaDl):
 
     def search(self, entry:str) -> list[Manga] | bool:
         response = self.session.post(
-            f'https://gekkou.com.br/',
+            f'https://gekkou.site/',
             params = {
                 's': entry,
                 'action': 'wp-manga-search-manga',
@@ -52,16 +52,16 @@ class GekkouDl(MangaDl):
         return manga_list[:10]
 
     def get_chapters(self, manga_name) -> list[Chapter] | bool:
-        response = self.session.post(f'https://gekkou.com.br/manga/{manga_name.replace(' ', '-')}/ajax/chapters/')
+        response = self.session.post(f'https://gekkou.site/manga/{manga_name.replace(' ', '-')}/ajax/chapters/')
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
         list_chapters = []
         for a in soup.find_all('a', {'href': True}):
-            if a['href'] !='#' and a['href'].replace('https://gekkou.com.br/manga/', '') not in [i['id'] for i in list_chapters]: 
+            if a['href'] !='#' and a['href'].replace('https://gekkou.site/manga/', '') not in [i['id'] for i in list_chapters]: 
                 list_chapters.append(
                     Chapter(
-                        id=a['href'].replace('https://gekkou.com.br/manga/', ''),
+                        id=a['href'].replace('https://gekkou.site/manga/', ''),
                         number=a['href'].split('/')[-2],
                         title=a.text
                     )
@@ -70,7 +70,7 @@ class GekkouDl(MangaDl):
         # works w
 
     def get_chapters_url(self, manga_name) -> list[str] | bool:
-        response = self.session.post(f'https://gekkou.com.br/manga/{manga_name.replace(' ', '-')}/ajax/chapters/')
+        response = self.session.post(f'https://gekkou.site/manga/{manga_name.replace(' ', '-')}/ajax/chapters/')
         if not response:
             return False
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -82,7 +82,7 @@ class GekkouDl(MangaDl):
     
     def get_chapter_imgs(self, chapter_id) -> list[str] | bool:
         response = self.session.get(
-            f'https://gekkou.com.br/manga/{chapter_id}',
+            f'https://gekkou.site/manga/{chapter_id}',
             params={'style': 'list'}
         )
         if not response:

@@ -1,14 +1,11 @@
 import flet as ft
-from backend.models import Chapter
 from backend.database import DataBase
-from backend.managers import DownloadManager
 from screen.constants import Language
 from screen.components import MangasCard
 
 
 class Favorites:
     def __init__(self, page: ft.Page) -> None:
-        dl: DownloadManager = page.data['dl']
         source_languages = Language.LANGUAGE
         database = DataBase()
         search = ft.TextField(
@@ -26,7 +23,7 @@ class Favorites:
             page.update()	
         reset_search = ft.IconButton(
             ft.icons.HIGHLIGHT_REMOVE_OUTLINED,
-            on_click=reset_field_value
+            on_click=reset_field_value,
         )
         mark_selector = ft.Dropdown(
             options=[
@@ -110,27 +107,7 @@ class Favorites:
             alert.open = True
             page.update()
         mark_add.on_click = mark_add_click
-        def read(source, manga, chapter: Chapter, chapters: list[dict], language: str=None) -> None:
-            page.dialog.content = ft.Container(
-                ft.Column([
-                    ft.ProgressRing(height=120, width=120),
-                ])
-            )
-            page.update()
-            pages = dl.get_chapter_image_urls(source, chapter.id)
-            images_b64 = dl.get_base64_images(pages)
-            page.data['chapter_images'] = images_b64
-            page.data['manga_chapters'] = chapters
-            page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
-            page.data['manga_name'] = manga['name']
-            page.data['manga_id'] = manga['id']
-            page.data['manga_source_id'] = manga[source] if source != 'opex' else source
-            page.data['chapter_id'] = chapter.id
-            page.data['source'] = source
-            if language:
-                page.data['language'] = language
-            page.go('/reader')
-
+       
         def remove_manga(manga_id):
             def delete(_=None):
                 if database.delete_favorite(int(manga_id)):
@@ -174,7 +151,6 @@ class Favorites:
                 search,
                 load_mangas_by_mark,
                 load_mangas,
-                read,
                 remove_manga,
                 page,
                 query=query

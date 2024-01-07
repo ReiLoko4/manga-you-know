@@ -9,7 +9,7 @@ from screen.components import MangasCardNotify
 class Index:
     def __init__(self, page: ft.Page):
         connection_data = DataBase()
-        downloader: DownloadManager = page.data['dl']
+        dl: DownloadManager = page.data['dl']
         source_selector = ft.Dropdown(options=[
             ft.dropdown.Option('md', text='MangaDex'),
             # ft.dropdown.Option('ml', text='MangaLivre'),
@@ -102,7 +102,7 @@ class Index:
             )
             results_card.visible = True
             page.update()
-            response = downloader.search(source_selector.value, query)
+            response = dl.search(source_selector.value, query)
             if query != search.value:
                     return False
             favorites = connection_data.get_favorites()
@@ -194,7 +194,7 @@ class Index:
                 stack.width = e
                 index.width = e
                 self.content.width = e
-            favorites = MangasCardNotify(favorites_row, connection_data, page)
+            favorites = MangasCardNotify(favorites_row, page)
             count = 0
             for num in range(len(favorites)):
                 if num % 3 == 0:

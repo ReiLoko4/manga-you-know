@@ -61,7 +61,6 @@ class TaoSectScanDl(MangaDl):
                     Chapter(
                         id='/'.join(a['href'].split('/')[-3:-1]),
                         number=a.text.split(' ')[-2],
-                        title=a.text
                     )
                 )
         chapters.reverse()

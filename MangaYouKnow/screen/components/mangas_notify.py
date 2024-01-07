@@ -13,8 +13,8 @@ from backend.models import Chapter
 database = DataBase()
 
 
-def verify_chapters(manga: dict, text: ft.Text, card: ft.Card, cards_row: ft.Row, container: ft.Container, page: ft.Page, is_the_last: bool = False):
-    downloader: DownloadManager = page.data['dl']
+def verify_chapters(manga: dict, text: ft.Text, card: ft.Card, container: ft.Container, page: ft.Page):
+    dl: DownloadManager = page.data['dl']
     last_readed = database.get_last_readed(manga['id'])
     if not last_readed:
         last_readed = {}
@@ -22,14 +22,11 @@ def verify_chapters(manga: dict, text: ft.Text, card: ft.Card, cards_row: ft.Row
         last_readed['manga_source_id'] = manga[last_readed['source']]
         last_readed['language'] = 'en' if last_readed['source'] == 'md_id' else None
         last_readed['chapter_id'] = None
-    chapters: list[Chapter] = downloader.get_chapters(last_readed['source'], last_readed['manga_source_id'], last_readed['language'] if last_readed['language'] else None)
+    chapters: list[Chapter] = dl.get_chapters(last_readed['source'], last_readed['manga_source_id'], last_readed['language'] if last_readed['language'] else None)
     if not last_readed.get('chapter_id'):
         text.value = f'+{len(chapters)}'
         card.key = len(chapters)
         container.border = ft.border.all(1, ft.colors.RED_500)
-        if is_the_last:
-            sleep(0.1)
-        cards_row.controls.sort(key=lambda card: int(card.key), reverse=True)
         page.update()
         return
     count = 0
@@ -40,28 +37,21 @@ def verify_chapters(manga: dict, text: ft.Text, card: ft.Card, cards_row: ft.Row
     if count == 0:
         text.value = f'Em dia!'
         container.border = ft.border.all(1, ft.colors.GREEN_500)
-        if is_the_last:
-            sleep(0.1)
-        cards_row.controls.sort(key=lambda card: int(card.key), reverse=True)
         page.update()
         return
     container.border = ft.border.all(1, ft.colors.BLUE_500 if count < 30 else ft.colors.YELLOW_500)
     text.value = f'+{count}'
     card.key = count
-    if is_the_last:
-        sleep(0.1)
-    cards_row.controls.sort(key=lambda card: int(card.key), reverse=True)
     page.update()
 
 def MangasCardNotify(
         cards_row: ft.Row,
-        read: callable,
         page: ft.Page,
     ) -> list[ft.Card]:
     def togle_notify(e: ft.ControlEvent, manga: dict) -> None:
         database.add_notify(manga['id']) if e.control.value \
             else database.delete_notify(manga['id'])
-        cards_row.controls = MangasCardNotify(cards_row, read, page)
+        cards_row.controls = MangasCardNotify(cards_row, page)
         page.update()
     favorites_notify = database.get_database_notify_on()
     mangas_card = []
@@ -73,7 +63,7 @@ def MangasCardNotify(
             text_chapters,
             ft.IconButton(
                 ft.icons.MENU_BOOK, on_click=lambda e, 
-                info=manga: MangaOpen(info, Language.LANGUAGE, read, togle_notify, page)
+                info=manga: MangaOpen(info, Language.LANGUAGE, togle_notify, page, True, cards_row, MangasCardNotify)
             ),
         ], alignment=ft.MainAxisAlignment.SPACE_AROUND, width=180)
         card.content = ft.Row([
@@ -86,6 +76,6 @@ def MangasCardNotify(
                 container
             ], alignment=ft.CrossAxisAlignment.STRETCH)
         ], alignment=ft.MainAxisAlignment.CENTER)
-        Thread(target=verify_chapters, args=(manga, text_chapters, card, cards_row, container, page, True if manga == favorites_notify[-1] else False)).start()
+        Thread(target=verify_chapters, args=(manga, text_chapters, card, container, page)).start()
         mangas_card.append(card)
     return mangas_card    

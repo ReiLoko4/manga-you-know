@@ -14,17 +14,17 @@ class MangaReader:
         self.create_content()
 
     def create_content(self):
+        self.pages = self.page.data['chapter_images']
+        self.pages_len = len(self.pages)
+        self.pages = EnableBackwardIterator(iter(self.pages))
+        self.currently_page = ft.Text(f' 1/{self.pages_len}')
+        self.panel = ft.Image(src_base64=self.pages.next(), fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
+        self.page.window_full_screen = True
         self.page.title = f'{self.page.data['manga_name']} - {self.page.data['chapter_title']}' 
         self.page.banner.visible = False
         if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id']):
             self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id'])
         self.chapters: list[Chapter] = self.page.data['manga_chapters']
-        self.pages = self.page.data['chapter_images']
-        self.pages_len = len(self.pages)
-        self.pages = EnableBackwardIterator(iter(self.pages))
-        self.page.window_full_screen = True
-        self.currently_page = ft.Text(f' 1/{self.pages_len}')
-        self.panel = ft.Image(src_base64=self.pages.next(), fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
         self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
         self.btn_next_chapter.visible = True if self.pages_len == 1 \
             and not self.chapters[0].id == self.page.data['chapter_id'] else False
@@ -83,7 +83,7 @@ class MangaReader:
                     self.page.window_full_screen = False
             if e.key == keybinds['return-home']:
                 self.page.title = f'MangaYouKnow {self.page.data['version']}' 
-                self.page.go('/favorites')
+                self.page.go('/favorites') if not self.page.data['is_index'] else self.page.go('/')
                 self.page.scroll = ft.ScrollMode.ADAPTIVE
                 self.page.window_full_screen = False
             self.page.update()
