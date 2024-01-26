@@ -23,8 +23,8 @@ class Index:
             # ft.dropdown.Option('lmorg', text='LerManga.org'),
             # ft.dropdown.Option('op', text='OP Scans'),
         ], value='md', width=140)
-        results = ft.Column(width=470, spacing=0.7, data={'last_src': '', 'chapters': []})
-        results_card = ft.Card(ft.Container(results), color='gray', visible=False)
+        results = ft.Column(width=470, spacing=0.7)
+        results_card = ft.Card(ft.Container(results, border=ft.border.all(1, 'white'), border_radius=15), color='gray', visible=False)
         search = ft.TextField(
             label='Pesquisar Mangás...',
             width=500,
@@ -118,22 +118,24 @@ class Index:
                         height=55
                     )
                 )
-            else:
-                for manga in response:
-                    button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga.id in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
-                    button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga, button, True)
-                    results.controls.append(
-                        ft.ListTile(
-                            key='manga',
-                            title=ft.Text(f'{manga.name[0:42]}...' if len(manga.name) > 45 else manga.name[0:50], tooltip=manga.name),
-                            height=45,
-                            trailing=button_favorite,
-                            on_click=lambda e, info=manga: manga_page(info)
-                        )
+                page.update()
+                return
+            results.data = response
+            for manga in response:
+                button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga.id in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
+                button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga, button, True)
+                results.controls.append(
+                    ft.ListTile(
+                        key='manga',
+                        title=ft.Text(f'{manga.name[0:42]}...' if len(manga.name) > 45 else manga.name[0:50], tooltip=manga.name),
+                        height=45,
+                        trailing=button_favorite,
+                        on_click=lambda e, info=manga: manga_page(info)
                     )
-                if len(search.value) == 0:
-                    results.controls.clear()
-                    results_card.visible = False
+                )
+            if len(search.value) == 0:
+                results.controls.clear()
+                results_card.visible = False
             page.update()
 
         def out_search(e):
@@ -146,6 +148,21 @@ class Index:
         def focus_search(e):
             if len(results.controls) != 0:
                 if results.controls[0].key == 'manga':
+                    favorites = connection_data.get_favorites()
+                    list_favorites_id = [i[f'{source_selector.value}_id'] for i in favorites]
+                    results.controls.clear()
+                    for manga in results.data:
+                        button_favorite = ft.IconButton(ft.icons.BOOKMARK_ROUNDED if manga.id in list_favorites_id else ft.icons.BOOKMARK_OUTLINE, height=30)
+                        button_favorite.on_click = lambda e, manga=manga, button=button_favorite: togle_favorite(manga, button, True)
+                        results.controls.append(
+                            ft.ListTile(
+                                key='manga',
+                                title=ft.Text(f'{manga.name[0:42]}...' if len(manga.name) > 45 else manga.name[0:50], tooltip=manga.name),
+                                height=45,
+                                trailing=button_favorite,
+                                on_click=lambda e, info=manga: manga_page(info)
+                            )
+                        )
                     results_card.visible = True
                     page.update()
         def togle_visible(_:ft.ControlEvent=None):
@@ -195,13 +212,13 @@ class Index:
                 index.width = e
                 self.content.width = e
             favorites = MangasCardNotify(favorites_row, page)
-            count = 0
+            count = 1
             for num in range(len(favorites)):
                 if num % 3 == 0:
                     count += 1
-            stack.height = count * 435
-            index.height = count * 435
-            favorites_row.height = count * 435
+            stack.height = count * 800
+            index.height = count * 800
+            favorites_row.height = count * 800
             if page.data['last_favorites'] == favorites:
                 return
             favorites_row.controls = favorites

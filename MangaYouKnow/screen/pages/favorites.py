@@ -111,7 +111,7 @@ class Favorites:
         def remove_manga(manga_id):
             def delete(_=None):
                 if database.delete_favorite(int(manga_id)):
-                    row_mangas.controls = load_mangas()
+                    row_mangas.controls = load_mangas(search.value if search.value != '' else None)
                     confirmation.open = False
                     page.update()
 

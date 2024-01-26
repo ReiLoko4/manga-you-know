@@ -7,14 +7,16 @@ class Router:
         self.page = page
         self.ft = ft
         index = Index(page).return_content()
-        favorites = Favorites(page).return_content()
-        configs = Configs(page).return_content()
         about = About(page).return_content()
+        configs = Configs(page).return_content()
+        favorites = Favorites(page).return_content()
+        downloads = Downloads(page).return_content()
         self.routes = {
             '/': index,
             '/favorites': favorites,
             '/configs': configs,
-            '/about': about
+            '/about': about,
+            '/downloads': downloads,
         }
         self.body = ft.Container(content=self.routes['/'])
         self.update = {
@@ -30,9 +32,9 @@ class Router:
         self.reader = ft.Container()
         self.reader.visible = False
 
-    def route_change(self, route: ft.RouteChangeEvent):
+    def route_change(self, r: ft.RouteChangeEvent):
         self.page.scroll_to(0)
-        if route.route == '/reader':
+        if r.route == '/reader':
             self.page.dialog.open = False
             self.page.scroll = False
             reader = MangaReader(self.page).return_content()
@@ -45,8 +47,8 @@ class Router:
             self.reader.visible = False
             self.body.visible = True
             self.page.banner.visible = True
-        self.body.content = self.routes[route.route]
+        self.body.content = self.routes[r.route]
         self.body.update()
-        if route.route == '/favorites' or route.route == '/':
-            self.update[route.route](self.page.width - 80)
-            self.page.on_resize = self.resize[route.route]
+        if r.route == '/favorites' or r.route == '/':
+            self.update[r.route](self.page.width - 80)
+            self.page.on_resize = self.resize[r.route]
