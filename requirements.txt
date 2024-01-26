@@ -4,3 +4,4 @@ flet
 pyperclip
 requests
 sqlalchemy
+win10toast
