@@ -47,6 +47,4 @@ Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos
 
 # Modo de uso
 
-Primeiro baixe o app [aqui](https://github.com/ReiLoko4/manga-you-know/releases/) (escolha a última release de preferência). Qualquer dúvida você pode perguntar ou dar feedback no [servidor Discord do projeto](https://discord.gg/FK37mJtFD4).
-
-
+Primeiro baixe o app [aqui](https://github.com/ReiLoko4/manga-you-know/releases/) (escolha a última release de preferência). Qualquer dúvida, feedback ou até mesmo novas ideias pro projeto, você pode mandar no [servidor Discord do projeto](https://discord.gg/FK37mJtFD4).
