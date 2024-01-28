@@ -6,7 +6,7 @@ from requests import Session
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from backend.downloaders import *
-from backend.utilities import ThreadWithReturnValue as Thread, Notificator
+from backend.utilities import Notificator
 from backend.interfaces import MangaDl
 from backend.models import Manga, Chapter, ChapterDownload
 from backend.managers import ThreadManager
@@ -48,7 +48,7 @@ class DownloadManager:
                 else dl.search(query, pre_results)
         return False
 
-    @cached(TTLCache(maxsize=1024, ttl=600))
+    @cached(TTLCache(maxsize=1024, ttl=580))
     def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
         source: MangaDl = self.__match_source__(source)
         if source:
@@ -85,16 +85,14 @@ class DownloadManager:
     def get_base64_images(self, pages: list[str]) -> list[str]:
         threads = ThreadManager()
         for image in pages:
-            threads.add_thread(
-                Thread(
-                    target=self.get_base_64_image,
-                    args=[image]
-                )
+            threads.add_thread_by_args(
+                target=self.get_base_64_image,
+                args=[image]
             )
         threads.start()
         return [i for i in threads.join() if i]
     
-    def download_chapter(self, manga: dict, source: str, chapter: Chapter, is_a_list: bool = False) -> bool:
+    def download_chapter(self, manga: dict, source: str, chapter: Chapter, is_in_list: bool = False) -> bool:
         manga_images = self.get_chapter_image_urls(source, chapter.id)
         if manga_images:
             threads = ThreadManager()
@@ -109,15 +107,13 @@ class DownloadManager:
             folder.mkdir(parents=True, exist_ok=True)
             for i, image in enumerate(manga_images):
                 path = folder / f'{i:03d}.png'
-                threads.add_thread(
-                    Thread(
-                        target=download_page,
-                        args=[image, path]
-                    )
+                threads.add_thread_by_args(
+                    target=download_page,
+                    args=[image, path]
                 )
             threads.start()
             threads.join()
-            if not is_a_list:
+            if not is_in_list:
                 self.notificator.show(manga['name'], f'Download do capítulo {chapter.number} concluído.')
             return True
         self.notificator.show(manga['name'], f'Erro ao baixar o capítulo {chapter.number}. \nVerifique sua conexão ou integridade do site.')
@@ -130,11 +126,9 @@ class DownloadManager:
             return False
         print(f'downloading {len(chapters)} chapters.')
         for chapter in chapters:
-            threads.add_thread(
-                Thread(
-                    target=self.download_chapter,
-                    args=[manga, source, chapter]
-                )
+            threads.add_thread_by_args(
+                target=self.download_chapter,
+                args=[manga, source, chapter]
             )
         threads.start_and_join_by_num(num)
         self.notificator.show(manga['name'], f'Download de {len(chapters)} capítulos concluído.')

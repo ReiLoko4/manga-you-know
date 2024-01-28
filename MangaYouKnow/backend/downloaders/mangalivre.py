@@ -86,7 +86,7 @@ class MangaLivreDl(MangaDl):
             if offset % 10 == 0:
                 threads.start()
                 threads.join()
-                threads.delete_all_threads()
+                threads.delete_all()
                 if self.end: break
             offset += 1
         def to_sort(e):
@@ -262,7 +262,7 @@ class MangaLivreDl(MangaDl):
             if threads.get_len() == simultaneous or number == chapters_list[-1]:
                 threads.start()
                 threads.join()
-                threads.delete_all_threads()
+                threads.delete_all()
         return not errors == threads.get_len()
 
     def download_manga_chapters_in_range(self, manga_name, first_chapter, last_chapter, simultaneous: int) -> bool:
@@ -288,7 +288,7 @@ class MangaLivreDl(MangaDl):
             if threads.get_len() == simultaneous or chapter == list_chapters[-1]:
                 threads.start()
                 threads.join()
-                threads.delete_all_threads()
+                threads.delete_all()
         return True
         # NEED A FIX
 
@@ -317,5 +317,5 @@ class MangaLivreDl(MangaDl):
             if threads.get_len() == simultaneous or chapter == chapters[-1]:
                 threads.start()
                 threads.join()
-                threads.delete_all_threads()
+                threads.delete_all()
         return True

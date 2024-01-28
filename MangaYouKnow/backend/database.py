@@ -189,6 +189,7 @@ class DataBase:
         try:
             con.execute(db.delete(Favorite).where(Favorite.id == manga_id))
             con.execute(db.delete(MarkFavorite).where(MarkFavorite.favorite_id == manga_id))
+            con.execute(db.delete(Readed).where(Readed.manga_id == manga_id))
         except Exception as e:
             print(e)
             return False

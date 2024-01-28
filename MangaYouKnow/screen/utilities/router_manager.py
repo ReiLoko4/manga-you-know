@@ -10,13 +10,11 @@ class Router:
         about = About(page).return_content()
         configs = Configs(page).return_content()
         favorites = Favorites(page).return_content()
-        downloads = Downloads(page).return_content()
         self.routes = {
             '/': index,
             '/favorites': favorites,
             '/configs': configs,
             '/about': about,
-            '/downloads': downloads,
         }
         self.body = ft.Container(content=self.routes['/'])
         self.update = {

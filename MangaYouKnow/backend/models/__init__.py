@@ -1,2 +1,2 @@
 from .manga import Manga
-from .chapter import Chapter 
+from .chapter import Chapter

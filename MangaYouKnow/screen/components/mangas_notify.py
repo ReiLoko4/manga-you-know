@@ -6,12 +6,16 @@ import flet_core.padding as padding
 from screen.components import MangaOpen
 from screen.constants import Language
 from backend.database import DataBase
-from backend.managers import DownloadManager
+from backend.managers import DownloadManager, ThreadManager
 from backend.models import Chapter
+from backend.utilities import Notificator
 
 
 database = DataBase()
+notificator = Notificator()
 
+threads = ThreadManager()
+manga_len = {}
 
 def verify_chapters(manga: dict, text: ft.Text, card: ft.Card, container: ft.Container, page: ft.Page):
     dl: DownloadManager = page.data['dl']
@@ -29,11 +33,16 @@ def verify_chapters(manga: dict, text: ft.Text, card: ft.Card, container: ft.Con
         container.border = ft.border.all(1, ft.colors.RED_500)
         page.update()
         return
+    is_each_readed = database.is_each_readed(last_readed['source'], manga['id'], last_readed['manga_source_id'], chapters)
     count = 0
-    for chapter in chapters:
-        if chapter.id == last_readed['chapter_id']:
+    for is_read in is_each_readed:
+        if is_read:
             break
         count += 1
+    if manga_len.get(manga['id']):
+        if  len(chapters) > manga_len[manga['id']]:
+            notificator.show(f'Novos capítulos de {manga["name"]}!', f'Foram adicionados {len(chapters) - manga_len[manga["id"]]} capítulos novos')
+    manga_len[manga['id']] = len(chapters)
     if count == 0:
         text.value = f'Em dia!'
         container.border = ft.border.all(1, ft.colors.GREEN_500)
@@ -43,6 +52,15 @@ def verify_chapters(manga: dict, text: ft.Text, card: ft.Card, container: ft.Con
     text.value = f'+{count}'
     card.key = count
     page.update()
+    
+def verify_ten_minutes():
+    while True:
+        try:
+            threads.start()
+            threads.restart()
+        except Exception as e:
+            print(e)
+        sleep(600)
 
 def MangasCardNotify(
         cards_row: ft.Row,
@@ -76,6 +94,7 @@ def MangasCardNotify(
                 container
             ], alignment=ft.CrossAxisAlignment.STRETCH)
         ], alignment=ft.MainAxisAlignment.CENTER)
-        Thread(target=verify_chapters, args=(manga, text_chapters, card, container, page)).start()
+        threads.add_thread_by_args(verify_chapters, args=(manga, text_chapters, card, container, page))
         mangas_card.append(card)
+    Thread(target=verify_ten_minutes).start()
     return mangas_card    

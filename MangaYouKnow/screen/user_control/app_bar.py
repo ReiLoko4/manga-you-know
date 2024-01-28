@@ -31,14 +31,14 @@ def NavBar(page: ft.Page) -> ft.NavigationRail:
                 icon=ft.icons.CONTACTS_OUTLINED,
                 selected_icon=ft.icons.CONTACTS_ROUNDED,
                 label='About'
-            )
+            ),
         ]
     )
     routes = {
         0: '/',
         1: '/favorites',
         2: '/configs',
-        3: '/about'
+        3: '/about',
     }
     NavBar.on_change = lambda e: page.go(routes[e.control.selected_index])
     return NavBar
