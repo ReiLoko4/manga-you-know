@@ -31,6 +31,12 @@ class DataBase:
             'gkk_id': Favorite.gkk_id,
             'lmorg_id': Favorite.lmorg_id
         }
+        self.order_dict = {
+            'asc': db.asc(Favorite.id),
+            'desc': db.desc(Favorite.id),
+            'asc-alf': db.asc(Favorite.name),
+            'desc-alf': db.desc(Favorite.name)
+        }
 
     def connect(self) -> db.Connection:
         self.create_database()
@@ -68,7 +74,7 @@ class DataBase:
                 self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} TEXT;')
                 self.execute_data(f'CREATE UNIQUE INDEX ta ON favorites({column});')
     
-    def get_favorites(self, mark_id: str = None) -> list[dict]:
+    def get_favorites(self, mark_id: str = None, order: str = 'asc') -> list[dict]:
         con = self.connect()
         if mark_id:
             data = con.execute(
@@ -76,10 +82,14 @@ class DataBase:
                     MarkFavorite, Favorite.id == MarkFavorite.favorite_id
                 ).where(
                     MarkFavorite.mark_id == mark_id
+                ).order_by(
+                    self.order_dict.get(order, db.asc(Favorite.id))
                 )
             )
             return [i._mapping for i in data.fetchall()]
-        data = con.execute(db.select(Favorite))
+        data = con.execute(db.select(Favorite)
+            .order_by(self.order_dict.get(order, db.asc(Favorite.id)))
+        )
         return [i._mapping for i in data.fetchall()]
 
     def get_database_notify_on(self) -> list[dict]:

@@ -22,9 +22,10 @@ def MangasCard(
         load_mangas: callable,
         remove_manga: callable,
         page: ft.Page,
+        order_by: str,
         query: str = None,
     ) -> list[ft.Card]:
-    favorites = database.get_favorites(None if mark_selector.value == 'all' else mark_selector.value)
+    favorites = database.get_favorites(None if mark_selector.value == 'all' else mark_selector.value, order_by)
     if mark_selector.value == 'all':
         page.data['last_favorites'] = favorites
     if query is not None:

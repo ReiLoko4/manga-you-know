@@ -63,7 +63,10 @@ class DownloadManager:
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
         dl: MangaDl = self.__match_source__(source)
         if dl:
-            return dl.get_chapter_imgs(chapter_id)
+            try:
+                return dl.get_chapter_imgs(chapter_id)
+            except Exception as e:
+                print(e)
         return False
     
     @cache
@@ -100,6 +103,8 @@ class DownloadManager:
                 if response:
                     with open(path, 'wb') as file:
                         file.write(response)
+                        return
+                self.notificator.show(manga['name'], f'Erro ao baixar a página {url}. \nVerifique sua conexão ou integridade do site.')
             folder = Path(f'mangas/{manga['folder_name']}/{chapter.number}')
             folder.mkdir(parents=True, exist_ok=True)
             for i, image in enumerate(manga_images):
@@ -115,6 +120,7 @@ class DownloadManager:
             if not is_a_list:
                 self.notificator.show(manga['name'], f'Download do capítulo {chapter.number} concluído.')
             return True
+        self.notificator.show(manga['name'], f'Erro ao baixar o capítulo {chapter.number}. \nVerifique sua conexão ou integridade do site.')
         return False
     
     def download_all_chapters(self, manga: dict, source: str, chapters: list[Chapter], num: int = 5) -> bool:

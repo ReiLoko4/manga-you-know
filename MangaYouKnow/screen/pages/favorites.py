@@ -15,6 +15,16 @@ class Favorites:
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300
         )
+        order_favorites = ft.Dropdown(
+            options=[
+                ft.dropdown.Option('asc', '+ Velhos'),
+                ft.dropdown.Option('desc', '+ Novos'),
+                ft.dropdown.Option('asc-alf', 'A-Z'),
+                ft.dropdown.Option('desc-alf', 'Z-A'),
+            ],
+            width=100,
+            value='asc'
+        )
         def reset_field_value(e):
             if not search.value:
                 return
@@ -153,14 +163,17 @@ class Favorites:
                 load_mangas,
                 remove_manga,
                 page,
+                order_favorites.value,
                 query=query
             )
         # page.data['load_mangas'] = load_mangas
+        order_favorites.on_change = lambda e: load_mangas_by_mark()
         row_mangas.controls = load_mangas()
         mark_selector.on_change = lambda e: load_mangas_by_mark()
         favorites = database.get_favorites()
         stack = ft.Stack([
             ft.Row([
+                ft.Container(order_favorites, padding=10),
                 ft.Container(search, padding=10),
                 reset_search,
                 ft.Container(ft.Row([mark_selector, mark_add]), width=250, padding=10),
