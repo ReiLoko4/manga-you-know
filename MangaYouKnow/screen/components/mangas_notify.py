@@ -73,6 +73,7 @@ def MangasCardNotify(
         page.update()
     favorites_notify = database.get_database_notify_on()
     mangas_card = []
+    threads.delete_all()
     for manga in favorites_notify:
         text_chapters = ft.Text('...', italic=True)
         card = ft.Card(height=340, width=190, key=0)
