@@ -4,6 +4,7 @@ from backend.database import DataBase
 class Configs:
     def __init__(self, page: ft.Page):
         database = DataBase()
+        configs = database.get_config()
         def change_keybind(_=None):
             keybinds = database.get_config()['keybinds']
             def listen_key(btn:ft.TextButton):
@@ -17,7 +18,6 @@ class Configs:
             next_page.on_click = lambda e, btn=next_page: listen_key(btn)
             previous_page = ft.TextButton(keybinds['previous-page'], disabled=True)
             previous_page.on_click = lambda e, btn=previous_page: listen_key(btn)
-            
             change_keys = ft.AlertDialog(
                 title=ft.Text('EM BREVE!'),
                 content=ft.Column([
@@ -25,17 +25,27 @@ class Configs:
                     ft.Card(ft.Row([return_home, ft.Text('Voltar para o home')], alignment=ft.MainAxisAlignment.SPACE_BETWEEN), margin=1),
                     ft.Card(ft.Row([next_page, ft.Text('Passar página')], alignment=ft.MainAxisAlignment.SPACE_BETWEEN), margin=1),
                     ft.Card(ft.Row([previous_page, ft.Text('Voltar página')], alignment=ft.MainAxisAlignment.SPACE_BETWEEN), margin=1),
-                    
                 ])
             )
             page.dialog = change_keys
             change_keys.open = True
             page.update()
-
+        def change_theme(theme: str):
+            database.set_config('theme-mode', theme)
+            page.theme_mode = theme
+            page.banner.bgcolor = ft.colors.GREY_900 if theme == 'dark' else ft.colors.GREY_200
+            page.update()
         self.content = ft.Row(
             [   
                 ft.Column([
-                    ft.TextButton('Mudar keybinds', on_click=change_keybind)
+                    ft.TextButton('Mudar keybinds', on_click=change_keybind),
+                    ft.Text('Tema'),
+                    ft.RadioGroup(ft.Column([
+                        ft.Radio(label='Claro', value='light'),
+                        ft.Radio(label='Escuro', value='dark'),
+                    ]), on_change=lambda e: change_theme(e.control.value), 
+                    value=configs['theme-mode']
+                    )
                 ])
             ],
             alignment=ft.MainAxisAlignment.CENTER,

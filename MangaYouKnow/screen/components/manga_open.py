@@ -20,8 +20,9 @@ def MangaOpen(
     manga_title = ft.Text(manga_info['name'] if len(manga_info['name']) < 35 else f'{manga_info['name'][0:33]}...', tooltip=manga_info['name'])
     next_chapter = ft.ListTile(
         title=ft.Text('...'),
-        trailing=ft.IconButton(ft.icons.ARROW_RIGHT_OUTLINED), 
-        leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED),
+        trailing=ft.IconButton(ft.icons.ARROW_RIGHT_OUTLINED, disabled=True), 
+        leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, disabled=True),
+        disabled=True
     )
     def read(source, manga, chapter: Chapter, chapters: list[dict], language: str=None) -> None:
         manga_title.value = manga_info['name'] if len(manga_info['name']) < 25 else f'{manga_info['name'][0:22]}...'
@@ -76,8 +77,7 @@ def MangaOpen(
                 icon = ft.icons.CHECK
             btn.icon = icon
         load_next()
-        if is_index:
-            cards_row.controls = mangas_card_notify(cards_row, page)
+
         page.update()
     chapter_search = ft.TextField(
         label='Capítulo...',
@@ -146,6 +146,23 @@ def MangaOpen(
     def load_next():
         chapters: list = chapters_by_source[f'{source}_{language_options.value}']
         each_readed = database.is_each_readed(source, manga_info['id'], manga_info[source] if source != 'opex' else source, chapters)
+        if not chapters:
+            next_chapter.title.value = '0 capítulos!'
+            next_chapter.trailing.icon = ft.icons.CHECK
+            next_chapter.leading.icon = ft.icons.CIRCLE
+            next_chapter.on_click = None
+            next_chapter.trailing.disabled = True
+            next_chapter.leading.disabled = True
+        if len(chapters) == 1 and not each_readed[0]:
+            next_chapter.disabled = False
+            next_chapter.title.value = chapters[0].number if len(str(chapters[0].number)) and chapters[0].number is not None else chapters[0].title
+            next_chapter.trailing.icon = ft.icons.ARROW_RIGHT_OUTLINED
+            next_chapter.leading.icon = ft.icons.DOWNLOAD_OUTLINED
+            next_chapter.on_click = lambda e, source=source_options.value, manga=manga_info, chapter=chapters[0]: read(source, manga, chapter, chapters_by_source[f'{source}_{language_options.value}'], language_options.value if len(source_languages[source_options.value]) > 1 else None)
+            next_chapter.trailing.on_click = lambda e, chp=chapters[0]: togle_next(chp)
+            next_chapter.leading.on_click = lambda e, source=source_options.value, chapter=chapters[0]: dl.download_chapter(manga_info, source, chapter)
+            next_chapter.trailing.disabled = False
+            next_chapter.leading.disabled = False
         for i, chapter in enumerate(chapters):
             if i == 0 and each_readed[i]:
                 next_chapter.title.value = 'Tudo lido!'
@@ -156,8 +173,9 @@ def MangaOpen(
                 next_chapter.leading.disabled = True
                 break
             if not each_readed[i] and len(chapters) > 1:
-                if chapters[i] == chapters[-1]:
-                    next_chapter.title.value = chapter.number if chapter.number else chapter.title
+                if chapters[i] == chapters[-1]:                
+                    next_chapter.disabled = False
+                    next_chapter.title.value = chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title
                     next_chapter.trailing.icon = ft.icons.ARROW_RIGHT_OUTLINED
                     next_chapter.leading.icon = ft.icons.DOWNLOAD_OUTLINED
                     next_chapter.on_click = lambda e, source=source_options.value, manga=manga_info, chapter=chapter: read(source, manga, chapter, chapters_by_source[f'{source}_{language_options.value}'], language_options.value if len(source_languages[source_options.value]) > 1 else None)
@@ -167,7 +185,8 @@ def MangaOpen(
                     next_chapter.leading.disabled = False
                     break
                 if each_readed[i+1]:
-                    next_chapter.title.value = chapter.number if chapter.number else chapter.title
+                    next_chapter.disabled = False
+                    next_chapter.title.value = chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title
                     next_chapter.trailing.icon = ft.icons.ARROW_RIGHT_OUTLINED
                     next_chapter.leading.icon = ft.icons.DOWNLOAD_OUTLINED
                     next_chapter.on_click = lambda e, source=source_options.value, manga=manga_info, chapter=chapter: read(source, manga, chapter, chapters_by_source[f'{source}_{language_options.value}'], language_options.value if len(source_languages[source_options.value]) > 1 else None)
@@ -193,8 +212,6 @@ def MangaOpen(
                     icon = ft.icons.CHECK
                 btn.icon = icon
             load_next()
-            if is_index:
-                cards_row.controls = mangas_card_notify(cards_row, page)
             page.update()
 
     def load_chapters(query: str=None) -> None:
@@ -243,6 +260,7 @@ def MangaOpen(
             if len(sources) > 1:
                 source_options.disabled = False
             page.update()
+            load_next()
             return
         for i, chapter in enumerate(chapters):
             if is_each_readed[i]:
@@ -254,7 +272,7 @@ def MangaOpen(
                     continue
             list_chapters.controls.append(
                 ft.ListTile(
-                    title=ft.Text(chapter.number if chapter.number else chapter.title, tooltip=chapter.title),
+                    title=ft.Text(chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title, tooltip=chapter.title),
                     trailing=btn_read, 
                     leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(manga_info, source, chapter)),
                     on_click=lambda e, source=source_options.value, chapter=chapter: read(source, manga_info, chapter, chapters, language_options.value if len(source_languages[source_options.value]) > 1 else None),
@@ -286,6 +304,8 @@ def MangaOpen(
     language_options.on_change = lambda e: load_chapters()
     chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
     def close(_=None):
+        if is_index:
+            cards_row.controls = mangas_card_notify(cards_row, page)
         list_chapters.controls = []
         alert.open = False
         page.update()
@@ -303,10 +323,10 @@ def MangaOpen(
                 ft.Column([
                     ft.Card(next_chapter, width=250),
                     chapter_search,
-                    ft.Card(list_chapters, width=250, height=420),
+                    ft.Card(list_chapters, width=250, height=400),
                 ])
             ]), height=500, width=430
-        )
+        ), on_dismiss=close
     )
     page.dialog = alert
     alert.open = True

@@ -119,6 +119,15 @@ class DataBase:
         self.create_config()
         with open(self.config, 'r', encoding='UTF-8') as file:
             return json.load(file)['config']
+    
+    def set_config(self, key: str, value: any) -> bool:
+        self.create_config()
+        with open(self.config, 'r', encoding='UTF-8') as file:
+            data = json.load(file)
+        data['config'][key] = value
+        with open(self.config, 'w', encoding='UTF-8') as file:
+            json.dump(data, file)
+        return True
         
     def _get_config(self) -> dict:
         self.create_config()

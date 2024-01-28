@@ -96,5 +96,9 @@ def MangasCardNotify(
         ], alignment=ft.MainAxisAlignment.CENTER)
         threads.add_thread_by_args(verify_chapters, args=(manga, text_chapters, card, container, page))
         mangas_card.append(card)
-    Thread(target=verify_ten_minutes).start()
+    if page.data['is_first']:
+        page.data['is_first'] = False
+        Thread(target=verify_ten_minutes).start()
+    else:
+        threads.start()
     return mangas_card    

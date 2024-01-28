@@ -5,7 +5,6 @@ from screen.pages import *
 class Router:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.ft = ft
         index = Index(page).return_content()
         about = About(page).return_content()
         configs = Configs(page).return_content()

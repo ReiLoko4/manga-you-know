@@ -2,14 +2,13 @@ import flet as ft
 
 
 def NavBar(page: ft.Page) -> ft.NavigationRail:
-
-    NavBar = ft.NavigationRail(
+    navbar = ft.NavigationRail(
         selected_index=0,
         label_type=ft.NavigationRailLabelType.SELECTED,
         min_width=90,
         width=90,
         height=1200,
-        bgcolor=ft.colors.GREY_900,
+        bgcolor=ft.colors.GREY_900 if page.theme_mode == 'dark' else ft.colors.GREY_200,
         group_alignment=-0.9,
         destinations=[
             ft.NavigationRailDestination(
@@ -40,8 +39,8 @@ def NavBar(page: ft.Page) -> ft.NavigationRail:
         2: '/configs',
         3: '/about',
     }
-    NavBar.on_change = lambda e: page.go(routes[e.control.selected_index])
-    return NavBar
+    navbar.on_change = lambda e: page.go(routes[e.control.selected_index])
+    return navbar
 
     # Code inspiration by CodingJQ
     # https://www.youtube.com/@codingjq

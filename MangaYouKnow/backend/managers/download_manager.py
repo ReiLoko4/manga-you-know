@@ -8,7 +8,7 @@ from requests.adapters import HTTPAdapter
 from backend.downloaders import *
 from backend.utilities import Notificator
 from backend.interfaces import MangaDl
-from backend.models import Manga, Chapter, ChapterDownload
+from backend.models import Manga, Chapter
 from backend.managers import ThreadManager
 
 
