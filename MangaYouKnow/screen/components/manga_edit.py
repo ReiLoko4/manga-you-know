@@ -1,32 +1,32 @@
 import flet as ft
 from backend.database import DataBase
-from screen.constants import Language
+from backend.tables import Favorite
 
 
 database = DataBase()
 def MangaEdit(
-            manga_info: dict, row_mangas: ft.Row, 
+            manga_info: Favorite, row_mangas: ft.Row, 
             load_mangas_by_mark: callable, load_mangas: callable,
             search: ft.TextField, page: ft.Page
         ) -> ft.AlertDialog:
-    change_name = ft.TextField(label='Nome', value=manga_info['name'])
-    change_cover = ft.TextField(label='Capa', value=manga_info['cover'])
+    change_name = ft.TextField(label='Nome', value=manga_info.name)
+    change_cover = ft.TextField(label='Capa', value=manga_info.cover)
     marks = database.get_marks()
     def change_mark(mark_id: int, value: bool):
         if value:
-            database.add_mark_favorite(manga_info['id'], mark_id)
+            database.add_mark_favorite(manga_info.id, mark_id)
             load_mangas_by_mark()
             return
-        database.delete_mark_favorite(manga_info['id'], mark_id)
+        database.delete_mark_favorite(manga_info.id, mark_id)
         load_mangas_by_mark()
     marks_column = ft.Column([
         ft.ListTile(
             title=ft.Text(
-                i['name'],
+                i.name,
             ),
             trailing=ft.Checkbox(
-                value=database.is_marked(manga_info['id'], i['id']),
-                on_change=lambda e, mark_id=i['id']: change_mark(mark_id, e.control.value)
+                value=database.is_marked(manga_info.id, i.id),
+                on_change=lambda e, mark_id=i.id: change_mark(mark_id, e.control.value)
             )
         )
         for i in marks
@@ -36,7 +36,7 @@ def MangaEdit(
     def save(column, content):
         if content == manga_info[column]:
             return
-        if database.set_favorite(manga_info['id'], column, content):
+        if database.set_favorite(manga_info.id, column, content):
             row_mangas.controls = load_mangas(search.value if search.value != '' else None)
             page.update()
     edition = ft.AlertDialog(

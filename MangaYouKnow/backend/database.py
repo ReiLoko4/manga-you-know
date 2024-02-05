@@ -1,102 +1,71 @@
 import json
-import sqlalchemy as db
 from pathlib import Path
-from backend.models import Manga, Chapter
-from backend.tables import Favorite, \
-    favorite_columns, Readed, Mark, MarkFavorite, \
-    FavoriteBase, ReadedBase, MarkBase, MarkFavoriteBase
+
+from backend.models import Chapter, Manga
+from backend.tables import (
+    Favorite, 
+    Readed,
+    Mark, 
+    MarkFavorite, 
+)
+from sqlmodel import (
+    Session, 
+    SQLModel, 
+    create_engine, 
+    select,
+    delete,
+    update,
+    text,
+    asc,
+    desc,
+)
 
 
 class DataBase:
     def __init__(self):
-        self.dir = Path('./database')
-        self.database = Path('./database/data.db')
+        self.dir = Path('database')
         self.config = Path('database/config.json')
-        self.engine = db.create_engine(
+        connect_args = {'check_same_thread': False}
+        self.engine = create_engine(
             'sqlite:///database/data.db', 
-            execution_options={'isolation_level': 'AUTOCOMMIT'},
-            pool_size=2000, max_overflow=0, pool_timeout=30000, pool_recycle=1800
+            connect_args=connect_args,
+            pool_size=2000, max_overflow=0, 
+            pool_timeout=30000, pool_recycle=1800,
+            isolation_level='AUTOCOMMIT'
         )
-        self.columns = favorite_columns
-        self.ids = {
-            'ml_id': Favorite.ml_id,
-            'md_id': Favorite.md_id,
-            'ms_id': Favorite.ms_id,
-            'mc_id': Favorite.mc_id,
-            'mf_id': Favorite.mf_id,
-            'mx_id': Favorite.mx_id,
-            'tcb_id': Favorite.tcb_id,
-            'tsct_id': Favorite.tsct_id,
-            'op_id': Favorite.op_id,
-            'gkk_id': Favorite.gkk_id,
-            'lmorg_id': Favorite.lmorg_id
-        }
+        self.database_path = 'database/data.db'
+        self.columns = ['source', 'source_id', 'notify', 'type']
         self.order_dict = {
-            'asc': db.asc(Favorite.id),
-            'desc': db.desc(Favorite.id),
-            'asc-alf': db.asc(Favorite.name),
-            'desc-alf': db.desc(Favorite.name)
+            'asc': asc(Favorite.id),
+            'desc': desc(Favorite.id),
+            'asc-mark': asc(MarkFavorite.id),
+            'desc-mark': desc(MarkFavorite.id),
+            'asc-alf': asc(Favorite.name),
+            'desc-alf': desc(Favorite.name)
         }
+        self.old_columns = [
+            'md_id', 
+            'ml_id', 
+            'ms_id', 
+            'mc_id', 
+            'mf_id', 
+            'mx_id', 
+            'tcb_id', 
+            'tsct_id', 
+            'op_id', 
+            'gkk_id', 
+            'lmorg_id'
+        ]
 
-    def connect(self) -> db.Connection:
+    def get_session(self) -> Session:
         self.create_database()
-        return self.engine.connect()
-        
+        return Session(self.engine)
+
     def create_database(self):
-        if not self.database.exists():
+        if not Path(self.database_path).exists():
             self.dir.mkdir(parents=True, exist_ok=True)
-            self.database.touch()
-            FavoriteBase.metadata.create_all(self.engine, checkfirst=True)
-            ReadedBase.metadata.create_all(self.engine, checkfirst=True)
-            MarkBase.metadata.create_all(self.engine, checkfirst=True)
-            MarkFavoriteBase.metadata.create_all(self.engine, checkfirst=True)
+        SQLModel.metadata.create_all(self.engine, checkfirst=True)
 
-    def init_database(self):
-        self.create_database()
-        self.fix_favorites()
-        self.fix_readed()
-    
-    def fix_readed(self):
-        table_columns = self.execute_data('PRAGMA TABLE_INFO(readed);')
-        for column in ['manga_source_id', 'language']:
-            if column not in [i['name'] for i in table_columns]:
-                self.execute_data(f'ALTER TABLE readed ADD COLUMN {column} TEXT;')
-                if column == 'manga_source_id':
-                    self.execute_data(f'CREATE UNIQUE INDEX manga_source_id ON readed({column});')
-
-    def fix_favorites(self):
-        table_columns = self.execute_data('PRAGMA TABLE_INFO(favorites);')
-        for column in self.columns:
-            if column not in [i['name'] for i in table_columns]:
-                if column == 'notify':
-                    self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} BOOLEAN DEFAULT FALSE;')
-                    continue
-                self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} TEXT;')
-                self.execute_data(f'CREATE UNIQUE INDEX ta ON favorites({column});')
-    
-    def get_favorites(self, mark_id: str = None, order: str = 'asc') -> list[dict]:
-        con = self.connect()
-        if mark_id:
-            data = con.execute(
-                db.select(Favorite).join(
-                    MarkFavorite, Favorite.id == MarkFavorite.favorite_id
-                ).where(
-                    MarkFavorite.mark_id == mark_id
-                ).order_by(
-                    self.order_dict.get(order, db.asc(Favorite.id))
-                )
-            )
-            return [i._mapping for i in data.fetchall()]
-        data = con.execute(db.select(Favorite)
-            .order_by(self.order_dict.get(order, db.asc(Favorite.id)))
-        )
-        return [i._mapping for i in data.fetchall()]
-
-    def get_database_notify_on(self) -> list[dict]:
-        con = self.connect()
-        data = con.execute(db.select(Favorite).where(Favorite.notify == True)).fetchall()
-        return [i._mapping for i in data]
-    
     def create_config(self):
         if not self.config.exists():
             self.dir.mkdir(parents=True, exist_ok=True)
@@ -114,6 +83,103 @@ class DataBase:
                         'previous-page': 'Arrow Left',
                     }}
                 }, file)
+
+    def init_database(self):
+        self.create_database()
+        self.fix_favorites()
+        self.fix_readed()
+    
+    def fix_favorites(self):
+        table_columns = self.execute_data('PRAGMA TABLE_INFO(favorites);')
+        for column in self.columns:
+            if column not in [i['name'] for i in table_columns]:
+                if column == 'notify':
+                    self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} BOOLEAN DEFAULT FALSE;')
+                    continue
+                self.execute_data(f'ALTER TABLE favorites ADD COLUMN {column} TEXT;')
+        if 'source' not in [i['name'] for i in table_columns]:
+            favorites = self.execute_data('SELECT * FROM favorites;')
+            sess = self.get_session()
+            for favorite in favorites:
+                source_id_key = [i for i in list(favorite.keys()) if i.endswith('_id') and favorite[i] != None][0]
+                print(source_id_key, favorite[source_id_key])
+                sess.exec(
+                    update(Favorite)
+                    .where(Favorite.id == favorite['id'])
+                    .values({
+                        'source': str(source_id_key).replace('_id', ''), 
+                        'source_id': favorite[source_id_key],
+                        'type': 'manga'
+                    })
+                )
+            # for column in self.old_columns:
+            #     self.execute_data(f'ALTER TABLE favorites DROP COLUMN {column};')
+                
+
+    def fix_readed(self):
+        table_columns = self.execute_data('PRAGMA TABLE_INFO(readed);')
+        for column in [i['name'] for i in table_columns]:
+            if column == 'manga_id':
+                self.execute_data(
+                    'ALTER TABLE readed RENAME COLUMN manga_id TO favorite_id;'
+                )
+            if column == 'manga_source_id':
+                self.execute_data(
+                    'ALTER TABLE readed RENAME COLUMN manga_source_id TO favorite_source_id;'
+                )
+        table_columns = self.execute_data('PRAGMA TABLE_INFO(readed);')
+        for column in ['favorite_source_id', 'language']:
+            if column not in [i['name'] for i in table_columns]:
+                self.execute_data(f'ALTER TABLE readed ADD COLUMN {column} TEXT;')
+                if column == 'favorite_source_id':
+                    self.execute_data(f'CREATE UNIQUE INDEX favorite_source_id ON readed({column});')
+        readeds = self.execute_data('SELECT * FROM readed;')
+        if readeds:
+            if readeds[0]['favorite_source_id'] == None:
+                sess = self.get_session()
+                for readed in readeds:
+                    sess.exec(
+                        update(Readed)
+                        .where(Readed.id == readed['id'])
+                        .values({'favorite_source_id': readed['manga_source_id']})
+                    )
+    
+    def get_favorites(self, mark_id: str = None, order: str = 'asc', fav_type: str = None) -> list[Favorite]:
+        sess = self.get_session()
+        if mark_id:
+            return sess.exec(
+                select(Favorite)
+                .join(MarkFavorite, Favorite.id == MarkFavorite.favorite_id)
+                .where(MarkFavorite.mark_id == mark_id)
+                .order_by(self.order_dict[f'{order}-mark' if order in ['asc', 'desc'] else order])
+            ).all() if fav_type is None else sess.exec(
+                select(Favorite)
+                .join(MarkFavorite, Favorite.id == MarkFavorite.favorite_id)
+                .where(MarkFavorite.mark_id == mark_id, Favorite.type == fav_type)
+                .order_by(self.order_dict[f'{order}-mark' if order in ['asc', 'desc'] else order])
+            ).all()
+        return sess.exec(
+            select(Favorite)
+            .order_by(self.order_dict[order])
+        ).all() if fav_type is None else sess.exec(
+            select(Favorite)
+            .where(Favorite.type == fav_type)
+            .order_by(self.order_dict[order])
+        ).all()
+    
+    def get_favorites_by_source(self, source: str) -> list[Favorite]:
+        sess = self.get_session()
+        return sess.exec(
+            select(Favorite)
+            .where(Favorite.source == source)
+        ).all()
+
+    def get_database_notify_on(self) -> list[Favorite]:
+        sess = self.get_session()
+        return sess.exec(
+            select(Favorite)
+            .where(Favorite.notify == True)
+        ).all()
 
     def get_config(self) -> dict:
         self.create_config()
@@ -135,275 +201,341 @@ class DataBase:
             return json.load(file)
 
     def execute_data(self, query: str) -> list[dict] | dict | bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            data = con.execute(db.text(query)).fetchall()
-            return [i._mapping for i in  data] if data else True
+            data = sess.exec(text(query)).all()
+            return [i._mapping for i in data]
         except Exception as e:
             print(e)
             return False
 
-    def add_favorite(
-            self, manga: Manga,
-            ml_id: int=None, md_id: str=None,
-            ms_id: str=None, mc_id: str=None,
-            mf_id: str=None, mx_id: str=None,
-            tcb_id: str=None, tsct_id: str=None,
-            op_id: str=None, gkk_id: str=None,
-            lmorg_id: str=None
-        ) -> bool:
+    def add_favorite(self, manga: Manga, source: str, source_id: str, fav_type: str) -> bool:
         try:
-            self.engine.connect().execute(
-                db.insert(Favorite), [{
-                'name': manga.name,
-                'folder_name': manga.folder_name,
-                'cover': manga.cover,
-                'description': manga.description,
-                'author': manga.author[0] if manga.author else 'Desconhecido',
-                'score': manga.grade,
-                'notify': False,
-                'ml_id': ml_id,
-                'md_id': md_id,
-                'ms_id': ms_id,
-                'mc_id': mc_id,
-                'mf_id': mf_id,
-                'mx_id': mx_id,
-                'tcb_id': tcb_id,
-                'tsct_id': tsct_id,
-                'op_id': op_id,
-                'gkk_id': gkk_id,
-                'lmorg_id': lmorg_id
-            }])
+            sess = self.get_session()
+            sess.add(
+                Favorite(
+                    name=manga.name,
+                    folder_name=manga.folder_name,
+                    cover=manga.cover,
+                    source=source,
+                    source_id=source_id,
+                    type=fav_type,
+                    description=manga.description,
+                    author=manga.author[0] if manga.author else 'Desconhecido',
+                    score=manga.grade,
+                    notify=False
+                )
+            )
+            sess.commit()
             return True
         except Exception as e:
             print(e)
             return False
     
     def get_favorite(self, favorite_id: int) -> dict | bool:
-        con = self.connect()
-        data = con.execute(db.select(Favorite).where(Favorite.id == favorite_id))
-        return data.fetchone()._mapping if data else False
+        sess = self.get_session()
+        data = sess.exec(
+            select(Favorite)
+            .where(Favorite.id == favorite_id)
+        )
+        return data.one() if data else False
 
     def set_favorite(self, manga_id: str, column: str, content: any) -> bool:
-        cur = self.connect()
+        sess = self.get_session()
         try:
-            cur.execute(db.update(Favorite).where(Favorite.id == manga_id).values({column: content}))
+            sess.exec(update(Favorite).where(Favorite.id == manga_id).values({column: content}))
         except Exception as e:
             print(e)
             return False
         return True
 
     def delete_favorite(self, manga_id: int) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.delete(Favorite).where(Favorite.id == manga_id))
-            con.execute(db.delete(MarkFavorite).where(MarkFavorite.favorite_id == manga_id))
-            con.execute(db.delete(Readed).where(Readed.manga_id == manga_id))
+            sess.exec(
+                delete(Favorite)
+                .where(Favorite.id == manga_id)
+            )
+            sess.exec(
+                delete(MarkFavorite)
+                .where(MarkFavorite.favorite_id == manga_id)
+            )
+            sess.exec(
+                delete(Readed)
+                .where(Readed.favorite_id == manga_id)
+            )
         except Exception as e:
             print(e)
             return False
         return True
         
     def delete_favorite_by_key(self, key: str, id: int | str) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.delete(Favorite).where(self.ids[key] == id))
-            con.execute(db.delete(MarkFavorite).where(self.ids[key] == id))
+            favorite = sess.exec(
+                select(Favorite)
+                .where(
+                    Favorite.source == key,
+                    Favorite.source_id == id
+                )
+            ).one()
+            sess.exec(
+                delete(Favorite)
+                .where(
+                    Favorite.source == key,
+                    Favorite.source_id == id
+                )
+            )
+            sess.exec(
+                delete(MarkFavorite)
+                .where(MarkFavorite.favorite_id == favorite.id)
+            )
         except Exception as e:
             print(e)
             return False
         return True
 
     def is_notify(self, manga_id: int) -> bool:
-        con = self.connect()
-        data = con.execute(db.select(Favorite).where(Favorite.id == manga_id))
-        return data.fetchone()._mapping['notify']
+        sess = self.get_session()
+        data = sess.exec(
+            select(Favorite)
+            .where(Favorite.id == manga_id)
+        )
+        return data.one().notify
     
     def add_notify(self, manga_id: int) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.update(Favorite).where(Favorite.id == manga_id).values({'notify': True}))
+            sess.exec(
+                update(Favorite)
+                .where(Favorite.id == manga_id)
+                .values({'notify': True})
+            )
         except Exception as e:
             print(e)
             return False
         return True
     
     def delete_notify(self, manga_id: int) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.update(Favorite).where(Favorite.id == manga_id).values({'notify': False}))
+            sess.exec(
+                update(Favorite)
+                .where(Favorite.id == manga_id)
+                .values({'notify': False})
+            )
         except Exception as e:
             print(e)
             return False
         return True
 
     def is_favorite(self, key, content) -> bool:
-        con = self.connect()
-        data = con.execute(db.select(Favorite).where(
-            self.ids[key] == content
-        )).fetchall()
+        sess = self.get_session()
+        data = sess.exec(
+            select(Favorite)
+            .where(
+                Favorite.source == key,
+                Favorite.source_id == content
+            )
+        ).all()
         return True if data else False
     
     def is_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str, language: str = None) -> bool:
-        con = self.connect()
-        data = con.execute(db.select(Readed).where(
-            Readed.manga_id == manga_id,
-            Readed.chapter_id == chapter_id,
-            Readed.manga_source_id == manga_source_id,
-            Readed.source == source,
-            Readed.language == language 
-        ))
-        if data.fetchall():
-            return True
-        return False
+        sess = self.get_session()
+        data = sess.exec(
+            select(Readed)
+            .where(
+                Readed.favorite_id == manga_id,
+                Readed.chapter_id == chapter_id,
+                Readed.favorite_source_id == manga_source_id,
+                Readed.source == source,
+                Readed.language == language
+            )
+        ).all()
+        return data != []
     
-    def is_each_readed(self, source: str, manga_id: str, manga_source_id: str, chapters: list[Chapter]) -> list[bool]:
-        con = self.connect()
-        readed = []
-        list_readed = con.execute(db.select(Readed).where(
-            Readed.manga_id == manga_id,
-            Readed.manga_source_id == manga_source_id,
-            Readed.source == source
-        )).fetchall()
+    def is_each_readed(self, source: str, favorite_id: str, favorite_source_id: str, chapters: list[Chapter]) -> list[bool]:
+        sess = self.get_session()
+        list_readed = sess.exec(
+            select(Readed)
+            .where(
+                Readed.favorite_id == favorite_id,
+                Readed.favorite_source_id == favorite_source_id,
+                Readed.source == source
+            )
+        ).all()
         if not list_readed:
             return [False for _ in range(len(chapters))]
-        for chapter in chapters:
-            readed.append(
-                True if chapter.id in [i._mapping['chapter_id'] for i in list_readed]
-                    else False
-            )
-        return readed
+        return [
+            chapter.id in [i.chapter_id for i in list_readed]
+            for chapter in chapters
+        ]
     
     def is_one_readed(self, source: str, manga_id: str, manga_source_id: str, chapters: list[Chapter]) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         for chapter in chapters:
-            data = con.execute(db.select(Readed).where(
-                Readed.chapter_id == chapter.id,
-                Readed.manga_id == manga_id,
-                Readed.manga_source_id == manga_source_id,
-                Readed.source == source
-            ))
-            if data.fetchall():
+            data = sess.exec(
+                select(Readed)
+                .where(
+                    Readed.chapter_id == chapter.id,
+                    Readed.favorite_id == manga_id,
+                    Readed.favorite_source_id == manga_source_id,
+                    Readed.source == source
+                )
+            )
+            if data.all():
                 return True
-        con.close()
+        sess.close()
         return False
     
-    def get_last_readed(self, manga_id: str) -> dict | bool:
-        con = self.connect()
-        data = con.execute(db.select(Readed).where(
-            Readed.manga_id == manga_id
-        ).order_by(db.desc(Readed.chapter_id))).fetchone()
-        if not data:
-            return False
-        return data._mapping
+    def get_last_readed(self, manga_id: str) -> Readed:
+        sess = self.get_session()
+        data = sess.exec(
+            select(Readed)
+            .limit(1)
+            .where(
+                Readed.favorite_id == manga_id
+            ).order_by(desc(Readed.chapter_id))
+        ).all()
+        return data[0] if data else None
 
-    def get_last_readed_by_source(self, source: str, manga_id: str) -> dict | bool:
-        con = self.connect()
-        data = con.execute(db.select(Readed).where(
-            Readed.manga_id == manga_id,
-            Readed.source == source
-        ).order_by(db.desc(Readed.chapter_id)))
-        if not data:
-            return False
-        return data.fetchone()._mapping
+    def get_last_readed_by_source(self, source: str, manga_id: str) -> Readed:
+        sess = self.get_session()
+        data = sess.exec(
+            select(Readed)
+            .limit(1)
+            .where(
+                Readed.favorite_id == manga_id,
+                Readed.source == source
+            ).order_by(desc(Readed.chapter_id))
+        ).all()
+        return data[0] if data else None
     
     def add_readed(self, source: str, manga_id: str, manga_source_id, chapter_id: str, language: str = None) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.insert(Readed),[{
-                'manga_id': manga_id,
-                'manga_source_id': manga_source_id,
-                'chapter_id': chapter_id,
-                'source': source,
-                'language': language
-            }])
+            sess.add(
+                Readed(
+                    favorite_id=manga_id,
+                    favorite_source_id=manga_source_id,
+                    chapter_id=chapter_id,
+                    source=source,
+                    language=language
+                )
+            )
+            sess.commit()
             return True
         except Exception as e:
             print(e)
             return False
 
     def delete_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str, language: str = None) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.delete(Readed).where(
-                Readed.chapter_id == chapter_id,
-                Readed.manga_id == manga_id,
-                Readed.manga_source_id == manga_source_id,
-                Readed.source == source,
-                Readed.language == language
-            ))
+            sess.exec(
+                delete(Readed)
+                .where(
+                    Readed.chapter_id == chapter_id,
+                    Readed.favorite_id == manga_id,
+                    Readed.favorite_source_id == manga_source_id,
+                    Readed.source == source,
+                    Readed.language == language
+                )
+            )
             return True
         except:
             return False
 
     def add_mark(self, name: str) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.insert(Mark), [{
-                'name': name
-            }])
+            sess.add(
+                Mark(name=name)
+            )
+            sess.commit()
             return True
         except Exception as e:
             print(e)
             return False
     
-    def get_marks(self) -> list[dict]:
-        con = self.connect()
-        data = con.execute(db.select(Mark))
-        return [i._mapping for i in data.fetchall()]
+    def get_marks(self) -> list[Mark]:
+        sess = self.get_session()
+        return sess.exec(select(Mark)).all()
     
-    def get_mark(self, mark_id: int) -> dict | bool:
-        con = self.connect()
-        data = con.execute(db.select(Mark).where(Mark.id == mark_id))
-        return data.fetchone()._mapping if data else False
-    
+    def get_mark(self, mark_id: int) -> Mark:
+        sess = self.get_session()
+        return sess.get(Mark, mark_id)
+
     def delete_mark(self, mark_id: int) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.delete(Mark).where(Mark.id == mark_id))
-            con.execute(db.delete(MarkFavorite).where(MarkFavorite.mark_id == mark_id))
+            sess.exec(
+                delete(MarkFavorite)
+                .where(
+                    MarkFavorite.mark_id == mark_id
+                )
+            )
+            sess.exec(
+                delete(MarkFavorite)
+                .where(
+                    MarkFavorite.mark_id == mark_id
+                )
+            )
             return True
         except:
             return False
         
     def add_mark_favorite(self, favorite_id: int, mark_id: int) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.insert(MarkFavorite), [{
-                'mark_id': mark_id,
-                'favorite_id': favorite_id
-            }])
+            sess.add(
+                MarkFavorite(
+                    mark_id=mark_id,
+                    favorite_id=favorite_id
+                )
+            )
+            sess.commit()
             return True
         except Exception as e:
             print(e)
             return False
 
     def edit_mark(self, mark_id: int, name: str) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.update(Mark).where(Mark.id == mark_id).values({'name': name}))
+            sess.exec(
+                update(Mark)
+                .where(Mark.id == mark_id)
+                .values({'name': name})
+            )
             return True
         except Exception as e:
             print(e)
             return False
 
     def is_marked(self, favorite_id: int, mark_id: int) -> bool:
-        con = self.connect()
-        data = con.execute(db.select(MarkFavorite).where(
-            MarkFavorite.mark_id == mark_id, 
-            MarkFavorite.favorite_id == favorite_id
-        ))
-        if data.fetchall():
+        sess = self.get_session()
+        data = sess.exec(
+            select(MarkFavorite)
+            .where(
+                MarkFavorite.mark_id == mark_id, 
+                MarkFavorite.favorite_id == favorite_id
+            ) 
+        )
+        if data.all():
             return True
         return False
     
     def delete_mark_favorite(self, favorite_id: int, mark_id: int) -> bool:
-        con = self.connect()
+        sess = self.get_session()
         try:
-            con.execute(db.delete(MarkFavorite).where(
-                MarkFavorite.mark_id == mark_id,
-                MarkFavorite.favorite_id == favorite_id
-            ))
+            sess.exec(
+                delete(MarkFavorite)
+                .where(
+                    MarkFavorite.mark_id == mark_id,
+                    MarkFavorite.favorite_id == favorite_id
+                )
+            )
             return True
         except Exception as e: 
             print(e)

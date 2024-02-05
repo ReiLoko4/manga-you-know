@@ -1,19 +1,7 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import declarative_base
+from sqlmodel import SQLModel, Field
 
 
-Base = declarative_base()
-
-
-class Mark(Base):
+class Mark(SQLModel, table=True):
     __tablename__ = 'marks'
-    id = Column(Integer, primary_key=True, autoincrement=True, unique=True, )
-    name = Column(String, nullable=False)
-
-    def __init__(
-        self, name: int = None
-    ) -> None:
-        self.name = name
-
-    def __repr__(self) -> str:
-        return f'<Mark {self.name}>'
+    id: int = Field(primary_key=True)
+    name: str = Field(nullable=False)

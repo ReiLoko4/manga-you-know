@@ -86,6 +86,7 @@ class MangaReader:
                 self.page.go('/favorites') if not self.page.data['is_index'] else self.page.go('/')
                 self.page.scroll = ft.ScrollMode.ADAPTIVE
                 self.page.window_full_screen = False
+                self.page.data['MangaOpen']()
             self.page.update()
 
         def resize(e):

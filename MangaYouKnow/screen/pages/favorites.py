@@ -2,6 +2,7 @@ import flet as ft
 from backend.database import DataBase
 from screen.constants import Language
 from screen.components import MangasCard
+from backend.tables import Mark
 
 
 class Favorites:
@@ -14,6 +15,16 @@ class Favorites:
             border_radius=20,
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300
+        )
+        favorite_type = ft.SegmentedButton(
+            show_selected_icon=False,
+            allow_empty_selection=False,
+            allow_multiple_selection=True,
+            segments=[
+                ft.Segment('manga', label=ft.Text('Manga')),
+                ft.Segment('anime', label=ft.Text('Anime')),
+            ],
+            selected={'manga', 'anime'},
         )
         order_favorites = ft.Dropdown(
             options=[
@@ -42,7 +53,7 @@ class Favorites:
             width=140,
             value='all'
         )
-        mark_selector.options.extend([ft.dropdown.Option(i['id'], i['name'][:14]) for i in database.get_marks()])
+        mark_selector.options.extend([ft.dropdown.Option(i.id, i.name[:14]) for i in database.get_marks()])
         mark_add = ft.IconButton(
             ft.icons.ADD_ROUNDED,
             icon_color=ft.colors.WHITE,
@@ -57,7 +68,7 @@ class Favorites:
                 mark_selector.options = [
                     ft.dropdown.Option('all', 'Todos'),
                 ]
-                mark_selector.options.extend([ft.dropdown.Option(i['id'], i['name'][:14]) for i in saved_marks])
+                mark_selector.options.extend([ft.dropdown.Option(i.id, i.name[:14]) for i in saved_marks])
                 column_marks.controls = [
                     ft.ListTile(
                         title=ft.TextField(
@@ -164,15 +175,18 @@ class Favorites:
                 remove_manga,
                 page,
                 order_favorites.value,
-                query=query
+                query=query,
+                favorite_type=list(favorite_type.selected)
             )
         # page.data['load_mangas'] = load_mangas
         order_favorites.on_change = lambda e: load_mangas_by_mark()
+        favorite_type.on_change = lambda e: load_mangas_by_mark()   
         row_mangas.controls = load_mangas()
         mark_selector.on_change = lambda e: load_mangas_by_mark()
         favorites = database.get_favorites()
         stack = ft.Stack([
             ft.Row([
+                ft.Container(favorite_type, padding=10),
                 ft.Container(order_favorites, padding=10),
                 ft.Container(search, padding=10),
                 reset_search,
@@ -196,8 +210,6 @@ class Favorites:
                 if num % 3 == 0:
                     count += 1
             stack.height = count * 435
-            if page.data['last_favorites'] == favorites:
-                return
             row_mangas.controls = load_mangas(query=search.value if search.value != '' else None)
             page.update()
 
