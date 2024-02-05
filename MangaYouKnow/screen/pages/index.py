@@ -24,12 +24,16 @@ class Index:
             # ft.dropdown.Option('op', text='OP Scans'),
         ]
         anime_options = [
-            ft.dropdown.Option('av', text='Animes Vision'),
+            ft.dropdown.Option('av', text='AnimesVision'),
+            ft.dropdown.Option('af', text='AnimeFire'),
+            ft.dropdown.Option('ao', text='AnimesOnline'),
         ]
         source_selector = ft.Dropdown(options=manga_options, value='md', width=140)
         def change_options(e: ft.ControlEvent):
             source_selector.options = manga_options if list(e.control.selected)[0] == 'manga' else anime_options
             source_selector.value = source_selector.options[0].key
+            search.label = f'Pesquisar {list(favorite_type.selected)[0]}s...'
+            search_mangas(search.value)
             page.update()
         favorite_type = ft.SegmentedButton(
             show_selected_icon=False,
@@ -45,12 +49,15 @@ class Index:
         results = ft.Column(width=470, spacing=0.7)
         results_card = ft.Card(ft.Container(results, border=ft.border.all(1, 'white'), border_radius=15), color='gray', visible=False)
         search = ft.TextField(
-            label='Pesquisar Mangás...',
+            label=f'Pesquisar {list(favorite_type.selected)[0]}s...',
             width=500,
             border_radius=20,
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300,
         )
+        # search = ft.SearchBar(
+        #     bar_hint_text=f'Pesquisar {list(favorite_type.selected)[0]}s...',
+        # )
         index = ft.Stack(width=1300, height=1000)
         manga = ft.Row(visible=False)
         self.is_clicked = False
@@ -63,13 +70,16 @@ class Index:
                 if connection_data.add_favorite(manga, source_selector.value, manga.id, list(favorite_type.selected)[0]):
                     button.icon = ft.icons.BOOKMARK_ROUNDED
             page.update()
-
             if is_on_search:
                 self.is_clicked = True
-                sleep(1)
-                self.is_clicked = False
+                sleep(0.1)
                 search.focus()
-                page.update()
+                # results_card.visible = True
+                # page.update()
+                # sleep(1)
+                self.is_clicked = False
+                # search.focus()
+                # page.update()
 
         def manga_page(info_manga: Manga):
             button_favorite = ft.IconButton(

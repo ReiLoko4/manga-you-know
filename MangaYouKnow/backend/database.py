@@ -222,7 +222,7 @@ class DataBase:
                     type=fav_type,
                     description=manga.description,
                     author=manga.author[0] if manga.author else 'Desconhecido',
-                    score=manga.grade,
+                    # score=manga.grade,
                     notify=False
                 )
             )

@@ -20,5 +20,7 @@ class Language:
         'op': ['en'],
         'opex': ['pt-br'],
         'lmorg': ['pt-br'],
-        'av': ['pt-br']
+        'av': ['pt-br'],
+        'af': ['pt-br'],
+        'ao': ['pt-br']
     }

@@ -1,14 +1,14 @@
 import base64
+import subprocess
 from functools import cache
 from pathlib import Path
-import subprocess
 
 import py7zr
 from backend.anime_downloaders import *
 from backend.interfaces import AnimeDl, MangaDl
 from backend.managers import ThreadManager
 from backend.manga_downloaders import *
-from backend.models import Chapter, Manga
+from backend.models import Chapter, Episode, Manga
 from backend.tables import Favorite
 from backend.utilities import Notificator
 from cachetools import TTLCache, cached
@@ -41,6 +41,8 @@ class DownloadManager:
         }
         self.anime_downloaders = {
             'av': AnimesVisionDl(),
+            'af': AnimeFireDl(),
+            'ao': AnimesOnlineDl(),
         }
         self.downloads = {}
         self.MPV_DOWNLOAD_URL = 'http://downloads.sourceforge.net/project/mpv-player-windows/release/mpv-0.37.0-x86_64.7z'
@@ -90,7 +92,7 @@ class DownloadManager:
         return False
     
     @cache
-    def get_episode_url(self, source: str, episode_id: str) -> str | bool:
+    def get_episode_url(self, source: str, episode_id: str) -> Episode | list[Episode] | bool:
         dl: AnimeDl = self.__match_source__(source, 'anime')
         if dl:
             try:

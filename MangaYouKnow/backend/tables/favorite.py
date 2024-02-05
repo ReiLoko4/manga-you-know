@@ -10,9 +10,9 @@ class Favorite(SQLModel, table=True):
     source: str = Field(nullable=False)
     source_id: str = Field(nullable=False)
     type: str = Field(nullable=False)
-    description: str = None
-    author: str = None
-    score: float = None
+    description: str = Field(nullable=True)
+    author: str = Field(nullable=True)
+    score: float = Field(nullable=True)
     notify: bool = False
     # md_id: str = Field(unique=True, nullable=True)
     # ml_id: str = Field(unique=True, nullable=True)

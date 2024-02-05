@@ -1,7 +1,7 @@
 import json
 
 from backend.interfaces import AnimeDl
-from backend.models import Manga, Chapter
+from backend.models import Chapter, Episode, Manga
 from bs4 import BeautifulSoup
 from requests import Session
 
@@ -70,9 +70,10 @@ class AnimesVisionDl(AnimeDl):
                 soup = BeautifulSoup(response.content, 'html.parser')
             h3_list = soup.find_all('h3', {'class': 'sii-title'})
             h3_list.reverse()
-            last_episode = [i.text for i in h3_list if 
+            last_episode = [i.text for i in h3_list if (
                 'Episodio' in i.text or 
-                'Episódio' in i.text 
+                'Episódio' in i.text) and
+                not 'Especial' in i.text
             ][0]
             last_episode = last_episode.split(' ')[-1] if last_episode[-1] != ' ' else last_episode.split(' ')[-2]
             last_episode = last_episode.replace(' ', '')
@@ -94,17 +95,15 @@ class AnimesVisionDl(AnimeDl):
                         # title=f'Episódio {num}'
                     )
                 )
-            episodes.reverse()
-            return episodes
+            return episodes[::-1]
         return False
 
-    def get_episode_url(self, episode_id: str) -> str | bool:
+    def get_episode_url(self, episode_id: str) -> Episode | bool:
         response = self.session.get(f'{self.base_url}/animes/{episode_id}')
         if response.status_code != 200:
             split_id = episode_id.split('/')
             split_ep = split_id[1].split('-')
             response = self.session.get(f'{self.base_url}/animes/{split_id[0]}/{split_ep[0]}-0{split_ep[1]}/{split_id[2]}')
-        print(response.url)
         if response.status_code == 200:
             videos = (response.text
             .split('const playerGlobalVideo = jwplayer("playerglobalapi").setup(')[1]
@@ -113,8 +112,15 @@ class AnimesVisionDl(AnimeDl):
             .split('sources:')[-1][:-4] + ']'
             .replace('\\', ''))
             videos = json.loads(videos)
-            return videos[-1]['file']
-        print('n passou?')
+            if len(videos) == 1:
+                return Episode(videos[0]['file'])
+            return [
+                Episode(
+                    url=episode['file'],
+                    label=episode['label']
+                )
+                for episode in videos
+            ][::-1]
         return False
             
 

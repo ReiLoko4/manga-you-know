@@ -30,6 +30,10 @@ def MangaOpen(
         status = ft.Text('Buscando as imagens...', weight=ft.FontWeight.W_500)
         media = 'Capítulo' if manga_info.type == 'manga' else 'Episódio'
         title = ft.Text(f'{media} {chapter.number} - {chapter.title}' if chapter.title else f'{media} {chapter.number}', size=20, weight=ft.FontWeight.BOLD)
+        row_content = ft.Row([
+            ft.ProgressRing(height=140, width=140),
+        ], alignment=ft.MainAxisAlignment.CENTER
+        )
         page.dialog.content = ft.Container(
             ft.Column([
                 ft.Row([
@@ -39,9 +43,7 @@ def MangaOpen(
                 ft.Container(height=5),
                 ft.Divider(height=5, color=ft.colors.GREY_700, thickness=2),
                 ft.Container(height=5),
-                ft.Row([
-                    ft.ProgressRing(height=140, width=140),
-                ],  alignment=ft.MainAxisAlignment.CENTER),
+                row_content,
                 ft.Row([status], expand=True,alignment=ft.MainAxisAlignment.CENTER),
                 ft.Text(f'Pressione F4 para sair do {media.lower()}', size=15, weight=ft.FontWeight.BOLD)
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
@@ -76,11 +78,38 @@ def MangaOpen(
             dl.download_mpv()
         status.value = 'Procurando o episódio...'
         page.update()
-        episode_url = dl.get_episode_url(source, chapter.id)
-        print(episode_url)
+        episode_urls = dl.get_episode_url(source, chapter.id)
+        print(episode_urls)
+        if type(episode_urls) == bool:
+            status.value = 'Erro ao encontrar o episódio!'
+            page.update()
+            return
+        def select_option(url):
+            row_content.controls = [
+                ft.ProgressRing(height=140, width=140),
+            ]
+            status.value = 'Abrindo o player...'
+            page.update()
+            if not database.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
+                database.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
+            dl.start_video_player(url, f'{manga.name} - {chapter.number}')
+            MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
+            return
+        if type(episode_urls) == list:
+            status.value = 'Escolha uma opção:'
+            row_content.controls = [
+                ft.Column([
+                    ft.FilledButton(episode.label, on_click=lambda e, url=episode.url: select_option(url), width=200)
+                    for episode in episode_urls
+                ], height=220, width=140, alignment=ft.MainAxisAlignment.CENTER)
+            ]
+            page.update()
+            return
         status.value = 'Abrindo o player...'
         page.update()
-        dl.start_video_player(episode_url, f'{manga.name} - {chapter.number}')
+        if not database.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
+            database.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
+        dl.start_video_player(episode_urls.url, f'{manga.name} - {chapter.number}')
         MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
 
     btn_is_readed_list = []
@@ -96,7 +125,6 @@ def MangaOpen(
                 icon = ft.icons.CHECK
             btn.icon = icon
         load_next()
-
         page.update()
     chapter_search = ft.TextField(
         label='Capítulo...',
@@ -134,7 +162,11 @@ def MangaOpen(
         case 'lmorg':
             text = 'LerManga.org'
         case 'av':
-            text = 'Animes Vision'
+            text = 'AnimesVision'
+        case 'af':
+            text = 'AnimeFire'
+        case 'ao':
+            text = 'AnimesOnline'
     options.append(ft.dropdown.Option(manga_info.source, text))
     if manga_info.source_id in [
         '5/one-piece',
@@ -258,8 +290,20 @@ def MangaOpen(
                 chapters = dl.get_chapters(source_options.value, manga_info.source_id if source_options.value != 'opex' else None) if len(source_languages[source_options.value]) == 1 \
                     else dl.get_chapters(source_options.value, manga_info.source_id, language_options.value)
             else:
-                chapters = dl.get_episodes(source_options.value, manga_info.source_id if source_options.value != 'opex' else None) 
+                chapters = dl.get_episodes(source_options.value, manga_info.source_id if source_options.value != 'opex' else None)
             chapters_by_source[f'{source_options.value}_{language_options.value}'] = chapters
+        if type(chapters) == bool:
+            list_chapters.controls = [
+                ft.ListTile(
+                    title=ft.Text(f'Erro ao carregar os {'capítulos' if manga_info.type == 'manga' else 'episódios'}!', color=ft.colors.RED_500),
+                )
+            ]
+            if len(source_languages[source_options.value]) > 1:
+                language_options.disabled = False
+            if len(source_options.options) > 1:
+                source_options.disabled = False
+            page.update()
+            return
         list_chapters.controls = []
         is_each_readed = database.is_each_readed(
             source_options.value, 
@@ -296,7 +340,7 @@ def MangaOpen(
                 ft.ListTile(
                     title=ft.Text(chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title, tooltip=chapter.title),
                     trailing=btn_read, 
-                    leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(manga_info, source, chapter)),
+                    leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=source_options.value, chapter=chapter: dl.download_chapter(manga_info, source, chapter), disabled=True if manga_info.type == 'anime' else False),
                     on_click=lambda e, source=source_options.value, chapter=chapter: read(source, manga_info, chapter, chapters, language_options.value if len(source_languages[source_options.value]) > 1 else None),
                     key=chapter.id
                 )
@@ -306,7 +350,7 @@ def MangaOpen(
             source_options.disabled = False
         if len(source_languages[source_options.value]) > 1:
             language_options.disabled = False
-        download_all.disabled = False
+        download_all.disabled = False if manga_info.type == 'manga' else True
         chapter_search.disabled = False
         last_readed = database.get_last_readed(manga_info.id)
         # list_chapters.scroll_to(key=last_readed['chapter_id'] if last_readed else None)

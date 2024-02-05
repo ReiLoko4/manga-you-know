@@ -27,7 +27,10 @@ def verify_chapters(manga: Favorite, text: ft.Text, card: ft.Card, container: ft
         last_readed.favorite_source_id = manga.source_id
         last_readed.language = 'en' if last_readed.source == 'md' else None
         last_readed.chapter_id = None
-    chapters: list[Chapter] = dl.get_chapters(last_readed.source, last_readed.favorite_source_id, last_readed.language if last_readed.language else None)
+    if manga.type == 'manga':
+        chapters: list[Chapter] = dl.get_chapters(last_readed.source, last_readed.favorite_source_id, last_readed.language if last_readed.language else None)
+    else:
+        chapters: list[Chapter] = dl.get_episodes(last_readed.source, last_readed.favorite_source_id)
     if last_readed.chapter_id is None:
         text.value = f'+{len(chapters)}'
         card.key = len(chapters)
