@@ -14,19 +14,4 @@ class Favorite(SQLModel, table=True):
     author: str = Field(nullable=True)
     score: float = Field(nullable=True)
     notify: bool = False
-    # md_id: str = Field(unique=True, nullable=True)
-    # ml_id: str = Field(unique=True, nullable=True)
-    # ms_id: str = Field(unique=True, nullable=True)
-    # mc_id: str = Field(unique=True, nullable=True)
-    # mf_id: str = Field(unique=True, nullable=True)
-    # mx_id: str = Field(unique=True, nullable=True)
-    # tcb_id: str = Field(unique=True, nullable=True)
-    # tsct_id: str = Field(unique=True, nullable=True)
-    # op_id: str = Field(unique=True, nullable=True)
-    # gkk_id: str = Field(unique=True, nullable=True)
-    # lmorg_id: str = Field(unique=True, nullable=True)
 
-# favorite_columns = [
-#     'notify',
-
-# ]

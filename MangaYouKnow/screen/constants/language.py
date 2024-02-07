@@ -24,4 +24,5 @@ class Language:
         'af': ['pt-br'],
         'ao': ['pt-br'],
         'ah': ['pt-br'],
+        'oa': ['pt-br']
     }

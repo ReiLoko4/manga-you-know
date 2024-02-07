@@ -28,6 +28,7 @@ class Index:
             ft.dropdown.Option('af', text='AnimeFire'),
             ft.dropdown.Option('ao', text='AnimesOnline'),
             ft.dropdown.Option('ah', text='AnimesHouse'),
+            ft.dropdown.Option('oa', text='OtakuAnimes'),
         ]
         source_selector = ft.Dropdown(options=manga_options, value='md', width=140)
         def change_options(e: ft.ControlEvent):

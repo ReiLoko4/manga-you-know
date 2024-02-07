@@ -1,6 +1,5 @@
 import base64
 import subprocess
-from functools import cache
 from pathlib import Path
 
 import py7zr
@@ -10,8 +9,12 @@ from backend.managers import ThreadManager
 from backend.manga_downloaders import *
 from backend.models import Chapter, Episode, Manga
 from backend.tables import Favorite
-from backend.utilities import Notificator
-from cachetools import TTLCache, cached
+from backend.utilities import (
+    Notificator, 
+    conditional_cache_lru,
+    conditional_cache_ttl
+)
+from cachetools import TTLCache
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -44,24 +47,26 @@ class DownloadManager:
             'af': AnimeFireDl(),
             'ao': AnimesOnlineDl(),
             'ah': AnimesHouseDl(),
+            'oa': OtakuAnimessDl()
         }
         self.downloads = {}
         self.MPV_DOWNLOAD_URL = 'http://downloads.sourceforge.net/project/mpv-player-windows/release/mpv-0.37.0-x86_64.7z'
         self.notificator = Notificator()
 
+    @conditional_cache_lru(maxsize=1024)
     def __match_source__(self, source: str, fav_type: str = 'manga') -> MangaDl | AnimeDl:
         if fav_type == 'manga':
             return self.manga_downloaders[source]
         return self.anime_downloaders[source]
     
-    @cache
+    @conditional_cache_lru(maxsize=1024)
     def search(self, source: str, query: str, fav_type: str = 'manga') -> list[Manga] | bool:
         dl = self.__match_source__(source, fav_type)
         if dl:
             return dl.search(query)
         return False
 
-    @cached(TTLCache(maxsize=1024, ttl=580))
+    @conditional_cache_ttl(TTLCache(maxsize=1024, ttl=580))
     def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
         source: MangaDl = self.__match_source__(source)
         if source:
@@ -72,7 +77,7 @@ class DownloadManager:
                 print(e)
         return False
     
-    @cached(TTLCache(maxsize=1024, ttl=580))
+    @conditional_cache_ttl(TTLCache(maxsize=1024, ttl=580))
     def get_episodes(self, source: str, anime_id: str) -> list[Chapter] | bool:
         source: AnimeDl = self.__match_source__(source, 'anime')
         if source:
@@ -82,7 +87,7 @@ class DownloadManager:
                 print(e)
         return False
 
-    @cache
+    @conditional_cache_lru(maxsize=1024)
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
         dl: MangaDl = self.__match_source__(source)
         if dl:
@@ -92,7 +97,7 @@ class DownloadManager:
                 print(e)
         return False
     
-    @cache
+    @conditional_cache_lru(maxsize=1024)
     def get_episode_url(self, source: str, episode_id: str) -> Episode | list[Episode] | bool:
         dl: AnimeDl = self.__match_source__(source, 'anime')
         if dl:
@@ -102,20 +107,22 @@ class DownloadManager:
                 print(e)
         return False
     
-    @cache
+    @conditional_cache_lru(maxsize=1024)
     def get_image_content(self, url: str) -> bytes | None:
         response = self.session.get(url)
         if response and 'image' in response.headers['content-type']:
             return response.content
         print(response.status_code, url)
     
-    @cache
+    @conditional_cache_lru(maxsize=1024)
     def get_base_64_image(self, url: str) -> str | None:
         response = self.get_image_content(url)
         if response:
             return base64.b64encode(response).decode('utf-8')
 
     def get_base64_images(self, pages: list[str]) -> list[str]:
+        if not pages:
+            return []
         threads = ThreadManager()
         for image in pages:
             threads.add_thread_by_args(
@@ -125,16 +132,15 @@ class DownloadManager:
         threads.start()
         return [i for i in threads.join() if i]
     
-    def start_video_player(self, url: str, title: str = 'Video sem titulo, igual o Palmeiras', header: str = None, local_folder: Path = Path('.')) -> None:
+    def start_video_player(self, url: str, title: str = 'Vídeo sem título, igual o Palmeiras', headers: dict = None, local_folder: Path = Path('.')) -> None:
         return subprocess.Popen([
             local_folder / 'mpv/mpv.exe',
             url,
-            # '--http-header-fields="Referer: https://corsair-ah.shop"'
             f'--title={title}',
             '--no-border',
             # '--ontop',
             '--fs',
-            f'--http-header-fields="Referer: {header if header else 'https://corsair-ah.shop'}"',
+            f'--http-header-fields="{'", "'.join([f'{key}: {value}' for key, value in headers.items()])}"' if headers else '',
         ], 
         stdin = subprocess.PIPE,
         stdout = subprocess.PIPE,

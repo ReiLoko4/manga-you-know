@@ -45,7 +45,7 @@ def MangaOpen(
                 ft.Container(height=5),
                 row_content,
                 ft.Row([status], expand=True,alignment=ft.MainAxisAlignment.CENTER),
-                ft.Text(f'Pressione F4 para sair do {media.lower()}', size=15, weight=ft.FontWeight.BOLD)
+                ft.Text(f'Pressione F4 para sair do {media.lower()}' if manga_info.type == 'manga' else 'O player pode demorar um pouco...', size=15, weight=ft.FontWeight.BOLD)
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
         page.update()
@@ -54,6 +54,11 @@ def MangaOpen(
             status.value = 'Baixando as imagens...'
             page.update()
             images_b64 = dl.get_base64_images(pages)
+            if not images_b64:
+                status.value = 'Erro ao baixar as imagens!'
+                status.color = ft.colors.RED_500
+                page.update()
+                return
             status.value = 'Pronto!'
             page.update()
             page.data['chapter_images'] = images_b64
@@ -82,6 +87,8 @@ def MangaOpen(
         print(episode_urls)
         if type(episode_urls) == bool:
             status.value = 'Erro ao encontrar o episódio!'
+            status.color = ft.colors.RED_500
+            row_content.controls = []
             page.update()
             return
         def select_option(ep: Episode):
@@ -136,7 +143,6 @@ def MangaOpen(
     )
     list_chapters = ft.Column(height=8000, width=240, scroll='always')
     options = []
-    is_op = False
     text = ''
     match manga_info.source:
         case 'md':
@@ -169,6 +175,8 @@ def MangaOpen(
             text = 'AnimesOnline'
         case 'ah':
             text = 'AnimesHouse'
+        case 'oa':
+            text = 'OtakuAnimes'
     options.append(ft.dropdown.Option(manga_info.source, text))
     if manga_info.source_id in [
         '5/one-piece',
