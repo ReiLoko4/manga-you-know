@@ -1,7 +1,7 @@
 import flet as ft
 from backend.database import DataBase
 from backend.managers import DownloadManager
-from backend.models import Chapter
+from backend.models import Chapter, Episode
 from backend.tables import Favorite
 
 
@@ -25,7 +25,7 @@ def MangaOpen(
         leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, disabled=True),
         disabled=True
     )
-    def read(source, manga: Favorite, chapter: Chapter, chapters: list[dict], language: str=None) -> None:
+    def read(source, manga: Favorite, chapter: Chapter, chapters: list[Chapter], language: str=None) -> None:
         manga_title.value = manga_info.name if len(manga_info.name) < 25 else f'{manga_info.name[0:22]}...'
         status = ft.Text('Buscando as imagens...', weight=ft.FontWeight.W_500)
         media = 'Capítulo' if manga_info.type == 'manga' else 'Episódio'
@@ -84,7 +84,7 @@ def MangaOpen(
             status.value = 'Erro ao encontrar o episódio!'
             page.update()
             return
-        def select_option(url):
+        def select_option(ep: Episode):
             row_content.controls = [
                 ft.ProgressRing(height=140, width=140),
             ]
@@ -92,14 +92,14 @@ def MangaOpen(
             page.update()
             if not database.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
                 database.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
-            dl.start_video_player(url, f'{manga.name} - {chapter.number}')
+            dl.start_video_player(ep.url, f'{manga.name} - {chapter.number}', ep.header)
             MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
             return
         if type(episode_urls) == list:
             status.value = 'Escolha uma opção:'
             row_content.controls = [
                 ft.Column([
-                    ft.FilledButton(episode.label, on_click=lambda e, url=episode.url: select_option(url), width=200)
+                    ft.FilledButton(episode.label, on_click=lambda e, ep=episode: select_option(ep), width=200)
                     for episode in episode_urls
                 ], height=220, width=140, alignment=ft.MainAxisAlignment.CENTER)
             ]
@@ -109,7 +109,7 @@ def MangaOpen(
         page.update()
         if not database.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
             database.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
-        dl.start_video_player(episode_urls.url, f'{manga.name} - {chapter.number}')
+        dl.start_video_player(episode_urls.url, f'{manga.name} - {chapter.number}', episode_urls.header)
         MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
 
     btn_is_readed_list = []
@@ -127,7 +127,7 @@ def MangaOpen(
         load_next()
         page.update()
     chapter_search = ft.TextField(
-        label='Capítulo...',
+        label='Capítulo...' if manga_info.type == 'manga' else 'Episódio...',
         width=240,
         border_radius=20,
         height=40,
@@ -167,6 +167,8 @@ def MangaOpen(
             text = 'AnimeFire'
         case 'ao':
             text = 'AnimesOnline'
+        case 'ah':
+            text = 'AnimesHouse'
     options.append(ft.dropdown.Option(manga_info.source, text))
     if manga_info.source_id in [
         '5/one-piece',
@@ -216,12 +218,14 @@ def MangaOpen(
             next_chapter.leading.disabled = False
         for i, chapter in enumerate(chapters):
             if i == 0 and each_readed[i]:
-                next_chapter.title.value = 'Tudo lido!'
+                next_chapter.title.value = 'Tudo lido!' if manga_info.type == 'manga' else 'Tudo assistido!'
                 next_chapter.trailing.icon = ft.icons.CHECK
                 next_chapter.leading.icon = ft.icons.CIRCLE
                 next_chapter.on_click = None
                 next_chapter.trailing.disabled = True
                 next_chapter.leading.disabled = True
+                if manga_info.type == 'anime':
+                    next_chapter.title.size = 13
                 break
             if not each_readed[i] and len(chapters) > 1:
                 if chapters[i] == chapters[-1]:                
@@ -246,6 +250,8 @@ def MangaOpen(
                     next_chapter.trailing.disabled = False
                     next_chapter.leading.disabled = False
                     break
+        if manga_info.type == 'anime':
+            next_chapter.leading.disabled = True
         page.update()
 
 

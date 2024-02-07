@@ -22,5 +22,6 @@ class Language:
         'lmorg': ['pt-br'],
         'av': ['pt-br'],
         'af': ['pt-br'],
-        'ao': ['pt-br']
+        'ao': ['pt-br'],
+        'ah': ['pt-br'],
     }

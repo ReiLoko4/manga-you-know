@@ -34,7 +34,7 @@ def MangaEdit(
     if len(marks) > 7:
         marks_column.height = 400
     def save(column, content):
-        if content == manga_info[column]:
+        if content == getattr(manga_info, column):
             return
         if database.set_favorite(manga_info.id, column, content):
             row_mangas.controls = load_mangas(search.value if search.value != '' else None)

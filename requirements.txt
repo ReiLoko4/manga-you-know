@@ -1,7 +1,8 @@
 bs4
 cachetools
 flet
+py7zr
 pyperclip
 requests
-sqlalchemy
+sqlmodel
 win10toast

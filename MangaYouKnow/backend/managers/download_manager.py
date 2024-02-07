@@ -43,6 +43,7 @@ class DownloadManager:
             'av': AnimesVisionDl(),
             'af': AnimeFireDl(),
             'ao': AnimesOnlineDl(),
+            'ah': AnimesHouseDl(),
         }
         self.downloads = {}
         self.MPV_DOWNLOAD_URL = 'http://downloads.sourceforge.net/project/mpv-player-windows/release/mpv-0.37.0-x86_64.7z'
@@ -124,7 +125,7 @@ class DownloadManager:
         threads.start()
         return [i for i in threads.join() if i]
     
-    def start_video_player(self, url: str, title: str = 'Video sem titulo, igual o Palmeiras', local_folder: Path = Path('.')) -> None:
+    def start_video_player(self, url: str, title: str = 'Video sem titulo, igual o Palmeiras', header: str = None, local_folder: Path = Path('.')) -> None:
         return subprocess.Popen([
             local_folder / 'mpv/mpv.exe',
             url,
@@ -132,7 +133,8 @@ class DownloadManager:
             f'--title={title}',
             '--no-border',
             # '--ontop',
-            '--fs'
+            '--fs',
+            f'--http-header-fields="Referer: {header if header else 'https://corsair-ah.shop'}"',
         ], 
         stdin = subprocess.PIPE,
         stdout = subprocess.PIPE,
