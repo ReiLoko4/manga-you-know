@@ -84,6 +84,7 @@ def MangaOpen(
         status.value = 'Procurando o episódio...'
         page.update()
         episode_urls = dl.get_episode_url(source, chapter.id)
+        print(episode_urls)
         if type(episode_urls) == bool:
             status.value = 'Erro ao encontrar o episódio!'
             status.color = ft.colors.RED_500

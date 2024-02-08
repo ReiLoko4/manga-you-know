@@ -1,6 +1,6 @@
 import flet as ft
-from app import __main__
+from app import main
 
 
 if __name__ == '__main__':
-    ft.app(target=__main__)
+    ft.app(target=main)

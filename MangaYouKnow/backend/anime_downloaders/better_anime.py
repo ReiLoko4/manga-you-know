@@ -1,3 +1,5 @@
+import re
+
 from backend.interfaces import AnimeDl
 from backend.models import Chapter, Episode, Manga
 from bs4 import BeautifulSoup
@@ -23,9 +25,6 @@ class BetterAnimeDl(AnimeDl):
         self.session.cookies.update({
             'betteranime_session': 'eyJpdiI6IlVuRk5LRldvc3pJaWdHbThoVCtYSlE9PSIsInZhbHVlIjoiTkJvbitCOW1uMWpYSkxCNXNsdHJTYnJUaWFabCtMdlhhdElnVFYrTlgwUUFENUhPYlIrMW5WSE9BWEd5ZG5Ba1Nqbjlma1BqWTJqQ001eWsvdnZxL1Awa21OMU96SGRlV2FMZmNyalI0MTdHYjk0UlZCeXdHakdIV1FUcWVTRkIiLCJtYWMiOiI1MjM3OGY0OGIyOWM3MWQyNmE2NDQyZGExNDJjNDliNGZjMGFmOTk0NjY4NmI5ZTQ0NzU5ZjczODUyZWMzMDYzIiwidGFnIjoiIn0%3D'
         })
-        self.episode_headers = self.session.headers.copy()
-        self.episode_headers['Sec-Fetch-Dest'] = 'iframe'
-        self.episode_headers['Cookie'] = '__ddg1_=mxDbK7MpYf7husQpsgEV; newBetterCountry=eyJpdiI6IjNyNHJVb016Qk1ocmdZVDQydU1hTmc9PSIsInZhbHVlIjoia0lyK2JKNXVQKzhoSUlmcFlXeWdaR1dmVFgybkVURGk2cEo5WkZiOGwzV1crb1lsejZOZ1JYai82S2o0S3ZrVVJDSndiNUFLR0tsMHp2elJJV25iSXplMGFwZCt3SlhLcDNEbmIxQnRYVGc9IiwibWFjIjoiMThmNGMxMmQ4YTNjMmFhNDljZDg1ZDc3NGRhOTFjNDY3ZWYyYmM1ZTY0ZjNhNDNiMmNmZGNmMDFiOGMwNGJkOCIsInRhZyI6IiJ9; XSRF-TOKEN=eyJpdiI6IkpORlVhVWdIbklqQmZOTXFnc1BpWWc9PSIsInZhbHVlIjoiZjVLVVo5NkI1MUo2THZ1bzlsSXpEK1ZzcWlLSGNyRDQyRy9sOUI0UUZvRjEwSVRYMW9oNEc3dnNDdWxwTkI0YnFUbzM5dzJVSENVelpGMWZQNzJ6UDk1T1BscnpPWkJNSGt3WHZFZzdsMHVEdXBWdCtYenNrQmhpcjFGQlEzWlgiLCJtYWMiOiJjNjAzZWE1NGMxZmQ2YWQzYjE4YWVmZDI4NzJlNTUzYjA5NWIyY2M1MzA3N2JjZWY1MzdlN2EyYTc5N2U2OTM4IiwidGFnIjoiIn0%3D; betteranime_session=eyJpdiI6ImVxOVNrZlBnMmFWaG55cGFreHBsc0E9PSIsInZhbHVlIjoiSndsZHBEakNQZE9pZVZiaWIyZlVHM3FiSmVPMEZaMVhKeDJWbVlUZTNqUnFEYzYxWDV6bXVydkxIK2x2bkJuTG1jZk9ZL1ozVXFNTEJvaFdzOGtXVnJOS3g2TkQ5V2lwOC8zWlJ6Z1BHWk5MNm55WVpyVHo2by95bzVlZm5JRUEiLCJtYWMiOiJjNjMxYmEyYzk5NmFmOGEwNDUyY2FhODkzNzhiODY5NGVkMWYwZGMzMjVmYTlmNmE5YTI3ODYwMjU0N2U2Y2NmIiwidGFnIjoiIn0%3D; BetterQuality=eyJpdiI6ImRCakJKaGVBZU9waHEvWFlwZFl6ZGc9PSIsInZhbHVlIjoiNG1VcUNOME5ZV25ZaktES00xVmZCc2h3RG91R2dTTUc5YjA4OFAwMS81b3hTRnE1dHRBU1ZQN1N3R2xXQzZseiIsIm1hYyI6IjhmYTc3M2ZiZjMzODA4MmQ3MGEzOGQ0MTdhMmE2OWU0YTkxZWNiMDIzNTBhNWM5YTc4NmRiNGNiNTI1MGFmNTAiLCJ0YWciOiIifQ%3D%3D; BetterAppModal_v2=eyJpdiI6IkR6K25QOHNjZUd2Q0dlZkNEWUwrUVE9PSIsInZhbHVlIjoiUGVJSkVTRTdzeTdmM1l3WCs1OGhidUZReE45MGNvVHZHUHJmM3AwbHVtSEQ1V1l3WTBRTEU4clFKb0piT3ZLcy96bHdMSmppaE1kOThTd1RtbGszT3c9PSIsIm1hYyI6IjQyNmUwZGZiNDkyYjkwOWMyNzM4ZTc5ZTJmMDM3MThhNmJmMzVkN2RiODYzM2ZmMWE3YTc0ZWUxYTczOTI3OGQiLCJ0YWciOiIifQ%3D%3D; remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d=eyJpdiI6IkltYS8zOUM5cE1kaHYwS3B2dngwTVE9PSIsInZhbHVlIjoiN2FCbE5LVUQyNHFkRFZSa016N2swc2c4bS9mYnVsSm1DU1RPcFVYYjRuUjBlMXd2b255cmt1SjFiWk54bDl3ZTdzT0ZVa3pxSWxDWlpocGpwNFNxV3hqZlYxa2NnV3oxbWN1WnFsRDBRbXU5cm5BKzNHWER2c0g0VXE4c2p1aXFuclVvNU0rRHRBaWJmbkt1ZnZQYi9vZ3pHMXRGTDBlR1ZPVjNZbU0reUxnbG9VRnlRcVdkWEVIMVdPUXVtSEJSNlNqbUVHcUJTbC9ZTm9LSHlldGJGOFd4K2ZRZFdodGYwSnQ4VkJIampRST0iLCJtYWMiOiIwN2Y0YzNlMzUzYzJiNjdmNWI3NjhkMTEyZGNjMmIxYTlmNDExM2YwM2RjYzA4Nzg3MmE5NjJlM2E3OGJmNmQ3IiwidGFnIjoiIn0%3D'
 
     def search(self, query: str) -> list[Manga] | bool:
         response = self.session.get(
@@ -69,21 +68,46 @@ class BetterAnimeDl(AnimeDl):
             return episodes[::-1]
         return False
     
-    def get_episode_url(self, episode_id: str) -> Episode | bool:
+    def get_url_by_quality(self, quality_info: str) -> str | bool:
+        response = self.session.post(
+            f'{self.base_url}/changePlayer', 
+            params={
+                '_token': '6ShF7Z7eEiKuICaNk0AImZuNlpnEZ36mzzisYQjT',
+                'info': quality_info
+            }
+        )
+        if not response:
+            return False
+        response = self.session.get(response.json()['frameLink'])
+        if not response:
+            return False
+        quality_match = re.search(r'"file":\s*"([^"]*)"', response.text)
+        if quality_match:
+            return quality_match.group(1).replace('\\', '')
+
+    def get_episode_url(self, episode_id: str) -> list[Episode] | Episode | bool:
         response = self.session.get(f'{self.base_url}/anime/{episode_id}')
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            url = soup.find('iframe')['src']
-            buttons_opt = soup.find('div', {'id': 'qualitiesColumn'}).find_all('button')
-            if len(buttons_opt) == 1:
-                return Episode(
-                    url=url,
-                    label=buttons_opt[0].text,
-                )
-            return [Episode(
+        if not response:
+            return False
+        url_and_label = []
+        matches = re.findall(r'qualityString\["([^"]*)"\]\s*=\s*"([^"]*)"', response.text)
+        for match in matches:
+            quality = match[0]
+            value = match[1]
+            url = self.get_url_by_quality(value)
+            if url:
+                url_and_label.append([url, quality])
+        if len(url_and_label) == 0:
+            return False
+        if len(url_and_label) == 1:
+            return Episode(
+                url=url_and_label[0],
+                label='Padrão'
+            )
+        return [
+            Episode(
                 url=url,
-                label=button.text,
-                headers=self.episode_headers,
-            ) for button in buttons_opt][::-1]
-        return False
+                label=label,
+            ) for url, label in url_and_label
+        ][::-1]
     

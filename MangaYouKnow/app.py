@@ -10,7 +10,7 @@ __version__ = '0.9.7b'
 
 database = DataBase()
 
-def __main__(page: ft.Page) -> ft.FletApp:
+def main(page: ft.Page) -> ft.FletApp:
     page.title = f'MangaYouKnow {__version__}'
     page.theme_mode = database.get_config()['theme-mode']
     page.window_min_width = 770

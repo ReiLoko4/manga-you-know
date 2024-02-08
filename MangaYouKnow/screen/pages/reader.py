@@ -9,6 +9,32 @@ class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = DataBase()
+        self.chapters: list[Chapter] = self.page.data['manga_chapters']
+        self.drawer = ft.NavigationDrawer(
+            controls=[
+                ft.ListTile(
+                    title=ft.Text('Home'),
+                    leading=ft.Icon(ft.icons.HOME_ROUNDED),
+                    on_click=lambda e: page.go('/')
+                ),
+                ft.ListTile(
+                    title=ft.Text('Favorites'),
+                    leading=ft.Icon(ft.icons.BOOKMARK_ROUNDED),
+                    on_click=lambda e: page.go('/favorites')
+                ),
+                ft.ListTile(
+                    title=ft.Text('Settings'),
+                    leading=ft.Icon(ft.icons.SETTINGS_ROUNDED),
+                    on_click=lambda e: page.go('/settings')
+                ),
+                ft.ListTile(
+                    title=ft.Text('About'),
+                    leading=ft.Icon(ft.icons.CONTACTS_ROUNDED),
+                    on_click=lambda e: page.go('/about')
+                ),
+            ]
+        )
+        self.page.drawer = self.drawer
         self.dl: DownloadManager = page.data['dl']
         self.content = None
         self.create_content()
@@ -24,7 +50,6 @@ class MangaReader:
         self.page.banner.visible = False
         if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id']):
             self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id'])
-        self.chapters: list[Chapter] = self.page.data['manga_chapters']
         self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
         self.btn_next_chapter.visible = True if self.pages_len == 1 \
             and not self.chapters[0].id == self.page.data['chapter_id'] else False
@@ -78,6 +103,11 @@ class MangaReader:
                     self.page.window_full_screen = False
                 else:
                     self.page.window_full_screen = True
+            if e.key == 'F3':
+                if self.page.drawer.open:
+                    self.page.drawer.open = False
+                else:
+                    self.page.drawer.open = True
             if e.key == 'Escape':
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
