@@ -26,10 +26,10 @@ def conditional_cache_lru(maxsize=128):
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
+            result = cached_func(*args, **kwargs)
             if isinstance(result, bool):
-                return result
-            return cached_func(*args, **kwargs)
+                return func(*args, **kwargs)
+            return result
 
         return wrapper
 

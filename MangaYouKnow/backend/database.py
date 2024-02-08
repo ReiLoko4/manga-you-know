@@ -428,6 +428,29 @@ class DataBase:
         except Exception as e:
             print(e)
             return False
+    
+    def add_all_readed_below(self, favorite: Favorite, source: str, currently_chapter: Chapter, chapters: list[Chapter], language: str = None) -> bool:
+        sess = self.get_session()
+        try:
+            each_readed = self.is_each_readed(source, favorite.id, favorite.source_id, chapters)
+            for chapter, is_readed in zip(reversed(chapters), reversed(each_readed)):
+                if not is_readed:
+                    sess.add(
+                        Readed(
+                            favorite_id=favorite.id,
+                            favorite_source_id=favorite.source_id,
+                            chapter_id=chapter.id,
+                            source=source,
+                            language=language
+                        )
+                    )
+                if chapter.id == currently_chapter.id:
+                    break
+            sess.commit()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
     def delete_readed(self, source: str, manga_id: str, manga_source_id: str, chapter_id: str, language: str = None) -> bool:
         sess = self.get_session()
@@ -443,7 +466,29 @@ class DataBase:
                 )
             )
             return True
-        except:
+        except Exception as e:
+            print(e)
+            return False
+        
+    def delete_all_readed_above(self, favorite: Favorite, source: str, currently_chapter: Chapter, chapters: list[Chapter], language: str = None) -> bool:
+        sess = self.get_session()
+        try:
+            for chapter in chapters:
+                sess.exec(
+                    delete(Readed)
+                    .where(
+                        Readed.chapter_id == chapter.id,
+                        Readed.favorite_id == favorite.id,
+                        Readed.favorite_source_id == favorite.source_id,
+                        Readed.source == source,
+                        Readed.language == language
+                    )
+                )
+                if chapter.id == currently_chapter.id:
+                    break
+            return True
+        except Exception as e:
+            print(e)
             return False
 
     def add_mark(self, name: str) -> bool:

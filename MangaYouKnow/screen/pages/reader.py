@@ -1,7 +1,8 @@
 import flet as ft
-from backend.models import Chapter
 from backend.database import DataBase
 from backend.managers import DownloadManager
+from backend.tables import Favorite
+from backend.models import Chapter
 from backend.utilities import EnableBackwardIterator
 
 
@@ -9,35 +10,64 @@ class MangaReader:
     def __init__(self, page: ft.Page):
         self.page = page
         self.db = DataBase()
+        self.dl: DownloadManager = self.page.data['dl']
+        self.manga: Favorite = self.page.data['manga']
+        self.source = self.page.data['source']
+        self.language = self.page.data.get('language')
+        self.chapter: Chapter = self.page.data['chapter']
         self.chapters: list[Chapter] = self.page.data['manga_chapters']
-        self.drawer = ft.NavigationDrawer(
-            controls=[
-                ft.ListTile(
-                    title=ft.Text('Home'),
-                    leading=ft.Icon(ft.icons.HOME_ROUNDED),
-                    on_click=lambda e: page.go('/')
-                ),
-                ft.ListTile(
-                    title=ft.Text('Favorites'),
-                    leading=ft.Icon(ft.icons.BOOKMARK_ROUNDED),
-                    on_click=lambda e: page.go('/favorites')
-                ),
-                ft.ListTile(
-                    title=ft.Text('Settings'),
-                    leading=ft.Icon(ft.icons.SETTINGS_ROUNDED),
-                    on_click=lambda e: page.go('/settings')
-                ),
-                ft.ListTile(
-                    title=ft.Text('About'),
-                    leading=ft.Icon(ft.icons.CONTACTS_ROUNDED),
-                    on_click=lambda e: page.go('/about')
-                ),
-            ]
+        if not self.db.is_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapter.id, self.language):
+            self.db.add_all_readed_below(self.manga, self.source, self.chapter, self.chapters, self.language)
+        self.drawer = ft.NavigationDrawer()
+        is_each_readed = self.db.is_each_readed(
+            self.source, 
+            self.manga.id,
+            self.manga.source_id
+            if self.source != 'opex' else 'opex', 
+            self.chapters
         )
-        self.page.drawer = self.drawer
+        self.btns_list: list[ft.IconButton] = []
+        icon = ft.icons.REMOVE
+        for is_readed, chapter in zip(is_each_readed, self.chapters):
+            if is_readed:
+                icon = ft.icons.CHECK
+            btn_read = ft.IconButton(
+                icon, on_click=lambda e, 
+                source=self.source, manga=self.manga, chapter=chapter, \
+                    language=self.language: \
+                        self.togle_readed(source, manga, chapter, language)
+            )
+            self.btns_list.append(btn_read)
+            # if query and chapter.number:
+            #     if str(query).lower() not in str(chapter.number).lower():
+            #         continue
+            self.drawer.controls.append(
+                ft.ListTile(
+                    title=ft.Text(chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title, tooltip=chapter.title),
+                    trailing=btn_read,
+                    autofocus=chapter.id == self.chapter.id,
+                    selected=chapter.id == self.chapter.id,
+                    on_click=lambda e, chapter=chapter: self.change_chapter(chapter),
+                    leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, on_click=lambda e, source=self.source, chapter=chapter: self.dl.download_chapter(self.manga, source, chapter), ),
+                    key=chapter.id
+                )
+            )
         self.dl: DownloadManager = page.data['dl']
         self.content = None
         self.create_content()
+
+    def togle_readed(self, source, manga: Favorite, chapter: Chapter, language: str=None):
+        if self.db.is_readed(source, manga.id, manga.source_id, chapter.id, language):
+            self.db.delete_all_readed_above(manga, source, chapter, self.chapters, language)
+        else:
+            self.db.add_all_readed_below(manga, source, chapter, self.chapters, language)
+        each_readed = self.db.is_each_readed(source, manga.id, manga.source_id, self.chapters)
+        icon = ft.icons.REMOVE
+        for is_read, btn in zip(each_readed, self.btns_list):
+            if is_read:
+                icon = ft.icons.CHECK
+            btn.icon = icon
+        self.page.update()
 
     def create_content(self):
         self.pages = self.page.data['chapter_images']
@@ -46,13 +76,13 @@ class MangaReader:
         self.currently_page = ft.Text(f' 1/{self.pages_len}')
         self.panel = ft.Image(src_base64=self.pages.next(), fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
         self.page.window_full_screen = True
-        self.page.title = f'{self.page.data['manga_name']} - {self.page.data['chapter_title']}' 
+        self.page.title = f'{self.manga.name} - {self.chapter.number} {' > ' + self.chapter.title if self.chapter.title else ''}'  
         self.page.banner.visible = False
-        if not self.db.is_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id']):
-            self.db.add_readed(self.page.data['source'], self.page.data['manga_id'], self.page.data['manga_source_id'], self.page.data['chapter_id'])
-        self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=self.next_chapter)
+        if not self.db.is_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapter.id):
+            self.db.add_all_readed_below(self.manga, self.source, self.chapter, self.chapters, self.language)
+        self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=lambda e: self.change_chapter())
         self.btn_next_chapter.visible = True if self.pages_len == 1 \
-            and not self.chapters[0].id == self.page.data['chapter_id'] else False
+            and not self.chapters[0].id == self.chapter.id else False
         is_second_time = False
         if self.content != None:
             is_second_time = True
@@ -79,7 +109,7 @@ class MangaReader:
             self.panel.height = self.page.height
             self.currently_page.value = f'{self.pages.i}/{self.pages_len}'
             if self.pages.i == self.pages_len and \
-                not self.chapters[0].id == self.page.data['chapter_id']:
+                not self.chapters[0].id == self.chapter.id:
                 self.btn_next_chapter.visible = True
             self.page.update()
 
@@ -104,10 +134,10 @@ class MangaReader:
                 else:
                     self.page.window_full_screen = True
             if e.key == 'F3':
-                if self.page.drawer.open:
-                    self.page.drawer.open = False
+                if not self.drawer.open:
+                    self.page.show_end_drawer(self.drawer)
                 else:
-                    self.page.drawer.open = True
+                    self.drawer.open = False
             if e.key == 'Escape':
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
@@ -134,26 +164,34 @@ class MangaReader:
     def return_content(self):
         return self.content
 
-    def next_chapter(self, _=None):
+    def change_chapter(self, chapter: Chapter=None):
         self.image_row.controls = [ft.ProgressRing(width=120, height=120)]
         self.page.update()
-        self.chapters.reverse()
-        chapter_id = None
-        for i, chapter in enumerate(self.chapters):
-            if chapter.id == self.page.data['chapter_id']:
-                if len(self.chapters) == i + 1:
-                    print('no more chapters')
-                    return False
-                self.page.data['chapter_id'] = self.chapters[i + 1].id
-                self.page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
-                chapter_id = self.chapters[i + 1].id
-                break
-        self.chapters.reverse()
-        if chapter_id == None:
-            return False
-        pages = self.dl.get_chapter_image_urls(self.page.data['source'], chapter_id)
+        if chapter:
+            self.chapter = chapter
+            self.drawer.open = False
+            self.page.update()
+        else:
+            chapter_id = None
+            for i, chapter in enumerate(reversed(self.chapters), 1):
+                if chapter.id == self.chapter.id:
+                    if len(self.chapters) == i:
+                        print('no more chapters')
+                        return False
+                    self.chapter = list(reversed(self.chapters))[i]
+                    chapter_id = self.chapter.id
+                    break
+            if chapter_id == None:
+                return False
+        for list_tile in self.drawer.controls:
+            if list_tile.key == self.chapter.id:
+                list_tile.selected = True
+                list_tile.autofocus = True
+                continue
+            list_tile.selected = False
+            list_tile.autofocus = False
+        pages = self.dl.get_chapter_image_urls(self.source, self.chapter.id)
         if not pages:
-            print('errokkkkk')
             return False
         images_b64 = self.dl.get_base64_images(pages)
         self.page.data['chapter_images'] = images_b64
