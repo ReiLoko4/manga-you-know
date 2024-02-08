@@ -24,5 +24,7 @@ class Language:
         'af': ['pt-br'],
         'ao': ['pt-br'],
         'ah': ['pt-br'],
-        'oa': ['pt-br']
+        'oa': ['pt-br'],
+        'go': ['pt-br'],
+        'ba': ['pt-br'],
     }

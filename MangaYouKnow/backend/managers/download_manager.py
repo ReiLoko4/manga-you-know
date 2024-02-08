@@ -47,7 +47,9 @@ class DownloadManager:
             'af': AnimeFireDl(),
             'ao': AnimesOnlineDl(),
             'ah': AnimesHouseDl(),
-            'oa': OtakuAnimessDl()
+            'oa': OtakuAnimessDl(),
+            'go': GoyabuDl(),
+            'ba': BetterAnimeDl(),
         }
         self.downloads = {}
         self.MPV_DOWNLOAD_URL = 'http://downloads.sourceforge.net/project/mpv-player-windows/release/mpv-0.37.0-x86_64.7z'
@@ -132,7 +134,16 @@ class DownloadManager:
         threads.start()
         return [i for i in threads.join() if i]
     
-    def start_video_player(self, url: str, title: str = 'Vídeo sem título, igual o Palmeiras', headers: dict = None, local_folder: Path = Path('.')) -> None:
+    def start_video_player(
+            self, 
+            url: str, 
+            title: str = 'Vídeo sem título, igual o Palmeiras', 
+            headers: dict = None,
+            cookies: str = None,
+            local_folder: Path = Path('.')) -> None:
+        if cookies:
+            with open(local_folder / 'mpv/cookies.txt', 'w') as file:
+                file.write(cookies)
         return subprocess.Popen([
             local_folder / 'mpv/mpv.exe',
             url,
@@ -140,8 +151,11 @@ class DownloadManager:
             '--no-border',
             # '--ontop',
             '--fs',
+            '--focus-on-open'
             f'--http-header-fields="{'", "'.join([f'{key}: {value}' for key, value in headers.items()])}"' if headers else '',
+            f'--cookies-file="{local_folder / 'mpv/cookies.txt'}"' if cookies else '',
         ], 
+
         stdin = subprocess.PIPE,
         stdout = subprocess.PIPE,
         ).communicate()

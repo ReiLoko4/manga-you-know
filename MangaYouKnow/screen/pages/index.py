@@ -27,8 +27,10 @@ class Index:
             ft.dropdown.Option('av', text='AnimesVision'),
             ft.dropdown.Option('af', text='AnimeFire'),
             ft.dropdown.Option('ao', text='AnimesOnline'),
-            ft.dropdown.Option('ah', text='AnimesHouse'),
-            ft.dropdown.Option('oa', text='OtakuAnimes'),
+            # ft.dropdown.Option('ah', text='AnimesHouse'),
+            # ft.dropdown.Option('oa', text='OtakuAnimes'),
+            ft.dropdown.Option('go', text='Goyabu'),
+            # ft.dropdown.Option('ba', text='BetterAnime'),
         ]
         source_selector = ft.Dropdown(options=manga_options, value='md', width=140)
         def change_options(e: ft.ControlEvent):
@@ -206,7 +208,7 @@ class Index:
             ft.Column([
             ft.ResponsiveRow([
                 ft.Column([ft.Container(ft.Row([favorite_type], alignment=ft.MainAxisAlignment.END), width=300)], col=2, height=70, alignment=ft.MainAxisAlignment.CENTER),
-                ft.Column([ft.Container(search, padding=5)], col=6),
+                ft.Column([ft.Container(search, padding=10)], col=6),
                 ft.Column([ft.Container(ft.Row([source_selector]), width=250, padding=10)], col=4),
             ], alignment=ft.MainAxisAlignment.CENTER, columns=12),
             ft.ResponsiveRow([

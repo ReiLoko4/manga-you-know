@@ -92,7 +92,7 @@ class AnimesHouseDl(AnimeDl):
                 return Episode(
                     url=url,
                     label=span_opt[0].text.split(' ')[-1],
-                    header={'Referer':f'https://{url.split('/')[2]}'}
+                    headers={'Referer':f'https://{url.split('/')[2]}'}
                 )
             episode_urls = []
             for li, span in zip(li_opt, span_opt):

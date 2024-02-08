@@ -84,7 +84,6 @@ def MangaOpen(
         status.value = 'Procurando o episódio...'
         page.update()
         episode_urls = dl.get_episode_url(source, chapter.id)
-        print(episode_urls)
         if type(episode_urls) == bool:
             status.value = 'Erro ao encontrar o episódio!'
             status.color = ft.colors.RED_500
@@ -99,7 +98,7 @@ def MangaOpen(
             page.update()
             if not database.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
                 database.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
-            dl.start_video_player(ep.url, f'{manga.name} - {chapter.number}', ep.header)
+            dl.start_video_player(ep.url, f'{manga.name} - {chapter.number}', ep.headers, ep.cookies)
             MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
             return
         if type(episode_urls) == list:
@@ -116,7 +115,7 @@ def MangaOpen(
         page.update()
         if not database.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
             database.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
-        dl.start_video_player(episode_urls.url, f'{manga.name} - {chapter.number}', episode_urls.header)
+        dl.start_video_player(episode_urls.url, f'{manga.name} - {chapter.number}', episode_urls.headers, episode_urls.cookies)
         MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
 
     btn_is_readed_list = []
@@ -177,6 +176,10 @@ def MangaOpen(
             text = 'AnimesHouse'
         case 'oa':
             text = 'OtakuAnimes'
+        case 'go':
+            text = 'Goyabu'
+        case 'ba':
+            text = 'BetterAnime'
     options.append(ft.dropdown.Option(manga_info.source, text))
     if manga_info.source_id in [
         '5/one-piece',

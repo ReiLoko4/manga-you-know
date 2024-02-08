@@ -83,7 +83,7 @@ class OtakuAnimessDl(AnimeDl):
                 return Episode(
                     url=videos[0].find('source')['src'],
                     label=soup.find('div', {'aba-target': '1'}).text,
-                    header=headers
+                    headers=headers
                 )
             return [
                 Episode(

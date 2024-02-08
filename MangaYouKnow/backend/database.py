@@ -470,9 +470,9 @@ class DataBase:
         sess = self.get_session()
         try:
             sess.exec(
-                delete(MarkFavorite)
+                delete(Mark)
                 .where(
-                    MarkFavorite.mark_id == mark_id
+                    Mark.id == mark_id
                 )
             )
             sess.exec(
@@ -482,7 +482,8 @@ class DataBase:
                 )
             )
             return True
-        except:
+        except Exception as e:
+            print(e)
             return False
         
     def add_mark_favorite(self, favorite_id: int, mark_id: int) -> bool:

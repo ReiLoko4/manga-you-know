@@ -53,7 +53,7 @@ class Favorites:
             width=140,
             value='all'
         )
-        mark_selector.options.extend([ft.dropdown.Option(i.id, i.name[:14]) for i in database.get_marks()])
+        mark_selector.options.extend([ft.dropdown.Option(mark.id, mark.name[:14]) for mark in database.get_marks()])
         mark_add = ft.IconButton(
             ft.icons.ADD_ROUNDED,
             icon_color=ft.colors.WHITE,
@@ -72,16 +72,16 @@ class Favorites:
                 column_marks.controls = [
                     ft.ListTile(
                         title=ft.TextField(
-                                value=i['name'],
-                                on_blur=lambda e, mark_id=i['id']: edit_mark(mark_id, e.control.value),
-                                on_submit=lambda e, mark_id=i['id']: edit_mark(mark_id, e.control.value)
+                                value=mark.name,
+                                on_blur=lambda e, mark_id=mark.id: edit_mark(mark_id, e.control.value),
+                                on_submit=lambda e, mark_id=mark.id: edit_mark(mark_id, e.control.value)
                             ),
                         trailing=ft.IconButton(
                             ft.icons.HIGHLIGHT_REMOVE,
-                            on_click=lambda e, mark_id=i['id']: delete_mark(mark_id)
+                            on_click=lambda e, mark_id=mark.id: delete_mark(mark_id)
                         )
                     )
-                    for i in saved_marks
+                    for mark in saved_marks
                 ] if saved_marks else [ft.Text('Nenhuma marcação salva', bgcolor=ft.colors.GREY_700)]
                 if len(saved_marks) > 5:
                     column_marks.height = 400
