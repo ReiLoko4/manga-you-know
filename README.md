@@ -10,38 +10,57 @@
 
 # Resumo
 
-Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos capítulos pra seus mangás favoritos, usando de diversas fontes, além de não possuir nenhum anúncio em suas dependencias. Isso tudo través de uma interface agrádavel e de fácil uso.
+Projeto que tem como intuito oferecer um leitor, buscador e verificador de novos capítulos pra seus mangas favoritos, usando de diversas fontes, além de não possuir nenhum anúncio em suas dependências. Isso tudo través de uma interface agradável e de fácil uso.
+
+Atualmente também oferecemos a possibilidade de assistir e acompanhar animes!
 <br>
 
 # Sumário
 
 - [Resumo](#resumo)
 - [Fontes](#fontes)
-- [Técnologias utilizadas](#técnologias-utilizadas)
+- [Tecnologias utilizadas](#tecnologias-utilizadas)
 - [Modo de uso](#modo-de-uso)
 <br>
 
 # Fontes
-- [MangaLivre](https://mangalivre.net)
+## Mangas
+- ~~[MangaLivre](https://mangalivre.net)~~
 - [MangaDex](https://mangadex.org)
 - [MangaSee](https://mangasee123.com)
-- [MangaFire](https://mangafire.to)
-- [Gekkou scan](https://gekkou.com.br)
+- ~~[MangaFire](https://mangafire.to)~~
+- [Gekkou scan](https://gekkou.site)
 - [One Piece Ex](https://onepieceex.net)
 - [Tao Sect Scanlator](https://taosect.com/)
 - [TCB Scans](https://tcbscans.com/)
-- [OPSCANS](https://opscans.com/)
-- [Ao Ashi Manga Online](https://ao-ashimanga.com/)
+- ~~[OPSCANS](https://opscans.com/)~~
+- ~~[Ao Ashi Manga Online](https://ao-ashimanga.com/)~~
+
+## Animes
+- [AnimesVision](https://animes.vision)
+- [AnimeFire](https://animefire.plus)
+- [AnimesOnline](https://animesonlinecc.to)
+- ~~[AnimesHouse](https://animeshouse.net)~~
+- ~~[MeusAnimes](https://meusanimes.biz)~~
+- ~~[OtakuAnimes](https://otakuanimess.cc/)~~
+- ~~[BetterAnime](https://betteranime.net)~~
+- [Goyabu](https://goyabu.to)
+
+> As fontes que estiverem tachadas, ou estão offline (logo fora do projeto),
+> ou estão em processo de desenvolvimento devido a alguma dificuldade.
 
 <br>
 
 # Tecnologias usadas
 - [Python](https://python.org)
   - [Flet](https://flet.dev)
+  - [SQLModel](https://sqlmodel.tiangolo.com/)
+  - [BeautifulSoup4](https://pypi.org/project/beautifulsoup4/)
   - [Requests](https://pypi.org/project/requests/)
-  - [bs4](https://pypi.org/project/beautifulsoup4/)
-  - [pyclip](https://pypi.org/project/pyclip/)
-
+  - [cachetools](https://pypi.org/project/cachetools/)
+  - [py7zr](https://pypi.org/project/py7zr/)
+  - [pyperclip](https://pypi.org/project/pyperclip/)
+  - [win10toast](https://pypi.org/project/win10toast/)
 
 <br>
 
