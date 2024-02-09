@@ -48,20 +48,33 @@ class AnimesVisionDl(AnimeDl):
             return animes[:10]
         return False
     
-    def get_episodes_by_content(self, content: str) -> list[Chapter] | bool:
+    def get_episodes_by_content(self, content: str, is_first: bool = False) -> list[Chapter] | bool:
         soup = BeautifulSoup(content, 'html.parser')
-        div_items = soup.find('div', {'class': 'screen-items'})
+        if is_first:
+            class_items = 'screen-items'
+            items_type = 'div'
+            items_class = 'item'
+            key_number = 'data-title'
+        else:
+            class_items = 'ss-list'
+            items_type = 'a'
+            items_class = 'ssl-item ep-item'
+            key_number = 'title'
+        div_items = soup.find('div', {'class': class_items})
         chapters = []
-        for div in div_items.find_all('div', {'class': 'item'}):
-            a = div.find('a')
-            number = re.search(r'\d+', div['data-title'])
-            if 'Especial' in div['data-title'] and number:
+        for div in div_items.find_all(items_type, {'class': items_class}):
+            if is_first:
+                a = div.find('a')
+            else:
+                a = div
+            number = re.search(r'\d+', div[key_number])
+            if 'Especial' in div[key_number] and number:
                 number = f'Especial {number.group()}'
             else:
-                number = number.group() if number else div['data-title']
+                number = number.group() if number else div[key_number]
             chapters.append(
                 Chapter(
-                    id='/'.join(a['href'].split('/')[-3:]),
+                    id='/'.join(a['href'].split('/')[-3:]) ,
                     number=number,
                 )
             )
@@ -76,19 +89,14 @@ class AnimesVisionDl(AnimeDl):
     def get_episodes(self, anime_id: str) -> list[Chapter] | bool:
         response = self.session.get(f'{self.base_url}/animes/{anime_id}')
         if response.status_code == 200:
-            episodes = self.get_episodes_by_content(response.content)
+            episodes = self.get_episodes_by_content(response.content, True)
             soup = BeautifulSoup(response.content, 'html.parser')
             page_links = soup.find_all('a', {'class': 'page-link'})
             if page_links:
-                threads = ThreadManager()
-                for i in range(2, int(page_links[-2].text) + 1, 1):
-                    threads.add_thread_by_args(
-                        self.get_page_episodes,
-                        (f'{self.base_url}/animes/{anime_id}?page={i}',)
-                    )
-                threads.start()
-                for episodes_page in threads.join():
-                    episodes.extend(episodes_page)
+                episodes_page = self.get_page_episodes(
+                    f'{self.base_url}/animes/{episodes[0].id}'
+                )
+                episodes.extend(episodes_page)
             return episodes[::-1]
         return False
 
