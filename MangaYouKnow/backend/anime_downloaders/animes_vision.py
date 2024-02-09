@@ -94,7 +94,8 @@ class AnimesVisionDl(AnimeDl):
                 episodes_page = self.get_page_episodes(
                     f'{self.base_url}/animes/{episodes[0].id}'
                 )
-                return [episodes[0]].extend(episodes_page[::-1])
+                episodes_page.insert(0, episodes[0])
+                return episodes_page[::-1]
             return episodes[::-1]
         return False
 
