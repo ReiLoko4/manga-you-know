@@ -1,6 +1,8 @@
 import json
+import re
 
 from backend.interfaces import AnimeDl
+from backend.managers import ThreadManager
 from backend.models import Chapter, Episode, Manga
 from bs4 import BeautifulSoup
 from requests import Session
@@ -44,83 +46,68 @@ class AnimesVisionDl(AnimeDl):
                     )
                 )
             return animes[:10]
-                # yield Manga(
-                #     title=a['title'],
-                #     cover=a.find('img')['src'],
-                #     url=a['href'],
-                # ) Test other time
+        return False
+    
+    def get_episodes_by_content(self, content: str) -> list[Chapter] | bool:
+        soup = BeautifulSoup(content, 'html.parser')
+        div_items = soup.find('div', {'class': 'screen-items'})
+        chapters = []
+        for div in div_items.find_all('div', {'class': 'item'}):
+            a = div.find('a')
+            number = re.search(r'\d+', div['data-title'])
+            if 'Especial' in div['data-title'] and number:
+                number = f'Especial {number.group()}'
+            else:
+                number = number.group() if number else div['data-title']
+            chapters.append(
+                Chapter(
+                    id='/'.join(a['href'].split('/')[-3:]),
+                    number=number,
+                )
+            )
+        return chapters
+    
+    def get_page_episodes(self, url: str) -> list[Chapter] | bool:
+        response = self.session.get(url)
+        if response.status_code == 200:
+            return self.get_episodes_by_content(response.content)
         return False
 
     def get_episodes(self, anime_id: str) -> list[Chapter] | bool:
         response = self.session.get(f'{self.base_url}/animes/{anime_id}')
         if response.status_code == 200:
+            episodes = self.get_episodes_by_content(response.content)
             soup = BeautifulSoup(response.content, 'html.parser')
-            div_stats = soup.find('div', {'class': 'film-stats'})
-            num_episodes = int([i for i in div_stats.find_all('span', {'class': 'item'}) if i.text.startswith('Episódios')][0].text.split(' ')[-1])
-            if num_episodes == 1:
-                return [Chapter(
-                    id=f'{anime_id}/{soup.find('a', {'class': 'screen-item-thumbnail'})['href'].split('/')[-2]}/{'dublado' if anime_id.endswith('dublado') else 'legendado'}',
-                    number='1',
-                    # title='Episódio 1'
-                )]
-            ul = soup.find('ul', {'class': 'pagination mb-0'})
-            num_pages = ul.find_all('a', {'class': 'page-link'})
-            if num_pages:
-                response = self.session.get(f'{self.base_url}/animes/{anime_id}?page={num_pages[-2].text}')
-                soup = BeautifulSoup(response.content, 'html.parser')
-            h3_list = soup.find_all('h3', {'class': 'sii-title'})
-            h3_list.reverse()
-            last_episode = [i.text for i in h3_list if (
-                'Episodio' in i.text or 
-                'Episódio' in i.text) and
-                not 'Especial' in i.text
-            ][0]
-            last_episode = last_episode.split(' ')[-1] if last_episode[-1] != ' ' else last_episode.split(' ')[-2]
-            last_episode = last_episode.replace(' ', '')
-            last_episode = int(last_episode)
-            episodes = []
-            for num in range(1, num_episodes - last_episode + 1, 1):
-                episodes.append(
-                    Chapter(
-                        id=f'{anime_id}/episodio-{num}/{'dublado' if anime_id.endswith('dublado') else 'legendado'}',
-                        number=f'Especial {num}',
-                        # title=f'Especial {num}'
+            page_links = soup.find_all('a', {'class': 'page-link'})
+            if page_links:
+                threads = ThreadManager()
+                for i in range(2, int(page_links[-2].text) + 1, 1):
+                    threads.add_thread_by_args(
+                        self.get_page_episodes,
+                        (f'{self.base_url}/animes/{anime_id}?page={i}',)
                     )
-                )
-            for num in range(1, last_episode+1, 1):
-                episodes.append(
-                    Chapter(
-                        id=f'{anime_id}/episodio-{num}/{'dublado' if anime_id.endswith('dublado') else 'legendado'}',
-                        number=str(num),
-                        # title=f'Episódio {num}'
-                    )
-                )
+                threads.start()
+                for episodes_page in threads.join():
+                    episodes.extend(episodes_page)
             return episodes[::-1]
         return False
 
     def get_episode_url(self, episode_id: str) -> Episode | bool:
         response = self.session.get(f'{self.base_url}/animes/{episode_id}')
-        if response.status_code != 200:
-            split_id = episode_id.split('/')
-            split_ep = split_id[1].split('-')
-            response = self.session.get(f'{self.base_url}/animes/{split_id[0]}/{split_ep[0]}-0{split_ep[1]}/{split_id[2]}')
         if response.status_code == 200:
-            videos = (response.text
-            .split('const playerGlobalVideo = jwplayer("playerglobalapi").setup(')[1]
-            .split('playlist: ')[1].replace(' ', '').replace('\n', '').replace('\r,', '')
-            .split(',width:')[0]
-            .split('sources:')[-1][:-4] + ']'
-            .replace('\\', ''))
-            videos = json.loads(videos)
-            if len(videos) == 1:
-                return Episode(videos[0]['file'])
+            file_urls = re.findall(r'"file":\s*"([^"]+)"', response.text)
+            labels = re.findall(r'"label":\s*"([^"]+)"', response.text)
+            if len(file_urls) == 1:
+                return Episode(
+                    url=file_urls[0].replace('\\', ''), 
+                    label=labels[0]
+                )
             return [
                 Episode(
-                    url=episode['file'],
-                    label=episode['label']
+                    url=url.replace('\\', ''),
+                    label=label
                 )
-                for episode in videos
+                for url, label in zip(file_urls, labels)
             ][::-1]
         return False
             
-

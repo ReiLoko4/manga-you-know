@@ -128,7 +128,8 @@ def MangaOpen(
         for is_read, btn in zip(each_readed, btns_list):
             if is_read:
                 icon = ft.icons.CHECK
-            btn.icon = icon
+            if btn.icon != icon:
+                btn.icon = icon
         load_next()
         page.update()
     chapter_search = ft.TextField(
@@ -344,8 +345,8 @@ def MangaOpen(
             chapters
         )
         icon = ft.icons.REMOVE
-        for i, chapter in enumerate(chapters):
-            if is_each_readed[i]:
+        for is_read, chapter in zip(is_each_readed, chapters):
+            if is_read:
                 icon = ft.icons.CHECK
             btn_read = ft.IconButton(icon, on_click=lambda e, source=source_options.value, manga=manga_info, chapter=chapter, language=language_options.value: togle_readed(source, manga, chapter, language if len(source_languages[source_options.value]) > 1 else None))
             btns_list.append(btn_read)

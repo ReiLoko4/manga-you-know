@@ -18,7 +18,13 @@ class MangaReader:
         self.chapters: list[Chapter] = self.page.data['manga_chapters']
         if not self.db.is_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapter.id, self.language):
             self.db.add_all_readed_below(self.manga, self.source, self.chapter, self.chapters, self.language)
-        self.drawer = ft.NavigationDrawer()
+        self.chapters_column = ft.Column(scroll=ft.ScrollMode.ADAPTIVE, expand=True)
+        self.drawer = ft.NavigationDrawer(
+            controls=[
+                ft.Card(content=self.chapters_column),
+
+            ],
+        )
         is_each_readed = self.db.is_each_readed(
             self.source, 
             self.manga.id,
@@ -41,7 +47,7 @@ class MangaReader:
             # if query and chapter.number:
             #     if str(query).lower() not in str(chapter.number).lower():
             #         continue
-            self.drawer.controls.append(
+            self.chapters_column.controls.append(
                 ft.ListTile(
                     title=ft.Text(chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title, tooltip=chapter.title),
                     trailing=btn_read,
@@ -142,6 +148,8 @@ class MangaReader:
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
             if e.key == keybinds['return-home']:
+                self.drawer.open = False
+                self.page.update()
                 self.page.title = f'MangaYouKnow {self.page.data['version']}' 
                 self.page.go('/favorites') if not self.page.data['is_index'] else self.page.go('/')
                 self.page.scroll = ft.ScrollMode.ADAPTIVE
@@ -183,7 +191,7 @@ class MangaReader:
                     break
             if chapter_id == None:
                 return False
-        for list_tile in self.drawer.controls:
+        for list_tile in self.chapters_column.controls:
             if list_tile.key == self.chapter.id:
                 list_tile.selected = True
                 list_tile.autofocus = True

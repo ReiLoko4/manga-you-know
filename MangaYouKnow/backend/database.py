@@ -25,7 +25,10 @@ class DataBase:
     def __init__(self):
         self.dir = Path('database')
         self.config = Path('database/config.json')
-        connect_args = {'check_same_thread': False}
+        connect_args = {
+            'check_same_thread': False,
+            'timeout': 30,
+        }
         self.engine = create_engine(
             'sqlite:///database/data.db', 
             connect_args=connect_args,
@@ -372,20 +375,10 @@ class DataBase:
         ]
     
     def is_one_readed(self, source: str, manga_id: str, manga_source_id: str, chapters: list[Chapter]) -> bool:
-        sess = self.get_session()
-        for chapter in chapters:
-            data = sess.exec(
-                select(Readed)
-                .where(
-                    Readed.chapter_id == chapter.id,
-                    Readed.favorite_id == manga_id,
-                    Readed.favorite_source_id == manga_source_id,
-                    Readed.source == source
-                )
-            )
-            if data.all():
+        is_each_readed = self.is_each_readed(source, manga_id, manga_source_id, chapters)
+        for is_readed in is_each_readed:
+            if is_readed:
                 return True
-        sess.close()
         return False
     
     def get_last_readed(self, manga_id: str) -> Readed:
@@ -433,9 +426,10 @@ class DataBase:
         sess = self.get_session()
         try:
             each_readed = self.is_each_readed(source, favorite.id, favorite.source_id, chapters)
+            readeds: list[Readed] = []
             for chapter, is_readed in zip(reversed(chapters), reversed(each_readed)):
                 if not is_readed:
-                    sess.add(
+                    readeds.append(
                         Readed(
                             favorite_id=favorite.id,
                             favorite_source_id=favorite.source_id,
@@ -446,6 +440,7 @@ class DataBase:
                     )
                 if chapter.id == currently_chapter.id:
                     break
+            sess.add_all(readeds)
             sess.commit()
             return True
         except Exception as e:
