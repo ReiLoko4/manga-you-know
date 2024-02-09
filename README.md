@@ -43,7 +43,7 @@ Atualmente também oferecemos a possibilidade de assistir e acompanhar animes!
 - ~~[AnimesHouse](https://animeshouse.net)~~
 - ~~[MeusAnimes](https://meusanimes.biz)~~
 - ~~[OtakuAnimes](https://otakuanimess.cc/)~~
-- ~~[BetterAnime](https://betteranime.net)~~
+- [BetterAnime](https://betteranime.net
 - [Goyabu](https://goyabu.to)
 
 > As fontes que estiverem tachadas, ou estão offline (logo fora do projeto),

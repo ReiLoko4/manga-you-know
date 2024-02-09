@@ -1,8 +1,6 @@
-import json
 import re
 
 from backend.interfaces import AnimeDl
-from backend.managers import ThreadManager
 from backend.models import Chapter, Episode, Manga
 from bs4 import BeautifulSoup
 from requests import Session

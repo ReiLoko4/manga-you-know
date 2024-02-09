@@ -41,7 +41,7 @@ Currently, we offer the possibility
 - ~~[AnimesHouse](https://animeshouse.net)~~
 - ~~[MeusAnimes](https://meusanimes.biz)~~
 - ~~[OtakuAnimes](https://otakuanimess.cc/)~~
-- ~~[BetterAnime](https://betteranime.net)~~
+- [BetterAnime](https://betteranime.net
 - [Goyabu](https://goyabu.to)
 
 > The source that were strikethrough, they are either offline (therefore outside the project),
