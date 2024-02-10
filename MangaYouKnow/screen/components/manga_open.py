@@ -375,6 +375,25 @@ def MangaOpen(
     download_all = ft.ElevatedButton(
         text='Baixar tudo',
         on_click=lambda e: dl.download_all_chapters(manga_info, source_options.value, chapters_by_source[f'{source_options.value}_{language_options.value}']))
+    download_not_readed = ft.ElevatedButton(
+        text='Baixar não lidos',
+    )
+    def download_not_readed_chapters(_=None):
+        chapters: list[Chapter] = chapters_by_source[f'{source_options.value}_{language_options.value}']
+        each_readed = db.is_each_readed(manga_info.source, manga_info.id, manga_info.source_id, chapters)
+        chapters_to_download = []
+        for is_readed, chapter in zip(each_readed, chapters):
+            if is_readed:
+                break
+            chapters_to_download.append(chapter)
+        if chapters_to_download:
+            dl.download_all_chapters(
+                manga_info, 
+                source_options.value, 
+                chapters_to_download
+            )
+    download_not_readed.on_click = download_not_readed_chapters
+    
     switch = ft.Switch(
         value=db.is_notify(manga_info.id),
         width=50,
@@ -402,6 +421,7 @@ def MangaOpen(
                     language_options,
                     switch,
                     download_all,
+                    download_not_readed,
                 ]),
                 ft.Column([
                     ft.Card(next_chapter, width=250),

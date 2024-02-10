@@ -18,6 +18,7 @@ from cachetools import TTLCache
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from urllib3 import PoolManager
 
 
 class DownloadManager:
@@ -27,6 +28,7 @@ class DownloadManager:
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
+        # pool_manager = PoolManager(num_pools=200, maxsize=200, block=True)
         self.manga_downloaders = {
             'aoashi': AoAshiDl(),
             'gkk': GekkouDl(),
@@ -213,18 +215,19 @@ class DownloadManager:
         return False
     
     def download_all_chapters(self, manga: Favorite, source: str, chapters: list[Chapter], num: int = 5) -> bool:
-        chapters.reverse()
         threads = ThreadManager()
         if not chapters:
             return False
         print(f'downloading {len(chapters)} chapters.')
-        for chapter in chapters:
+        self.notificator.show(manga.name, f'Baixando {len(chapters)} capítulos...')
+        for chapter in reversed(chapters):
             threads.add_thread_by_args(
                 target=self.download_chapter,
-                args=[manga, source, chapter]
+                args=[manga, source, chapter, True]
             )
-        threads.start_and_join_by_num(num)
-        self.notificator.show(manga.name, f'Download de {len(chapters)} capítulos concluído.')
+        relatory = threads.start_and_join_by_num(num)
+        relatory = [i for i in relatory if i]
+        self.notificator.show(manga.name, f'Download de {len(chapters)} capítulos concluído.\n{len(chapters) - len(relatory)} capítulos com erro.')
         print('finished.')
         return True
     

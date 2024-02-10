@@ -26,12 +26,17 @@ class ThreadManager(Thread):
         for thread in self.threads:
             thread.start()
 
-    def start_and_join_by_num(self, num: int = 5):
+    def start_and_join_by_num(self, num: int = 5) -> list[any] | None:
+        values = []
         for i in range(0, len(self.threads), num):
             for thread in self.threads[i:i + num]:
                 thread.start()
             for thread in self.threads[i:i + num]:
-                thread.join()
+                value = thread.join()
+                if value:
+                    values.append(value)
+        if values:
+            return values
 
     def start_and_join(self):
         for thread in self.threads:
@@ -46,7 +51,9 @@ class ThreadManager(Thread):
     def join(self) -> list[any] | None:
         values = []
         for thread in self.threads:
-            values.append(thread.join())
+            value = thread.join()
+            if value:
+                values.append(value)
         if values:
             return values
         
