@@ -72,6 +72,6 @@ class AnimeFireDl(AnimeDl):
                         label=episode['label']
                     )
                     for episode in video_json.json()['data']
-                ]
+                ][::-1]
             return False
         return False

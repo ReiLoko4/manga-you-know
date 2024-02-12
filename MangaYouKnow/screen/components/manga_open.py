@@ -93,10 +93,16 @@ def MangaOpen(
             row_content.controls = [
                 ft.ProgressRing(height=140, width=140),
             ]
-            status.value = 'Abrindo o player...'
             page.update()
             if not db.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
                 db.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
+            if source == 'av':
+                status.value = 'Baixando o episódio...'
+                page.update()
+                path = dl.download_episode(chapter.number, manga, ep)
+                ep.url = path
+            status.value = 'Abrindo o player...'
+            page.update()
             dl.start_video_player(ep.url, f'{manga.name} - {chapter.number}', ep.headers, ep.cookies)
             MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
             return
@@ -114,6 +120,11 @@ def MangaOpen(
         page.update()
         if not db.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
             db.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
+        if source == 'av':
+            status.value = 'Baixando o episódio...'
+            page.update()
+            path = dl.download_episode(chapter.number, manga, episode_urls)
+            episode_urls.url = path
         dl.start_video_player(episode_urls.url, f'{manga.name} - {chapter.number}', episode_urls.headers, episode_urls.cookies)
         MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
 

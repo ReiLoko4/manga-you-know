@@ -107,12 +107,14 @@ class AnimesVisionDl(AnimeDl):
             if len(file_urls) == 1:
                 return Episode(
                     url=file_urls[0].replace('\\', ''), 
-                    label=labels[0]
+                    label=labels[0],
+                    headers={'Referer': 'https://animes.vision/'}
                 )
             return [
                 Episode(
                     url=url.replace('\\', ''),
-                    label=label
+                    label=label,
+                    headers={'Referer': 'https://animes.vision/'}
                 )
                 for url, label in zip(file_urls, labels)
             ][::-1]

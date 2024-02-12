@@ -1,4 +1,5 @@
 import base64
+import os
 import subprocess
 from pathlib import Path
 
@@ -17,8 +18,9 @@ from backend.utilities import (
 from cachetools import TTLCache
 from requests import Session
 from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 from urllib3 import PoolManager
+from urllib3.util.retry import Retry
+from yt_dlp import YoutubeDL
 
 
 class DownloadManager:
@@ -146,24 +148,33 @@ class DownloadManager:
         if cookies:
             with open(local_folder / 'mpv/cookies.txt', 'w') as file:
                 file.write(cookies)
-        return subprocess.Popen([
+        output = subprocess.Popen([
             local_folder / 'mpv/mpv.exe',
             url,
             f'--title={title}',
             '--no-border',
             # '--ontop',
+            '--save-position-on-quit',
             '--fs',
-            '--focus-on-open'
+            '--focus-on-open',
             f'--http-header-fields="{'", "'.join([f'{key}: {value}' for key, value in headers.items()])}"' if headers else '',
             f'--cookies-file="{local_folder / 'mpv/cookies.txt'}"' if cookies else '',
         ], 
-
         stdin = subprocess.PIPE,
         stdout = subprocess.PIPE,
         ).communicate()
+        if 'http' not in str(url):
+            os.remove(url)
+        print(output)
+        return
     
     def is_mpv_installed(self, output_folder: Path = Path('.')) -> bool:
         return (output_folder / 'mpv/mpv.exe').exists()
+
+    def extract_7z(self, input_file: Path, output_folder: Path):
+        output_folder.mkdir(exist_ok=True)
+        with py7zr.SevenZipFile(input_file, mode='r') as file:
+            file.extractall(path=output_folder)
 
     def download_file(self, url: str, output_folder: Path = Path('.')):
         chunk_size = 1024
@@ -230,8 +241,14 @@ class DownloadManager:
         self.notificator.show(manga.name, f'Download de {len(chapters)} capítulos concluído.\n{len(chapters) - len(relatory)} capítulos com erro.')
         print('finished.')
         return True
-    
-    def extract_7z(self, input_file: Path, output_folder: Path):
-        output_folder.mkdir(exist_ok=True)
-        with py7zr.SevenZipFile(input_file, mode='r') as file:
-            file.extractall(path=output_folder)
+
+
+    def download_episode(self, number, anime: Favorite, episode: Episode) -> Path | bool:
+        with YoutubeDL(
+            {
+                'http_headers': episode.headers,
+                'outtmpl': f'{anime.folder_name}-{number}-{episode.label}.mp4',
+            }
+        ) as ydl:
+            ydl.download(episode.url)
+        return Path(f'{anime.folder_name}-{number}-{episode.label}.mp4')
