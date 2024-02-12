@@ -6,3 +6,4 @@ pyperclip
 requests
 sqlmodel
 win10toast
+yt-dlp
