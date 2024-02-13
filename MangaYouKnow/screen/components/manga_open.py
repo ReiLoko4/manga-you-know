@@ -96,7 +96,7 @@ def MangaOpen(
             page.update()
             if not db.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
                 db.add_readed(source, manga.id, manga.source_id, chapter.id, language if language else None)
-            if source == 'av':
+            if source == '':
                 status.value = 'Baixando o episódio...'
                 page.update()
                 path = dl.download_episode(chapter.number, manga, ep)

@@ -1,3 +1,4 @@
+import json
 import re
 
 from backend.interfaces import AnimeDl
@@ -102,21 +103,28 @@ class AnimesVisionDl(AnimeDl):
     def get_episode_url(self, episode_id: str) -> Episode | bool:
         response = self.session.get(f'{self.base_url}/animes/{episode_id}')
         if response.status_code == 200:
-            file_urls = re.findall(r'"file":\s*"([^"]+)"', response.text)
-            labels = re.findall(r'"label":\s*"([^"]+)"', response.text)
-            if len(file_urls) == 1:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            div_player = soup.find('div', {'class': 'watch-player'})
+            div_script = div_player.find('div', {'wire:initial-data': True})
+            script = json.loads(div_script['wire:initial-data'])
+            urls = []
+            labels = []
+            for key, value in script['serverMemo']['data']['episodiosLink'].items():
+                urls.append(value)
+                labels.append(str(key).replace('key', ''))
+            if len(urls) == 1:
                 return Episode(
-                    url=file_urls[0].replace('\\', ''), 
+                    url=urls[0], 
                     label=labels[0],
-                    headers={'Referer': 'https://animes.vision/'}
+                    # headers={'Referer': 'https://animes.vision/'}
                 )
             return [
                 Episode(
-                    url=url.replace('\\', ''),
+                    url=url,
                     label=label,
-                    headers={'Referer': 'https://animes.vision/'}
+                    # headers={'Referer': 'https://animes.vision/'}
                 )
-                for url, label in zip(file_urls, labels)
+                for url, label in zip(urls, labels)
             ][::-1]
         return False
             

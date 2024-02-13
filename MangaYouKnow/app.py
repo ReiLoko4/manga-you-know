@@ -5,7 +5,7 @@ from backend.managers import DownloadManager
 from backend.database import DataBase
 
 
-__version__ = '0.9.11b'
+__version__ = '0.9.12b'
 
 
 database = DataBase()
