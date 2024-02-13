@@ -24,6 +24,7 @@ Atualmente também oferecemos a possibilidade de assistir e acompanhar animes!
 <br>
 
 # Fontes
+Se desejar que seu site seja removido, apenas entre contato comigo via Discord *RESPEITOSAMENTE*.
 ## Mangas
 - ~~[MangaLivre](https://mangalivre.net)~~
 - [MangaDex](https://mangadex.org)
