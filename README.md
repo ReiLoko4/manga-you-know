@@ -24,7 +24,7 @@ Atualmente também oferecemos a possibilidade de assistir e acompanhar animes!
 <br>
 
 # Fontes
-Se desejar que seu site seja removido, apenas entre contato comigo via Discord *RESPEITOSAMENTE*.
+Se desejar que seu site seja removido, apenas entre contato comigo via Discord (@reiloko.) *RESPEITOSAMENTE*.
 ## Mangas
 - ~~[MangaLivre](https://mangalivre.net)~~
 - [MangaDex](https://mangadex.org)
@@ -44,7 +44,7 @@ Se desejar que seu site seja removido, apenas entre contato comigo via Discord *
 - ~~[AnimesHouse](https://animeshouse.net)~~
 - ~~[MeusAnimes](https://meusanimes.biz)~~
 - ~~[OtakuAnimes](https://otakuanimess.cc/)~~
-- [BetterAnime](https://betteranime.net
+- [BetterAnime](https://betteranime.net)
 - [Goyabu](https://goyabu.to)
 
 > As fontes que estiverem tachadas, ou estão offline (logo fora do projeto),

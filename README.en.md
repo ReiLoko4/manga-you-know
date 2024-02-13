@@ -22,7 +22,7 @@ Currently, we offer the possibility
 <br>
 
 # Sources
-If you want me to remove your site, just contact me at *Discord RESPECTFUL*
+If you want me to remove your site, just contact me at Discord (@reiloko.) *RESPECTFUL*
 ## Mangas
 - ~~[MangaLivre](https://mangalivre.net)~~
 - [MangaDex](https://mangadex.org)
