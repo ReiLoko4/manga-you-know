@@ -26,7 +26,7 @@ class AnimesVisionDl(AnimeDl):
 
     def search(self, query: str):
         response = self.session.get(
-            f'{self.base_url}/search',
+            f'{self.base_url}/search-anime',
             params={'nome': query},
         )
         if response.status_code == 200:
