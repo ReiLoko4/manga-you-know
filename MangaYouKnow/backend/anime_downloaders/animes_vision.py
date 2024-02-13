@@ -104,8 +104,7 @@ class AnimesVisionDl(AnimeDl):
         response = self.session.get(f'{self.base_url}/animes/{episode_id}')
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
-            div_player = soup.find('div', {'class': 'watch-player'})
-            div_script = div_player.find('div', {'wire:initial-data': True})
+            div_script = soup.find_all('div', {'wire:initial-data': True})[1]
             script = json.loads(div_script['wire:initial-data'])
             urls = []
             labels = []
