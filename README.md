@@ -38,7 +38,7 @@ Se desejar que seu site seja removido, apenas entre contato comigo via Discord (
 - ~~[Ao Ashi Manga Online](https://ao-ashimanga.com/)~~
 
 ## Animes
-- [AnimesVision](https://animes.vision)
+- ~~[AnimesVision](https://animes.vision)~~
 - [AnimeFire](https://animefire.plus)
 - [AnimesOnline](https://animesonlinecc.to)
 - ~~[AnimesHouse](https://animeshouse.net)~~

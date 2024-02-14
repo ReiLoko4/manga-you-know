@@ -36,7 +36,7 @@ If you want me to remove your site, just contact me at Discord (@reiloko.) *RESP
 - ~~[Ao Ashi Manga Online](https://ao-ashimanga.com/)~~
 
 ## Animes
-- [AnimesVision](https://animes.vision)
+- ~~[AnimesVision](https://animes.vision)~~
 - [AnimeFire](https://animefire.plus)
 - [AnimesOnline](https://animesonlinecc.to)
 - ~~[AnimesHouse](https://animeshouse.net)~~
