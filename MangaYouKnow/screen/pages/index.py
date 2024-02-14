@@ -24,9 +24,9 @@ class Index:
             # ft.dropdown.Option('op', text='OP Scans'),
         ]
         anime_options = [
-            ft.dropdown.Option('av', text='AnimesVision'),
-            ft.dropdown.Option('af', text='AnimeFire'),
             ft.dropdown.Option('ba', text='BetterAnime'),
+            # ft.dropdown.Option('av', text='AnimesVision'),
+            ft.dropdown.Option('af', text='AnimeFire'),
             # ft.dropdown.Option('ah', text='AnimesHouse'),
             ft.dropdown.Option('go', text='Goyabu'),   
             ft.dropdown.Option('ao', text='AnimesOnline'),

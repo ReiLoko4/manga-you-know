@@ -244,12 +244,17 @@ class DownloadManager:
         return True
 
 
-    def download_episode(self, number, anime: Favorite, episode: Episode) -> Path | bool:
+    def download_episode(self, anime: Favorite, source, chapter: Chapter) -> Path | bool:
+        episode = self.get_episode_url(source, chapter.id)
+        if not episode:
+            return False
+        episode = episode[0] if type(episode) == list else episode
         with YoutubeDL(
             {
                 'http_headers': episode.headers,
-                'outtmpl': f'{anime.folder_name}-{number}-{episode.label}.mp4',
+                'outtmpl': f'{anime.folder_name}-{chapter.number}-{episode.label}.mp4',
             }
         ) as ydl:
             ydl.download(episode.url)
-        return Path(f'{anime.folder_name}-{number}-{episode.label}.mp4')
+        self.notificator.show(anime.name, f'Download do episódio {chapter.number} concluído.')
+        return Path(f'{anime.folder_name}-{chapter.number}-{episode.label}.mp4')
