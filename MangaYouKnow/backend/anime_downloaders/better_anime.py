@@ -85,10 +85,10 @@ class BetterAnimeDl(AnimeDl):
         if quality_match:
             return quality_match.group(1).replace('\\', '')
 
-    def get_episode_url(self, episode_id: str) -> list[Episode] | Episode | bool:
+    def get_episode_url(self, episode_id: str) -> list[Episode] | Episode | str:
         response = self.session.get(f'{self.base_url}/anime/{episode_id}')
         if not response:
-            return False
+            return f'{self.base_url}/anime/{episode_id}'
         url_and_label = []
         matches = re.findall(r'qualityString\["([^"]*)"\]\s*=\s*"([^"]*)"', response.text)
         for match in matches:

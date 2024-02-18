@@ -73,4 +73,4 @@ class GoyabuDl(AnimeDl):
             return Episode(
                 url=url
             )
-        return False
+        return f'{self.base_url}/{episode_id}'

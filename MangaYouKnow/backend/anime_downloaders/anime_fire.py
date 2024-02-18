@@ -57,7 +57,7 @@ class AnimeFireDl(AnimeDl):
             return episodes[::-1]
         return False
 
-    def get_episode_url(self, episode_id: str) -> Episode | bool:
+    def get_episode_url(self, episode_id: str) -> Episode | str:
         response = self.session.get(f'{self.base_url}/animes/{episode_id}')
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -73,5 +73,5 @@ class AnimeFireDl(AnimeDl):
                     )
                     for episode in video_json.json()['data']
                 ][::-1]
-            return False
-        return False
+            return f'{self.base_url}/animes/{episode_id}'
+        return f'{self.base_url}/animes/{episode_id}'

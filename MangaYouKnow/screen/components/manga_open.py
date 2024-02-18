@@ -1,4 +1,7 @@
+import webbrowser
+
 import flet as ft
+import pyperclip
 from backend.database import DataBase
 from backend.managers import DownloadManager
 from backend.models import Chapter, Episode
@@ -85,12 +88,27 @@ def MangaOpen(
             dl.download_mpv()
         status.value = 'Procurando o episódio...'
         page.update()
+        print(chapter)
         episode_urls = dl.get_episode_url(source, chapter.id)
         print(episode_urls)
-        if type(episode_urls) == bool:
+        if type(episode_urls) == str:
             status.value = 'Erro ao encontrar o episódio!'
             status.color = ft.colors.RED_500
-            row_content.controls = []
+            row_content.controls = [
+                ft.Column([
+                    ft.Text('Você pode assistir diretamente no link: '),
+                    ft.TextField(value=episode_urls, read_only=True, width=240, border_radius=20, height=70, border_color=ft.colors.GREY_700, focused_border_color=ft.colors.BLUE_300),
+                    ft.Row([
+                        ft.FilledButton('Copiar', on_click=lambda e: pyperclip.copy(episode_urls), ),
+                        ft.FilledButton('Abrir no navegador', on_click=lambda e: webbrowser.open(episode_urls),),
+                    ], alignment=ft.MainAxisAlignment.CENTER, width=250),
+                    ft.Text('Assistiu?'),
+                    ft.Row([
+                        ft.IconButton(icon=ft.icons.CHECK, on_click=lambda e: (togle_readed(source, manga, chapter, language if language else None, True), MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify))),
+                        ft.IconButton(icon=ft.icons.HIGHLIGHT_REMOVE, on_click=lambda e: MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)),
+                    ], alignment=ft.MainAxisAlignment.CENTER, width=250),
+                ])
+            ]
             page.update()
             return
         def select_option(ep: Episode):
@@ -133,8 +151,10 @@ def MangaOpen(
         MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
 
     btns_list: list[ft.IconButton] = []
-    def togle_readed(source, manga: Favorite, chapter: Chapter, language: str=None):
+    def togle_readed(source, manga: Favorite, chapter: Chapter, language: str=None, just_read: bool=False) -> None:
         if db.is_readed(source, manga.id, manga.source_id, chapter.id, language if language else None):
+            if just_read:
+                return
             db.delete_all_readed_above(manga, source, chapter, chapters_by_source[f'{source}_{language_options.value}'], language if language else None)
         else:
             db.add_all_readed_below(manga, source, chapter, chapters_by_source[f'{source}_{language_options.value}'], language if language else None)

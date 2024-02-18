@@ -100,10 +100,12 @@ class AnimesVisionDl(AnimeDl):
             return episodes[::-1]
         return False
 
-    def get_episode_url(self, episode_id: str) -> Episode | bool:
+    def get_episode_url(self, episode_id: str) -> Episode | str:
         response = self.session.get(f'{self.base_url}/animes/{episode_id}')
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
+            return f'{self.base_url}/animes/{episode_id}'
+
             div_script = soup.find_all('div', {'wire:initial-data': True})[1]
             script = json.loads(div_script['wire:initial-data'])
             urls = []
@@ -125,5 +127,5 @@ class AnimesVisionDl(AnimeDl):
                 )
                 for url, label in zip(urls, labels)
             ][::-1]
-        return False
+        return f'{self.base_url}/animes/{episode_id}'
             

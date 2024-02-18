@@ -78,4 +78,4 @@ class AnimesOnlineDl(AnimeDl):
                 ) 
                 for iframe, a in zip(iframes, a)
             ]
-        return False
+        return f'{self.base_url}/episodio/{episode_id}'
