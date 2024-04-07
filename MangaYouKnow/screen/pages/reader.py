@@ -22,7 +22,6 @@ class MangaReader:
         self.drawer = ft.NavigationDrawer(
             controls=[
                 ft.Card(content=self.chapters_column),
-
             ],
         )
         is_each_readed = self.db.is_each_readed(
@@ -168,6 +167,7 @@ class MangaReader:
             self.page.data['reader_container'].content = self.content
         else:
             self.page.on_keyboard_event = on_key
+        self.page.update()
 
     def return_content(self):
         return self.content
@@ -191,7 +191,12 @@ class MangaReader:
                     break
             if chapter_id == None:
                 return False
-        for list_tile in self.chapters_column.controls:
+        readeds = self.db.is_each_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapters)
+        for list_tile, is_readed in zip(self.chapters_column.controls, readeds):
+            if is_readed:
+                list_tile.trailing.icon = ft.icons.CHECK
+            else:
+                list_tile.trailing.icon = ft.icons.REMOVE
             if list_tile.key == self.chapter.id:
                 list_tile.selected = True
                 list_tile.autofocus = True
@@ -205,3 +210,4 @@ class MangaReader:
         self.page.data['chapter_images'] = images_b64
         self.create_content()
         self.page.update()
+        self.page.data['pre_load'](self.chapter)

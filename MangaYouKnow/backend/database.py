@@ -43,6 +43,8 @@ class DataBase:
             'desc': desc(Favorite.id),
             'asc-mark': asc(MarkFavorite.id),
             'desc-mark': desc(MarkFavorite.id),
+            'more-score': desc(Favorite.score),
+            'less-score': asc(Favorite.score),
             'asc-alf': asc(Favorite.name),
             'desc-alf': desc(Favorite.name)
         }

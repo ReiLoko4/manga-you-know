@@ -18,6 +18,7 @@ from backend.utilities import (
 from cachetools import TTLCache
 from requests import Session
 from requests.adapters import HTTPAdapter
+from retrying import retry
 from urllib3 import PoolManager
 from urllib3.util.retry import Retry
 from yt_dlp import YoutubeDL
@@ -50,6 +51,7 @@ class DownloadManager:
             'av': AnimesVisionDl(),
             'af': AnimeFireDl(),
             'ao': AnimesOnlineDl(),
+            'aon': AnimesOnlineNZDl(),
             'ah': AnimesHouseDl(),
             'oa': OtakuAnimessDl(),
             'go': GoyabuDl(),
@@ -65,6 +67,7 @@ class DownloadManager:
             return self.manga_downloaders[source]
         return self.anime_downloaders[source]
     
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     @conditional_cache_lru(maxsize=1024)
     def search(self, source: str, query: str, fav_type: str = 'manga') -> list[Manga] | bool:
         dl = self.__match_source__(source, fav_type)
@@ -72,6 +75,7 @@ class DownloadManager:
             return dl.search(query)
         return False
 
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     @conditional_cache_ttl(TTLCache(maxsize=1024, ttl=580))
     def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
         source: MangaDl = self.__match_source__(source)
@@ -83,6 +87,7 @@ class DownloadManager:
                 print(e)
         return False
     
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     @conditional_cache_ttl(TTLCache(maxsize=1024, ttl=580))
     def get_episodes(self, source: str, anime_id: str) -> list[Chapter] | bool:
         source: AnimeDl = self.__match_source__(source, 'anime')
@@ -93,6 +98,7 @@ class DownloadManager:
                 print(e)
         return False
 
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     @conditional_cache_lru(maxsize=1024)
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
         dl: MangaDl = self.__match_source__(source)
@@ -103,6 +109,7 @@ class DownloadManager:
                 print(e)
         return False
     
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     @conditional_cache_lru(maxsize=1024)
     def get_episode_url(self, source: str, episode_id: str) -> Episode | list[Episode] | bool:
         dl: AnimeDl = self.__match_source__(source, 'anime')
@@ -113,6 +120,7 @@ class DownloadManager:
                 print(e)
         return False
     
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     @conditional_cache_lru(maxsize=1024)
     def get_image_content(self, url: str) -> bytes | None:
         response = self.session.get(url)
@@ -227,6 +235,7 @@ class DownloadManager:
         return False
     
     def download_all_chapters(self, manga: Favorite, source: str, chapters: list[Chapter], num: int = 5) -> bool:
+        self.notificator.show(manga.name, f'Baixando {len(chapters)} capítulos...')
         threads = ThreadManager()
         if not chapters:
             return False

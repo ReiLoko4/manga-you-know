@@ -1,4 +1,6 @@
 import webbrowser
+import concurrent.futures
+from threading import Thread
 
 import flet as ft
 import pyperclip
@@ -31,6 +33,20 @@ def MangaOpen(
         trailing=ft.IconButton(ft.icons.ARROW_RIGHT_OUTLINED, disabled=True), 
         leading= ft.IconButton(ft.icons.DOWNLOAD_OUTLINED, disabled=True),
         disabled=True
+    )
+    score = ft.Text(
+        # read_only=True, 
+        value=manga_info.score if manga_info.score else 'N/A',
+        weight=ft.FontWeight.BOLD,
+        text_align=ft.TextAlign.CENTER,
+        color=ft.colors.BLUE_300,
+        width=50
+        # width=55,
+        # height=40, 
+        # border_radius=10, 
+        # text_align=ft.TextAlign.CENTER,
+        # border_color=ft.colors.GREY_700, 
+        # focused_border_color=ft.colors.BLUE_300
     )
     def read(source, manga: Favorite, chapter: Chapter, chapters: list[Chapter], language: str=None) -> None:
         manga_title.value = limit_text(manga.name, 35)
@@ -68,6 +84,10 @@ def MangaOpen(
                 return
             status.value = 'Pronto!'
             page.update()
+            def pre_load_next(chapter: Chapter):
+                chapter_next = chapters[chapters.index(chapter) -1] if chapters.index(chapter) - 1 > 0 else None
+                if chapter_next != None:
+                    Thread(target=load_chapter_imgs, args=(chapter_next,)).start()
             page.data['chapter_images'] = images_b64
             page.data['manga_chapters'] = chapters
             page.data['chapter_title'] = f'{chapter.title} - {chapter.number}' if chapter.title else chapter.number
@@ -78,9 +98,11 @@ def MangaOpen(
                 page.data['language'] = language
             page.data['is_index'] = False
             page.data['MangaOpen'] = lambda: MangaOpen(manga_info, source_languages, togle_notify, page, is_index, cards_row, mangas_card_notify)
+            page.data['pre_load'] = pre_load_next
             if is_index:
                 page.data['is_index'] = True
             page.go('/reader')
+            pre_load_next(chapter)
             return
         if not dl.is_mpv_installed():
             status.value = 'Baixando o player de vídeo...'
@@ -215,6 +237,8 @@ def MangaOpen(
             text = 'Goyabu'
         case 'ba':
             text = 'BetterAnime'
+        case 'aon':
+            text = 'AnimesOnNZ'
     options.append(ft.dropdown.Option(manga_info.source, text))
     if manga_info.source_id in [
         '5/one-piece',
@@ -245,6 +269,7 @@ def MangaOpen(
     def load_next():
         chapters: list[Chapter] = chapters_by_source[f'{manga_info.source}_{language_options.value}']
         each_readed = db.is_each_readed(manga_info.source, manga_info.id, manga_info.source_id, chapters)
+        currently_chapter = None
         if not chapters:
             next_chapter.title.value = '0 capítulos!'
             next_chapter.trailing.icon = ft.icons.CHECK
@@ -253,6 +278,7 @@ def MangaOpen(
             next_chapter.trailing.disabled = True
             next_chapter.leading.disabled = True
         if len(chapters) == 1 and not each_readed[0]:
+            currently_chapter = chapters[0]
             next_chapter.disabled = False
             next_chapter.title.value = chapters[0].number if len(str(chapters[0].number)) and chapters[0].number is not None else chapters[0].title
             next_chapter.trailing.icon = ft.icons.ARROW_RIGHT_OUTLINED
@@ -274,7 +300,8 @@ def MangaOpen(
                     next_chapter.title.size = 13
                 break
             if not each_readed[i] and len(chapters) > 1:
-                if chapters[i] == chapters[-1]:                
+                if chapters[i] == chapters[-1]:
+                    currently_chapter = chapter               
                     next_chapter.disabled = False
                     next_chapter.title.value = chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title
                     next_chapter.trailing.icon = ft.icons.ARROW_RIGHT_OUTLINED
@@ -286,6 +313,7 @@ def MangaOpen(
                     next_chapter.leading.disabled = False
                     break
                 if each_readed[i+1]:
+                    currently_chapter = chapter
                     next_chapter.disabled = False
                     next_chapter.title.value = chapter.number if len(str(chapter.number)) and chapter.number is not None else chapter.title
                     next_chapter.trailing.icon = ft.icons.ARROW_RIGHT_OUTLINED
@@ -297,6 +325,8 @@ def MangaOpen(
                     next_chapter.leading.disabled = False
                     break
         page.update()
+        if manga_info.type == 'manga' and currently_chapter != None:
+            Thread(target=load_chapter_imgs, args=(currently_chapter,)).start()
 
 
     def togle_next(chapter: Chapter):
@@ -323,8 +353,11 @@ def MangaOpen(
             language_options.disabled = True
         source_options.disabled = True
         language_options.disabled = True
-        download_all.disabled = True
-        download_not_readed.disabled = True
+        download_chpt.disabled = True
+        download_options.disabled = True
+        chapter_search.disabled = True
+        pre_load_btn.disabled = True
+        pre_load_options.disabled = True
         if not query: chapter_search.disabled = True
         column_chapters.controls = [
             ft.Row(
@@ -401,20 +434,31 @@ def MangaOpen(
             source_options.disabled = False
         if len(source_languages[source_options.value]) > 1:
             language_options.disabled = False
-        download_all.disabled = False if manga_info.type == 'manga' else True
-        download_not_readed.disabled = False if manga_info.type == 'manga' else True
         chapter_search.disabled = False
-        last_readed = db.get_last_readed(manga_info.id)
+        if manga_info.type == 'manga':
+            download_chpt.disabled = False
+            download_options.disabled = False
+            pre_load_btn.disabled = False
+            pre_load_options.disabled = False 
+        # last_readed = db.get_last_readed(manga_info.id)
         # list_chapters.scroll_to(key=last_readed['chapter_id'] if last_readed else None)
         page.update()
-    download_all = ft.ElevatedButton(
-        text='Baixar tudo',
-        on_click=lambda e: dl.download_all_chapters(manga_info, source_options.value, chapters_by_source[f'{source_options.value}_{language_options.value}']))
-    download_not_readed = ft.ElevatedButton(
-        text='Baixar não lidos',
+    download_chpt = ft.IconButton(
+        icon=ft.icons.DOWNLOAD_FOR_OFFLINE_OUTLINED,
     )
-    def download_not_readed_chapters(_=None):
+    download_options = ft.Dropdown(
+        options=[
+            ft.dropdown.Option('not_readed', 'Não lidos'),
+            ft.dropdown.Option('all', 'Todos'),
+        ],
+        width=130,
+        value='not_readed'
+    )
+    def download_chapter_by_option(_=None):
         chapters: list[Chapter] = chapters_by_source[f'{source_options.value}_{language_options.value}']
+        if download_options.value == 'all':
+            dl.download_all_chapters(manga_info, source_options.value, chapters)
+            return
         each_readed = db.is_each_readed(manga_info.source, manga_info.id, manga_info.source_id, chapters)
         chapters_to_download = []
         for is_readed, chapter in zip(each_readed, chapters):
@@ -427,16 +471,47 @@ def MangaOpen(
                 source_options.value, 
                 chapters_to_download
             )
-    download_not_readed.on_click = download_not_readed_chapters
+    download_chpt.on_click = download_chapter_by_option
+
+    pre_load_btn = ft.IconButton(
+        ft.icons.IMAGE_SEARCH_OUTLINED,
+        tooltip='Pré-carregar capítulos',
+    )
+    pre_load_options = ft.Dropdown(
+        options=[
+            ft.dropdown.Option('not_readed', 'Não lidos'),
+            ft.dropdown.Option('all', 'Todos'),
+        ],
+        width=130,
+        value='not_readed'
+    )
+    def load_chapter_imgs(chapter: Chapter):
+        pages = dl.get_chapter_image_urls(source_options.value, chapter.id)
+        dl.get_base64_images(pages)
+    def pre_load_chapters():
+        chapters = chapters_by_source[f'{source_options.value}_{language_options.value}']
+        if pre_load_options.value == 'all':
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                executor.map(load_chapter_imgs, chapters, range(len(chapters)))
+            return
+        each_readed = db.is_each_readed(manga_info.source, manga_info.id, manga_info.source_id, chapters)
+        chapters_to_load = []
+        for is_readed, chapter in zip(each_readed, chapters):
+            if is_readed:
+                break
+            chapters_to_load.append(chapter)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            executor.map(load_chapter_imgs, chapters_to_load, range(len(chapters_to_load)))
+    pre_load_btn.on_click = lambda e: pre_load_chapters()
     
-    switch = ft.Switch(
+    switch_notify = ft.Switch(
         value=db.is_notify(manga_info.id),
         width=50,
         height=30,
         label='Notificações',
         label_position=ft.LabelPosition.RIGHT,
     )
-    switch.on_change=lambda e: togle_notify(e, manga_info)
+    switch_notify.on_change=lambda e: togle_notify(e, manga_info)
     source_options.on_change = lambda e: load_chapters()
     language_options.on_change = lambda e: load_chapters()
     chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
@@ -446,24 +521,60 @@ def MangaOpen(
         column_chapters.controls = []
         alert.open = False
         page.update()
+    def change_grade(mode: str):
+        if score.value == 'N/A':
+            score.value = '0.0' if mode == 'add' else '10.0'
+            db.set_favorite(manga_info.id, 'score', float(score.value))
+            page.update()
+            return
+        curr_score = float(score.value)
+        if curr_score == 10 and mode == 'add':
+            return
+        if curr_score == 0 and mode == 'remove':
+            return
+        curr_score += 0.5 if mode == 'add' else -0.5
+        # if curr_score.is_integer():
+        #     score.value = str(int(curr_score))
+        # else:
+        score.value = str(curr_score)
+        db.set_favorite(manga_info.id, 'score', float(score.value))
+        page.update()
+        
     alert = ft.AlertDialog(
         title=ft.Row([manga_title, ft.IconButton(ft.icons.CLOSE, on_click=close)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
         content=ft.Container(
             ft.Row([
                 ft.Column([
-                    ft.Container(ft.Image(manga_info.cover, height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
+                    ft.Container(ft.Image(manga_info.cover, height=240, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
                     source_options,
                     language_options,
-                    switch,
-                    download_all,
-                    download_not_readed,
+                    switch_notify,
+                    ft.Row([
+                        ft.Container(ft.Column([score], alignment=ft.MainAxisAlignment.CENTER), height=40, border=ft.border.all(1, ft.colors.GREY_700), border_radius=10, padding=10),
+                        ft.IconButton(
+                            ft.icons.REMOVE_ROUNDED,
+                            on_click=lambda e: change_grade('remove')
+                        ),
+                        ft.IconButton(
+                            ft.icons.ADD_ROUNDED,
+                            on_click=lambda e: change_grade('add')
+                        )
+                    ]),
+                    ft.Row([
+                        pre_load_btn,
+                        pre_load_options
+                    ]),
+                    ft.Row([
+                        download_chpt,
+                        download_options,
+                    ])
                 ]),
                 ft.Column([
                     ft.Card(next_chapter, width=250),
                     chapter_search,
-                    ft.Card(column_chapters, width=250, height=400),
+                    ft.Card(column_chapters, width=250, height=490),
                 ])
-            ]), height=500, width=430
+            ]), height=600, width=440
         ), on_dismiss=close
     )
     page.dialog = alert

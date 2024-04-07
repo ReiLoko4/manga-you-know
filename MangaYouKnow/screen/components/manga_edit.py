@@ -5,9 +5,9 @@ from backend.tables import Favorite
 
 database = DataBase()
 def MangaEdit(
-            manga_info: Favorite, row_mangas: ft.Row, 
-            load_mangas_by_mark: callable, load_mangas: callable,
-            search: ft.TextField, page: ft.Page
+            manga_info: Favorite,
+            load_mangas: callable,
+            page: ft.Page
         ) -> ft.AlertDialog:
     change_name = ft.TextField(label='Nome', value=manga_info.name)
     change_cover = ft.TextField(label='Capa', value=manga_info.cover)
@@ -15,10 +15,10 @@ def MangaEdit(
     def change_mark(mark_id: int, value: bool):
         if value:
             database.add_mark_favorite(manga_info.id, mark_id)
-            load_mangas_by_mark()
+            load_mangas()
             return
         database.delete_mark_favorite(manga_info.id, mark_id)
-        load_mangas_by_mark()
+        load_mangas()
     marks_column = ft.Column([
         ft.ListTile(
             title=ft.Text(
@@ -37,7 +37,7 @@ def MangaEdit(
         if content == getattr(manga_info, column):
             return
         if database.set_favorite(manga_info.id, column, content):
-            row_mangas.controls = load_mangas(search.value if search.value != '' else None)
+            load_mangas()
             page.update()
     edition = ft.AlertDialog(
         title=ft.Text('Editar Mangá'),

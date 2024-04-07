@@ -27,4 +27,5 @@ class Language:
         'oa': ['pt-br'],
         'go': ['pt-br'],
         'ba': ['pt-br'],
+        'aon': ['pt-br'],
     }

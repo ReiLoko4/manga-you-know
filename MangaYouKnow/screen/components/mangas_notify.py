@@ -91,7 +91,12 @@ def MangasCardNotify(
         ], alignment=ft.MainAxisAlignment.SPACE_AROUND, width=180)
         card.content = ft.Row([
             ft.Column([
-                ft.Container(ft.Text(manga.name if len(manga.name) < 25 else f'{manga.name[0:20]}...', tooltip=manga.name), margin=margin.only(left=5, top=5)),
+                ft.Container(
+                    ft.Row([
+                        ft.Text(manga.name if len(manga.name) < 24 else f'{manga.name[0:20]}...', tooltip=manga.name)
+                    ], alignment=ft.MainAxisAlignment.CENTER, width=170),
+                    margin=margin.only(left=5, top=5)
+                ),
                 ft.Row(
                     [ft.Image(manga.cover, height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10)],
                     width=180, alignment=ft.MainAxisAlignment.CENTER

@@ -11,10 +11,17 @@ class Favorites:
         database = DataBase()
         search = ft.TextField(
             label='Pesquisar Favoritos...',
-            width=500,
+            width=400,
             border_radius=20,
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300
+        )
+        count_results = ft.Text(
+            '0',
+            width=70,
+            weight=ft.FontWeight.BOLD,
+            text_align=ft.TextAlign.CENTER,
+            color=ft.colors.BLUE_300
         )
         favorite_type = ft.SegmentedButton(
             show_selected_icon=False,
@@ -30,6 +37,8 @@ class Favorites:
             options=[
                 ft.dropdown.Option('asc', '+ Velhos'),
                 ft.dropdown.Option('desc', '+ Novos'),
+                ft.dropdown.Option('more-score', '+ Nota'),
+                ft.dropdown.Option('less-score', '- Nota'),
                 ft.dropdown.Option('asc-alf', 'A-Z'),
                 ft.dropdown.Option('desc-alf', 'Z-A'),
             ],
@@ -40,7 +49,7 @@ class Favorites:
             if not search.value:
                 return
             search.value = ''
-            row_mangas.controls = load_mangas()
+            load_mangas()
             page.update()	
         reset_search = ft.IconButton(
             ft.icons.HIGHLIGHT_REMOVE_OUTLINED,
@@ -105,7 +114,7 @@ class Favorites:
                     return
                 if mark_selector.value == str(mark_id):
                     mark_selector.value = 'all'
-                    row_mangas.controls = load_mangas(search.value if search.value != '' else None)
+                    load_mangas()
                     page.update()
                 load_marks()
             saved_marks = database.get_marks()
@@ -132,7 +141,7 @@ class Favorites:
         def remove_manga(manga_id):
             def delete(_=None):
                 if database.delete_favorite(int(manga_id)):
-                    row_mangas.controls = load_mangas(search.value if search.value != '' else None)
+                    load_mangas()
                     confirmation.open = False
                     page.update()
 
@@ -161,16 +170,13 @@ class Favorites:
             top=100,
             alignment=ft.MainAxisAlignment.START
         )
-        def load_mangas_by_mark():
-            row_mangas.controls = load_mangas(search.value if search.value else None)
-            page.update()
-        def load_mangas(query: str = None) -> list[ft.Card]:
-            return MangasCard(
+        def load_mangas(query: str = None):
+            if query == None:
+                query = search.value if search.value != '' else None
+            if query: query = query.lower()
+            favorites = MangasCard(
                 source_languages,
-                row_mangas,
                 mark_selector,
-                search,
-                load_mangas_by_mark,
                 load_mangas,
                 remove_manga,
                 page,
@@ -178,11 +184,18 @@ class Favorites:
                 query=query,
                 favorite_type=list(favorite_type.selected)
             )
+            row_mangas.controls = favorites
+            if favorites[0].key == 'nothing':
+                count_results.value = '0'
+                page.update()
+                return
+            count_results.value = str(len(favorites))
+            page.update()
         # page.data['load_mangas'] = load_mangas
-        order_favorites.on_change = lambda e: load_mangas_by_mark()
-        favorite_type.on_change = lambda e: load_mangas_by_mark()   
-        row_mangas.controls = load_mangas()
-        mark_selector.on_change = lambda e: load_mangas_by_mark()
+        order_favorites.on_change = lambda e: load_mangas()
+        favorite_type.on_change = lambda e: load_mangas()  
+        load_mangas()
+        mark_selector.on_change = lambda e: load_mangas()
         favorites = database.get_favorites()
         stack = ft.Stack([
             ft.Row([
@@ -190,6 +203,7 @@ class Favorites:
                 ft.Container(order_favorites, padding=10),
                 ft.Container(search, padding=10),
                 reset_search,
+                ft.Container(ft.Column([count_results], alignment=ft.MainAxisAlignment.CENTER), height=60, border=ft.border.all(1, ft.colors.GREY_700), border_radius=20, padding=10),
                 ft.Container(ft.Row([mark_selector, mark_add]), width=250, padding=10),
             ], alignment=ft.MainAxisAlignment.CENTER
             ),
@@ -210,15 +224,15 @@ class Favorites:
                 if num % 3 == 0:
                     count += 1
             stack.height = count * 435
-            row_mangas.controls = load_mangas(query=search.value if search.value != '' else None)
+            load_mangas()
             page.update()
 
         def search_favorites(e):
             if len(e.control.value) == 0:
-                row_mangas.controls = load_mangas()
+                load_mangas()
                 page.update()
                 return
-            row_mangas.controls = load_mangas(e.control.value)
+            load_mangas(e.control.value)
             page.update()
 
         search.on_change = search_favorites

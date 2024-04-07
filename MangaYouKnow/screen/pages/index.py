@@ -24,8 +24,9 @@ class Index:
             # ft.dropdown.Option('op', text='OP Scans'),
         ]
         anime_options = [
+            ft.dropdown.Option('aon', text='AnimesOnNZ'),
             ft.dropdown.Option('ba', text='BetterAnime'),
-            ft.dropdown.Option('av', text='AnimesVision'),
+            # ft.dropdown.Option('av', text='AnimesVision'),
             ft.dropdown.Option('af', text='AnimeFire'),
             # ft.dropdown.Option('ah', text='AnimesHouse'),
             ft.dropdown.Option('go', text='Goyabu'),   
@@ -111,16 +112,17 @@ class Index:
                 results_card.visible = False
                 page.update()
                 return False
-            results.controls.clear()
-            results.controls.append(
-                ft.ListTile(
-                    key='noresult',
-                    title=ft.Row([ft.Text('Procurando...'), ft.ProgressRing()],
-                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    disabled=True,
-                    height=55
+            if len(results.controls) == 0 or results.controls[0].key != 'noresult':
+                results.controls.clear()
+                results.controls.append(
+                    ft.ListTile(
+                        key='noresult',
+                        title=ft.Row([ft.Text('Procurando...'), ft.ProgressRing()],
+                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        disabled=True,
+                        height=55
+                    )
                 )
-            )
             results_card.visible = True
             page.update()
             response = dl.search(source_selector.value, query, list(favorite_type.selected)[0])
@@ -199,7 +201,7 @@ class Index:
             wrap=True,
             width=page.width - 90,
             height=10000,
-            top=170
+            top=120
         )
         index.controls.append(
             favorites_row

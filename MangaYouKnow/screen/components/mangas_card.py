@@ -16,10 +16,7 @@ def togle_notify(e: ft.ControlEvent, manga: Favorite) -> None:
 
 def MangasCard(
         source_languages: dict,
-        row_mangas: ft.Row,
         mark_selector: ft.Dropdown,
-        search: ft.TextField,
-        load_mangas_by_mark: callable,
         load_mangas: callable,
         remove_manga: callable,
         page: ft.Page,
@@ -42,20 +39,24 @@ def MangasCard(
                     content=ft.Text(
                         f'Não existe nenhum manga que contenha "{query}" nos seus favoritos' if mark_selector.value == 'all'
                         else f'Não existe nenhum manga que contenha "{query}" nos seus favoritos com a marcação "{database.get_mark(mark_selector.value).name}"'
-                    )
+                    ), key='nothing'
                 )
             ]
     if not len(favorites) and mark_selector.value == 'all':
         return [
             ft.Card(
-                content=ft.Text('Nada adicionado por enquanto...')
+                content=ft.Text(
+                    'Nada adicionado por enquanto...'
+                ), key='nothing'
             )
         ]
     if mark_selector.value != 'all' \
         and not len(favorites):
         return [
             ft.Card(
-                content=ft.Text(f'Não existe nenhum manga com a marcação "{database.get_mark(mark_selector.value).name}" nos seus favoritos')
+                content=ft.Text(
+                    f'Não existe nenhum manga com a marcação "{database.get_mark(mark_selector.value).name}" nos seus favoritos'
+                ), key='nothing'
             )
         ]
     return [
@@ -73,7 +74,7 @@ def MangasCard(
                     ft.Container(
                         ft.Row([
                             ft.IconButton(ft.icons.MENU_BOOK, on_click=lambda e, info=manga: MangaOpen(info, source_languages, togle_notify, page)),
-                            ft.IconButton(ft.icons.EDIT_SQUARE, on_click=lambda e, info=manga: MangaEdit(info, row_mangas, load_mangas_by_mark, load_mangas, search, page)),
+                            ft.IconButton(ft.icons.EDIT_SQUARE, on_click=lambda e, info=manga: MangaEdit(info, load_mangas, page)),
                             ft.IconButton(ft.icons.HIGHLIGHT_REMOVE, on_click=lambda e, info=manga: remove_manga(info.id))
                         ], alignment=ft.MainAxisAlignment.CENTER, width=180), padding=padding.only(top=-5))
                 ], alignment=ft.CrossAxisAlignment.STRETCH)
