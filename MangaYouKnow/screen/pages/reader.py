@@ -57,9 +57,39 @@ class MangaReader:
                     key=chapter.id
                 )
             )
+        self.load_drawer()
         self.dl: DownloadManager = page.data['dl']
         self.content = None
         self.create_content()
+
+    def focus_drawer(self):
+        count = 0
+        is_counting = False
+        for list_tile in reversed(self.chapters_column.controls):
+            if is_counting:
+                count += 1
+            if count == 8:
+                try:
+                    self.chapters_column.scroll_to(key=list_tile.key)
+                except:
+                    print('nothing happened kkkk')
+            if list_tile.key == self.chapter.id:
+                is_counting = True
+                continue
+
+    def load_drawer(self):
+        readeds = self.db.is_each_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapters)
+        for list_tile, is_readed in zip(reversed(self.chapters_column.controls), reversed(readeds)):
+            if is_readed:
+                list_tile.trailing.icon = ft.icons.CHECK
+            else:
+                list_tile.trailing.icon = ft.icons.REMOVE
+            if list_tile.key == self.chapter.id:
+                list_tile.selected = True
+                list_tile.autofocus = True
+                continue
+            list_tile.selected = False
+            list_tile.autofocus = False
 
     def togle_readed(self, source, manga: Favorite, chapter: Chapter, language: str=None):
         if self.db.is_readed(source, manga.id, manga.source_id, chapter.id, language):
@@ -141,6 +171,7 @@ class MangaReader:
             if e.key == 'F3':
                 if not self.drawer.open:
                     self.page.show_end_drawer(self.drawer)
+                    self.focus_drawer()
                 else:
                     self.drawer.open = False
             if e.key == 'Escape':
@@ -191,18 +222,7 @@ class MangaReader:
                     break
             if chapter_id == None:
                 return False
-        readeds = self.db.is_each_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapters)
-        for list_tile, is_readed in zip(self.chapters_column.controls, readeds):
-            if is_readed:
-                list_tile.trailing.icon = ft.icons.CHECK
-            else:
-                list_tile.trailing.icon = ft.icons.REMOVE
-            if list_tile.key == self.chapter.id:
-                list_tile.selected = True
-                list_tile.autofocus = True
-                continue
-            list_tile.selected = False
-            list_tile.autofocus = False
+        self.load_drawer()
         pages = self.dl.get_chapter_image_urls(self.source, self.chapter.id)
         if not pages:
             return False

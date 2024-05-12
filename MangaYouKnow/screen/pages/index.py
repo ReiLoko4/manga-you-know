@@ -1,14 +1,15 @@
 import flet as ft
 from time import sleep
-from backend.models import Manga
+from backend.models import Manga, Chapter
+from backend.tables import Favorite, Readed
 from backend.database import DataBase
 from backend.managers import DownloadManager
-from screen.components import MangasCardNotify
+from screen.components import MangasCardNotify, RelatoryCard
 
 
 class Index:
     def __init__(self, page: ft.Page):
-        connection_data = DataBase()
+        database = DataBase()
         dl: DownloadManager = page.data['dl']
         manga_options = [
             ft.dropdown.Option('md', text='MangaDex'),
@@ -33,13 +34,15 @@ class Index:
             ft.dropdown.Option('ao', text='AnimesOnline'),
             # ft.dropdown.Option('oa', text='OtakuAnimes'),
         ]
+        btn_relatory = ft.IconButton(
+            ft.icons.ASSESSMENT_OUTLINED,
+            tooltip='Gerar relatório'
+        )
+        btn_refresh = ft.IconButton(
+            ft.icons.CACHED_OUTLINED,
+            tooltip='Recarregar'
+        )
         source_selector = ft.Dropdown(options=manga_options, value='md', width=140)
-        def change_options(e: ft.ControlEvent):
-            source_selector.options = manga_options if list(e.control.selected)[0] == 'manga' else anime_options
-            source_selector.value = source_selector.options[0].key
-            search.label = f'Pesquisar {list(favorite_type.selected)[0]}s...'
-            search_mangas(search.value)
-            page.update()
         favorite_type = ft.SegmentedButton(
             show_selected_icon=False,
             allow_multiple_selection=False,
@@ -49,7 +52,6 @@ class Index:
                 ft.Segment('anime', label=ft.Text('Anime')),
             ],
             selected={'manga'},
-            on_change=change_options
         )
         results = ft.Column(width=470, spacing=0.7)
         results_card = ft.Card(ft.Container(results, border=ft.border.all(1, 'white'), border_radius=15), color='gray', visible=False)
@@ -66,13 +68,49 @@ class Index:
         index = ft.Stack(width=1300, height=1000)
         manga = ft.Row(visible=False)
         self.is_clicked = False
+        
+        def get_relatory(_=None):
+            relatory_row = ft.Row(
+                [ft.ProgressRing(height=200, width=200, color=ft.colors.BLUE_500, key='progress')], 
+                wrap=True, height=10000, alignment=ft.MainAxisAlignment.START, scroll='always'
+            )
+            def close_dialog(_=None):
+                dialog.open = False
+                page.update()
+            dialog = ft.AlertDialog(
+                title=ft.Row(
+                    [ft.Text('Favoritos', size='xl'), ft.IconButton(ft.icons.CLOSE, on_click=close_dialog)],
+                    expand=True, alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                ),
+                content=relatory_row
+            )
+            page.dialog = dialog
+            dialog.open = True
+            page.update()
+            favorites_noty = database.get_favorites_notify()
+            relatory_row.controls.clear()
+            for favorite in favorites_noty:
+                try:
+                    relatory_row.controls.append(RelatoryCard(page, favorite))
+                except Exception as e:
+                    print(e)
+            page.update()
 
+        btn_relatory.on_click = get_relatory
+        def change_options(e: ft.ControlEvent):
+            source_selector.options = manga_options if list(e.control.selected)[0] == 'manga' else anime_options
+            source_selector.value = source_selector.options[0].key
+            search.label = f'Pesquisar {list(favorite_type.selected)[0]}s...'
+            search_mangas(search.value)
+            page.update()
+
+        favorite_type.on_change = change_options
         def togle_favorite(manga: Manga, button: ft.IconButton, is_on_search: bool = False):
-            if connection_data.is_favorite(source_selector.value, manga.id):
-                if connection_data.delete_favorite_by_key(source_selector.value, manga.id):
+            if database.is_favorite(source_selector.value, manga.id):
+                if database.delete_favorite_by_key(source_selector.value, manga.id):
                     button.icon = ft.icons.BOOKMARK_OUTLINE
             else:
-                if connection_data.add_favorite(manga, source_selector.value, manga.id, list(favorite_type.selected)[0]):
+                if database.add_favorite(manga, source_selector.value, manga.id, list(favorite_type.selected)[0]):
                     button.icon = ft.icons.BOOKMARK_ROUNDED
             page.update()
             if is_on_search:
@@ -88,7 +126,7 @@ class Index:
 
         def manga_page(info_manga: Manga):
             button_favorite = ft.IconButton(
-                ft.icons.BOOKMARK_ROUNDED if connection_data.is_favorite(source_selector.value, info_manga.id) else ft.icons.BOOKMARK_OUTLINE,
+                ft.icons.BOOKMARK_ROUNDED if database.is_favorite(source_selector.value, info_manga.id) else ft.icons.BOOKMARK_OUTLINE,
                 height=30)
             button_favorite.on_click = lambda e, info=info_manga, button=button_favorite: togle_favorite(info, button)
             manga_dialog = ft.AlertDialog(
@@ -128,7 +166,7 @@ class Index:
             response = dl.search(source_selector.value, query, list(favorite_type.selected)[0])
             if query != search.value:
                     return False
-            favorites = connection_data.get_favorites_by_source(source_selector.value)
+            favorites = database.get_favorites_by_source(source_selector.value)
             list_favorites_id = [i.source_id for i in favorites]
             results_card.visible = True
             results.controls.clear()
@@ -171,7 +209,7 @@ class Index:
         def focus_search(e):
             if len(results.controls) != 0:
                 if results.controls[0].key == 'manga':
-                    favorites = connection_data.get_favorites()
+                    favorites = database.get_favorites()
                     list_favorites_id = [i.source_id for i in favorites]
                     results.controls.clear()
                     for manga in results.data:
@@ -208,11 +246,12 @@ class Index:
         )
         index.controls.append(
             ft.Column([
-            ft.ResponsiveRow([
-                ft.Column([ft.Container(ft.Row([favorite_type], alignment=ft.MainAxisAlignment.END), width=300)], col=2, height=70, alignment=ft.MainAxisAlignment.CENTER),
-                ft.Column([ft.Container(search, padding=10)], col=6),
-                ft.Column([ft.Container(ft.Row([source_selector]), width=250, padding=10)], col=4),
-            ], alignment=ft.MainAxisAlignment.CENTER, columns=12),
+            ft.Row([
+                ft.Column([ft.Container(ft.Row([favorite_type, search, source_selector, btn_refresh, btn_relatory], alignment=ft.MainAxisAlignment.END))], height=70, alignment=ft.MainAxisAlignment.CENTER),
+                # ft.Column([ft.Container(, padding=10)], col=6),
+                # ft.Column([ft.Container(ft.Row([]), width=250, padding=10)], col=4),
+                # ft.Column([ft.Container(ft.Row([]), padding=10)], col=2, height=70, width=250, alignment=ft.MainAxisAlignment.START),
+            ], alignment=ft.MainAxisAlignment.CENTER),
             ft.ResponsiveRow([
                 ft.Column([ft.Container(bgcolor='white', width=300)], col=2),
                 ft.Column([ft.Container(results_card, padding=5)], col=6),

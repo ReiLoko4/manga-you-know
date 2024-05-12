@@ -27,11 +27,18 @@ def verify_chapters(manga: Favorite, text: ft.Text, card: ft.Card, container: ft
         last_readed.favorite_source_id = manga.source_id
         last_readed.language = 'en' if last_readed.source == 'md' else None
         last_readed.chapter_id = None
-    if manga.type == 'manga':
-        chapters: list[Chapter] = dl.get_chapters(last_readed.source, last_readed.favorite_source_id, last_readed.language if last_readed.language else None)
-    else:
-        chapters: list[Chapter] = dl.get_episodes(last_readed.source, last_readed.favorite_source_id)
+    try:
+        if manga.type == 'manga':
+            chapters: list[Chapter] = dl.get_chapters(last_readed.source, last_readed.favorite_source_id, last_readed.language if last_readed.language else None)
+        else:
+            chapters: list[Chapter] = dl.get_episodes(last_readed.source, last_readed.favorite_source_id)
+    except:
+        text.value = 'Error!!!'
+        container.border = ft.border.all(1, ft.colors.RED_500)
+        page.update()
+        return
     if last_readed.chapter_id is None:
+        page.data[manga.id] = f'0/{len(chapters)}'
         text.value = f'+{len(chapters)}'
         card.key = len(chapters)
         container.border = ft.border.all(1, ft.colors.RED_500)
@@ -48,10 +55,12 @@ def verify_chapters(manga: Favorite, text: ft.Text, card: ft.Card, container: ft
             notificator.show(f'Novos capítulos de {manga.name}!', f'Foram adicionados {len(chapters) - manga_len[manga.id]} capítulos novos')
     manga_len[manga.id] = len(chapters)
     if count == 0:
+        page.data[manga.id] = f'{len(chapters)}/{len(chapters)}'
         text.value = f'Em dia!'
         container.border = ft.border.all(1, ft.colors.GREEN_500)
         page.update()
         return
+    page.data[manga.id] = f'{count}/{len(chapters)}'
     container.border = ft.border.all(1, ft.colors.BLUE_500 if count < 30 else ft.colors.YELLOW_500)
     text.value = f'+{count}'
     card.key = count
@@ -75,7 +84,7 @@ def MangasCardNotify(
             else database.delete_notify(manga.id)
         cards_row.controls = MangasCardNotify(cards_row, page)
         page.update()
-    favorites_notify = database.get_database_notify_on()
+    favorites_notify = database.get_favorites_notify()
     mangas_card = []
     threads.delete_all()
     for manga in favorites_notify:

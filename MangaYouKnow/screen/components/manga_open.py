@@ -85,7 +85,9 @@ def MangaOpen(
             status.value = 'Pronto!'
             page.update()
             def pre_load_next(chapter: Chapter):
+                print(chapter.number)
                 chapter_next = chapters[chapters.index(chapter) -1] if chapters.index(chapter) - 1 > 0 else None
+                print(chapter_next.number)
                 if chapter_next != None:
                     Thread(target=load_chapter_imgs, args=(chapter_next,)).start()
             page.data['chapter_images'] = images_b64
@@ -492,7 +494,7 @@ def MangaOpen(
         chapters = chapters_by_source[f'{source_options.value}_{language_options.value}']
         if pre_load_options.value == 'all':
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                executor.map(load_chapter_imgs, chapters, range(len(chapters)))
+                executor.map(load_chapter_imgs, chapters)
             return
         each_readed = db.is_each_readed(manga_info.source, manga_info.id, manga_info.source_id, chapters)
         chapters_to_load = []

@@ -16,11 +16,14 @@ class Notificator:
 
         The icone is already seted to the app icon
         """
-        if not self.img_path.exists():
-            self.img_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.img_path, 'wb') as f:
-                f.write(requests.get(self.img_url).content)
-        self.notify.show_toast(title, message, icon_path=self.img_path)
+        try:
+            if not self.img_path.exists():
+                self.img_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(self.img_path, 'wb') as f:
+                    f.write(requests.get(self.img_url).content)
+            self.notify.show_toast(title, message, icon_path=self.img_path)
+        except Exception as e:
+            print(f'Error in notification: {e}')
 
 
 

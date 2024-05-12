@@ -179,7 +179,7 @@ class DataBase:
             .where(Favorite.source == source)
         ).all()
 
-    def get_database_notify_on(self) -> list[Favorite]:
+    def get_favorites_notify(self) -> list[Favorite]:
         sess = self.get_session()
         return sess.exec(
             select(Favorite)

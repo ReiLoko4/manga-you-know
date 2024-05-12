@@ -2,12 +2,14 @@ import base64
 import os
 import subprocess
 from pathlib import Path
+import concurrent.futures
 
 import py7zr
-from backend.anime_downloaders import *
+from backend.downloaders.hq import *
+from backend.downloaders.anime import *
+from backend.downloaders.manga import *
 from backend.interfaces import AnimeDl, MangaDl
 from backend.managers import ThreadManager
-from backend.manga_downloaders import *
 from backend.models import Chapter, Episode, Manga
 from backend.tables import Favorite
 from backend.utilities import (
@@ -72,7 +74,10 @@ class DownloadManager:
     def search(self, source: str, query: str, fav_type: str = 'manga') -> list[Manga] | bool:
         dl = self.__match_source__(source, fav_type)
         if dl:
-            return dl.search(query)
+            respose = dl.search(query)
+            if respose != False:
+                return respose
+            raise Exception('Error while searching.')
         return False
 
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
@@ -80,11 +85,11 @@ class DownloadManager:
     def get_chapters(self, source: str, manga_id: str, source_language: str = None) -> list[Chapter] | bool:
         source: MangaDl = self.__match_source__(source)
         if source:
-            try:
-                return source.get_chapters(manga_id) if not source_language \
-                    else source.get_chapters(manga_id, source_language)
-            except Exception as e: 
-                print(e)
+            response = source.get_chapters(manga_id) if not source_language \
+                else source.get_chapters(manga_id, source_language)
+            if response != False:
+                return response
+            raise Exception('Error while getting chapters.')
         return False
     
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
@@ -92,10 +97,10 @@ class DownloadManager:
     def get_episodes(self, source: str, anime_id: str) -> list[Chapter] | bool:
         source: AnimeDl = self.__match_source__(source, 'anime')
         if source:
-            try:
-                return source.get_episodes(anime_id)
-            except Exception as e:
-                print(e)
+            response = source.get_episodes(anime_id)
+            if response != False:
+                return response
+            raise Exception('Error while getting episodes.')
         return False
 
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
@@ -103,10 +108,10 @@ class DownloadManager:
     def get_chapter_image_urls(self, source: str, chapter_id: str) -> list[str] | bool:
         dl: MangaDl = self.__match_source__(source)
         if dl:
-            try:
-                return dl.get_chapter_imgs(chapter_id)
-            except Exception as e:
-                print(e)
+            response = dl.get_chapter_imgs(chapter_id)
+            if response != False:
+                return response
+            raise Exception('Error while getting chapter image urls.')
         return False
     
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
@@ -126,7 +131,7 @@ class DownloadManager:
         response = self.session.get(url)
         if response and 'image' in response.headers['content-type']:
             return response.content
-        print(response.status_code, url)
+        raise Exception('Error while downloading image.')
     
     @conditional_cache_lru(maxsize=1024)
     def get_base_64_image(self, url: str) -> str | None:
@@ -134,6 +139,7 @@ class DownloadManager:
         if response:
             return base64.b64encode(response).decode('utf-8')
 
+    @retry(stop_max_attempt_number=3, wait_fixed=1000)
     def get_base64_images(self, pages: list[str]) -> list[str]:
         if not pages:
             return []
@@ -220,6 +226,7 @@ class DownloadManager:
                 self.notificator.show(manga['name'], f'Erro ao baixar a página {url}. \nVerifique sua conexão ou integridade do site.')
             folder = Path(f'mangas/{manga.folder_name}/{chapter.number}')
             folder.mkdir(parents=True, exist_ok=True)
+            
             for i, image in enumerate(manga_images):
                 path = folder / f'{i:03d}.png'
                 threads.add_thread_by_args(
@@ -235,18 +242,19 @@ class DownloadManager:
         return False
     
     def download_all_chapters(self, manga: Favorite, source: str, chapters: list[Chapter], num: int = 5) -> bool:
-        self.notificator.show(manga.name, f'Baixando {len(chapters)} capítulos...')
-        threads = ThreadManager()
         if not chapters:
+            self.notificator.show(manga.name, f'Erro ao tentar baixar {len(chapters)} capítulos.')
             return False
         print(f'downloading {len(chapters)} chapters.')
         self.notificator.show(manga.name, f'Baixando {len(chapters)} capítulos...')
-        for chapter in reversed(chapters):
-            threads.add_thread_by_args(
-                target=self.download_chapter,
-                args=[manga, source, chapter, True]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            relatory = executor.map(
+                self.download_chapter, 
+                [manga] * len(chapters), 
+                [source] * len(chapters), 
+                list(reversed(chapters)), 
+                [True] * len(chapters)
             )
-        relatory = threads.start_and_join_by_num(num)
         relatory = [i for i in relatory if i]
         self.notificator.show(manga.name, f'Download de {len(chapters)} capítulos concluído.\n{len(chapters) - len(relatory)} capítulos com erro.')
         print('finished.')

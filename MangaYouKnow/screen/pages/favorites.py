@@ -1,8 +1,7 @@
 import flet as ft
 from backend.database import DataBase
 from screen.constants import Language
-from screen.components import MangasCard
-from backend.tables import Mark
+from screen.components import MangasCard, AgroupedCard
 
 
 class Favorites:
@@ -11,14 +10,14 @@ class Favorites:
         database = DataBase()
         search = ft.TextField(
             label='Pesquisar Favoritos...',
-            width=400,
+            width=320,
             border_radius=20,
             border_color=ft.colors.GREY_700,
             focused_border_color=ft.colors.BLUE_300
         )
         count_results = ft.Text(
             '0',
-            width=70,
+            width=50,
             weight=ft.FontWeight.BOLD,
             text_align=ft.TextAlign.CENTER,
             color=ft.colors.BLUE_300
@@ -54,6 +53,40 @@ class Favorites:
         reset_search = ft.IconButton(
             ft.icons.HIGHLIGHT_REMOVE_OUTLINED,
             on_click=reset_field_value,
+        )
+        def get_mark_name() -> str:
+            for option in mark_selector.options:
+                if str(option.key) == str(mark_selector.value):
+                    return option.text
+        def show_agrouped_favorites(e):
+            agrouped_row = ft.Row(
+                [ft.ProgressRing(height=200, width=200, color=ft.colors.BLUE_500, key='progress')], 
+                wrap=True, height=10000, alignment=ft.MainAxisAlignment.START, scroll='always'
+            )
+            def close_dialog(_=None):
+                dialog.open = False
+                page.update()
+            dialog = ft.AlertDialog(
+                title=ft.Row(
+                    [ft.Text(get_mark_name(), size='xl'), ft.IconButton(ft.icons.CLOSE, on_click=close_dialog)],
+                    expand=True, alignment=ft.MainAxisAlignment.SPACE_BETWEEN
+                ),
+                content=agrouped_row
+            )
+            page.dialog = dialog
+            dialog.open = True
+            page.update()
+            favorites_by_mark = database.get_favorites(mark_selector.value if mark_selector.value != 'all' else None)
+            agrouped_row.controls.clear()
+            for favorite in favorites_by_mark:
+                try:
+                    agrouped_row.controls.append(AgroupedCard(favorite))
+                except Exception as e:
+                    print(e)
+            page.update()
+        show_agrouped = ft.IconButton(
+            ft.icons.BOOKMARKS_ROUNDED,
+            on_click=show_agrouped_favorites,
         )
         mark_selector = ft.Dropdown(
             options=[
@@ -196,14 +229,15 @@ class Favorites:
         favorite_type.on_change = lambda e: load_mangas()  
         load_mangas()
         mark_selector.on_change = lambda e: load_mangas()
-        favorites = database.get_favorites()
+        favorites_by_mark = database.get_favorites()
         stack = ft.Stack([
             ft.Row([
                 ft.Container(favorite_type, padding=10),
                 ft.Container(order_favorites, padding=10),
                 ft.Container(search, padding=10),
                 reset_search,
-                ft.Container(ft.Column([count_results], alignment=ft.MainAxisAlignment.CENTER), height=60, border=ft.border.all(1, ft.colors.GREY_700), border_radius=20, padding=10),
+                show_agrouped,
+                ft.Container(ft.Column([count_results], alignment=ft.MainAxisAlignment.CENTER), height=60, border=ft.border.all(1, ft.colors.GREY_700), border_radius=20, padding=5),
                 ft.Container(ft.Row([mark_selector, mark_add]), width=250, padding=10),
             ], alignment=ft.MainAxisAlignment.CENTER
             ),
@@ -211,7 +245,7 @@ class Favorites:
             row_mangas
         ],
             width=page.width - 90,
-            height=len(favorites) * 360
+            height=len(favorites_by_mark) * 360
         )
 
         def update(e=None):

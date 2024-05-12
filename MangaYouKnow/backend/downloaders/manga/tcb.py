@@ -7,6 +7,7 @@ from backend.models import Manga, Chapter
 
 class TCBScansDl(MangaDl):
     def __init__(self):
+        self.base_url = 'https://tcb-backup.bihar-mirchi.com/'
         self.session = Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
@@ -24,7 +25,7 @@ class TCBScansDl(MangaDl):
         
     @cache
     def get_mangas(self) -> list[Manga] | bool:
-        response = self.session.get('https://tcbscans.com/projects')
+        response = self.session.get(f'{self.base_url}projects')
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -51,7 +52,7 @@ class TCBScansDl(MangaDl):
         return sorted_mangas[:10]
 
     def get_chapters(self, manga_id: str) -> list[Chapter] | bool:
-        response = self.session.get(f'https://tcbscans.com/mangas/{manga_id}')
+        response = self.session.get(f'{self.base_url}mangas/{manga_id}')
         if not response:
             return False
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -68,7 +69,7 @@ class TCBScansDl(MangaDl):
         return chapters_list
         
     def get_chapter_imgs(self, chapter_id: str) -> list[str] | bool:
-        response = self.session.get(f'https://tcbscans.com/chapters/{chapter_id}')
+        response = self.session.get(f'{self.base_url}chapters/{chapter_id}')
         if not response:
             return False
         soup = BeautifulSoup(response.text, 'html.parser')

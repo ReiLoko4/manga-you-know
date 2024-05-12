@@ -7,6 +7,7 @@ from backend.models import Manga, Chapter
 
 class MangaSeeDl(MangaDl):
     def __init__(self) -> None:
+        self.base_url = 'https://mangasee123.com'
         self.session = Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0',
@@ -24,7 +25,9 @@ class MangaSeeDl(MangaDl):
 
     @cache
     def get_mangas(self) -> list[Manga] | bool:
-        response = self.session.get('https://www.mangasee123.com/search?name=qualquercoisaliteralmente')
+        response = self.session.get(
+            f'{self.base_url}/search?name=lol'
+            )
         if response.status_code != 200:
             return False
         results = json.loads(response.text.split('vm.Directory = ')[1].split('\n')[0][:-2])
@@ -62,7 +65,9 @@ class MangaSeeDl(MangaDl):
         return sorted_mangas[:10]
     
     def get_chapters(self, manga_id: str) -> list[Chapter] | bool:
-        response = self.session.get(f'https://www.mangasee123.com/manga/{manga_id}')
+        response = self.session.get(
+            f'{self.base_url}/manga/{manga_id}'
+        )
         if response.status_code == 200:
             results = json.loads(response.text.split('vm.Chapters = ')[1].split('\n')[0][:-2])
             page = response.text.split('vm.PageOne="')[1].split('"')[0]
@@ -84,7 +89,9 @@ class MangaSeeDl(MangaDl):
         return False
 
     def get_chapter_imgs(self, chapter_id: str) -> list[str] | bool:
-        response = self.session.get(f'https://mangasee123.com/read-online/{chapter_id}')
+        response = self.session.get(
+            f'{self.base_url}/read-online/{chapter_id}'
+        )
         if response.status_code == 200:
             dominy = response.text.split('vm.CurPathName = "')[1].split('"')[0]
             manga_id = response.text.split('vm.IndexName = "')[1].split('"')[0]
