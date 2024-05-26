@@ -239,7 +239,8 @@ class Index:
             wrap=True,
             width=page.width - 90,
             height=10000,
-            top=120
+            top=120,
+            scroll='always'
         )
         index.controls.append(
             favorites_row

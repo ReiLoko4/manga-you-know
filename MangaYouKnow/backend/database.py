@@ -185,6 +185,12 @@ class DataBase:
             select(Favorite)
             .where(Favorite.notify == True)
         ).all()
+    
+    def get_favorites_sources(self) -> list[str]:
+        sess = self.get_session()
+        return sess.exec(
+            select(Favorite.source)
+        ).unique().all()
 
     def get_config(self) -> dict:
         self.create_config()

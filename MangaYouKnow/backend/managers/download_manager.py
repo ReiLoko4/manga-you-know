@@ -213,35 +213,33 @@ class DownloadManager:
             self.download_file(self.MPV_DOWNLOAD_URL, output_folder)
             self.extract_7z(output_folder / 'mpv-0.37.0-x86_64.7z', output_folder / 'mpv')
     
-    def download_chapter(self, manga: Favorite, source: str, chapter: Chapter, is_in_list: bool = False) -> bool:
-        manga_images = self.get_chapter_image_urls(source, chapter.id)
+    def download_page(self, url: str, path: Path, manga_name):
+        response = self.get_image_content(url)
+        if response:
+            with open(path, 'wb') as file:
+                file.write(response)
+                return
+        self.notificator.show(manga_name, f'Erro ao baixar a página {url}. \nVerifique sua conexão ou integridade do site.')
+
+    def download_chapter(self, manga: Favorite, chapter: Chapter, is_in_list: bool = False) -> bool:
+        manga_images = self.get_chapter_image_urls(manga.source, chapter.id)
         if manga_images:
-            threads = ThreadManager()
-            def download_page(url: str, path: Path):
-                response = self.get_image_content(url)
-                if response:
-                    with open(path, 'wb') as file:
-                        file.write(response)
-                        return
-                self.notificator.show(manga['name'], f'Erro ao baixar a página {url}. \nVerifique sua conexão ou integridade do site.')
             folder = Path(f'mangas/{manga.folder_name}/{chapter.number}')
             folder.mkdir(parents=True, exist_ok=True)
-            
-            for i, image in enumerate(manga_images):
-                path = folder / f'{i:03d}.png'
-                threads.add_thread_by_args(
-                    target=download_page,
-                    args=[image, path]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+                executor.map(
+                    self.download_page, 
+                    manga_images, 
+                    [folder / f'{i:03d}.png' for i in range(len(manga_images))], 
+                    [manga.name] * len(manga_images)
                 )
-            threads.start()
-            threads.join()
             if not is_in_list:
                 self.notificator.show(manga.name, f'Download do capítulo {chapter.number} concluído.')
             return True
         self.notificator.show(manga.name, f'Erro ao baixar o capítulo {chapter.number}. \nVerifique sua conexão ou integridade do site.')
         return False
     
-    def download_all_chapters(self, manga: Favorite, source: str, chapters: list[Chapter], num: int = 5) -> bool:
+    def download_all_chapters(self, manga: Favorite, chapters: list[Chapter], num: int = 5) -> bool:
         if not chapters:
             self.notificator.show(manga.name, f'Erro ao tentar baixar {len(chapters)} capítulos.')
             return False
@@ -251,7 +249,7 @@ class DownloadManager:
             relatory = executor.map(
                 self.download_chapter, 
                 [manga] * len(chapters), 
-                [source] * len(chapters), 
+                [manga.source] * len(chapters), 
                 list(reversed(chapters)), 
                 [True] * len(chapters)
             )
@@ -259,10 +257,19 @@ class DownloadManager:
         self.notificator.show(manga.name, f'Download de {len(chapters)} capítulos concluído.\n{len(chapters) - len(relatory)} capítulos com erro.')
         print('finished.')
         return True
+    
+    def is_downloaded(self, manga: Favorite, chapter : Chapter) -> bool:
+        return Path(f'mangas/{manga.folder_name}/{chapter.number}').exists()
 
+    def is_each_downloaded(self, manga: Favorite, chapters: list[Chapter]) -> list[bool]:
+        if Path(f'mangas/{manga.folder_name}').exists():
+            downloaded_chapters = Path(f'mangas/{manga.folder_name}').iterdir()
+            chapters_names = [chapter.name for chapter in downloaded_chapters]
+            return [str(chapter.number) in chapters_names for chapter in chapters]
+        return [False] * len(chapters)
 
-    def download_episode(self, anime: Favorite, source, chapter: Chapter) -> Path | bool:
-        episode = self.get_episode_url(source, chapter.id)
+    def download_episode(self, anime: Favorite, chapter: Chapter) -> Path | bool:
+        episode = self.get_episode_url(anime.source, chapter.id)
         if not episode:
             return False
         episode = episode[0] if type(episode) == list else episode

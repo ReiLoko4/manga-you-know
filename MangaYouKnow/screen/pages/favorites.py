@@ -201,7 +201,8 @@ class Favorites:
             wrap=True,
             width=page.width - 90,
             top=100,
-            alignment=ft.MainAxisAlignment.START
+            alignment=ft.MainAxisAlignment.START,
+            scroll='always'
         )
         def load_mangas(query: str = None):
             if query == None:
