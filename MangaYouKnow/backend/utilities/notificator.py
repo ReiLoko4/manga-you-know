@@ -1,7 +1,8 @@
 from win10toast import ToastNotifier
 from pathlib import Path
-import flet as ft
 import requests
+
+from threading import Thread
 
 
 class Notificator:
@@ -16,6 +17,9 @@ class Notificator:
 
         The icone is already seted to the app icon
         """
+        Thread(target=self.show_it, args=(title, message)).start()
+
+    def show_it(self, title: str, message: str) -> None:
         try:
             if not self.img_path.exists():
                 self.img_path.parent.mkdir(parents=True, exist_ok=True)

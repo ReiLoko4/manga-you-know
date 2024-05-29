@@ -4,6 +4,7 @@ flet
 py7zr
 pyperclip
 requests
+retrying
 sqlmodel
 win10toast
 yt-dlp

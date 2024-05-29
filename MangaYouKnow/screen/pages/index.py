@@ -254,10 +254,10 @@ class Index:
                 # ft.Column([ft.Container(ft.Row([]), padding=10)], col=2, height=70, width=250, alignment=ft.MainAxisAlignment.START),
             ], alignment=ft.MainAxisAlignment.CENTER),
             ft.ResponsiveRow([
-                ft.Column([ft.Container(bgcolor='white', width=300)], col=2),
-                ft.Column([ft.Container(results_card, padding=5)], col=6),
-                ft.Column([ft.Container(width=250, padding=10)], col=4),
-            ], alignment=ft.MainAxisAlignment.CENTER, columns=12),
+                ft.Column([ft.Container(bgcolor='white', width=300)], col=3),
+                ft.Column([ft.Container(results_card, padding=5)], col=7),
+                ft.Column([ft.Container(width=250, padding=10)], col=3),
+            ], alignment=ft.MainAxisAlignment.CENTER, columns=13),
             ], spacing=0.3)
         )
         stack = ft.Stack([
