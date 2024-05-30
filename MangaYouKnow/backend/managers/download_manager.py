@@ -74,9 +74,9 @@ class DownloadManager:
     def search(self, source: str, query: str, fav_type: str = 'manga') -> list[Manga] | bool:
         dl = self.__match_source__(source, fav_type)
         if dl:
-            respose = dl.search(query)
-            if respose != False:
-                return respose
+            response = dl.search(query)
+            if response != False:
+                return response
             raise Exception('Error while searching.')
         return False
 

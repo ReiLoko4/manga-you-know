@@ -7,21 +7,45 @@ from backend.models import Manga, Chapter
 
 class TCBScansDl(MangaDl):
     def __init__(self):
-        self.base_url = 'https://tcb-backup.bihar-mirchi.com/'
+        self.base_url = 'https://tcbscans.me/'
         self.session = Session()
+        # self.session.headers.update({
+        #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
+        #     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        #     'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
+        #     'Referer': 'https://tcbscans.me/',
+        #     'Alt-Used': 'tcbscans.me',
+        #     'Connection': 'keep-alive',
+        #     'Upgrade-Insecure-Requests': '1',
+        #     'Sec-Fetch-Dest': 'document',
+        #     'Sec-Fetch-Mode': 'navigate',
+        #     'Sec-Fetch-Site': 'same-origin',
+        #     'Sec-Fetch-User': '?1',
+        # })
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-            'Referer': 'https://tcbscans.com/',
-            'Alt-Used': 'tcbscans.com',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'same-origin',
-            'Sec-Fetch-User': '?1',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'max-age=0',
+            'dnt': '1',
+            'priority': 'u=0, i',
+            'referer': 'https://tcbscans.me/',
+            'sec-ch-ua': '"Chromium";v="125", "Not.A/Brand";v="24"',
+            'sec-ch-ua-arch': '"x86"',
+            'sec-ch-ua-bitness': '"64"',
+            'sec-ch-ua-full-version': '"125.0.6422.112"',
+            'sec-ch-ua-full-version-list': '"Chromium";v="125.0.6422.112", "Not.A/Brand";v="24.0.0.0"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-model': '""',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-ch-ua-platform-version': '"15.0.0"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         })
+
         
     @cache
     def get_mangas(self) -> list[Manga] | bool:
@@ -52,7 +76,9 @@ class TCBScansDl(MangaDl):
         return sorted_mangas[:10]
 
     def get_chapters(self, manga_id: str) -> list[Chapter] | bool:
-        response = self.session.get(f'{self.base_url}mangas/{manga_id}')
+        response = self.session.get(f'{self.base_url}mangas/{manga_id}', cookies = {
+            'cf_clearance': 'nAxl8ZCSRxoKsYnm2fCLuut3aD8YNGSrT5_67jnTjJ8-1717032062-1.0.1.1-_j_JIecvqrQJqMzkfh2DTPRAhxHoOue1ToszMNFQpNt2n0F1QVL.wfMX_BVDRpQkYYsCm8JTThNtEVvsIc_Gtg',
+        })
         if not response:
             return False
         soup = BeautifulSoup(response.content, 'html.parser')

@@ -58,7 +58,7 @@ class MangaDexDl(MangaDl):
         chapters_list = []
         while True:
             response = requests.get(
-                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]={language}&order[chapter]=desc&order[volume]=desc',
+                f'https://api.mangadex.org/manga/{manga_id}/feed?limit={limit}&translatedLanguage[]={language}&order[chapter]=desc&order[volume]=desc&includeExternalUrl=0',
                 params={'offset':offset}
             )
             if not response:
