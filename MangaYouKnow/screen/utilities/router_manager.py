@@ -15,7 +15,14 @@ class Router:
             '/configs': configs,
             '/about': about,
         }
-        self.body = ft.Container(content=self.routes['/'])
+        self.body = ft.Container(
+            content=self.routes['/'],
+            col=11,
+        )
+        self.espacer = ft.Container(
+            bgcolor=ft.colors.TRANSPARENT,
+            col=1,
+        )
         self.update = {
             '/': index.data[0],
             '/favorites': favorites.data[0],
@@ -26,24 +33,22 @@ class Router:
             '/favorites': favorites.data[1],
             '/configs': configs
         }
-        self.reader = ft.Container()
-        self.reader.visible = False
 
     def route_change(self, r: ft.RouteChangeEvent):
         self.page.scroll_to(0)
         if r.route == '/reader':
+            self.page.banner.visible = False
+            self.espacer.col = 0
+            self.body.col = 12
             self.page.dialog.open = False
             self.page.scroll = False
             reader = MangaReader(self.page).return_content()
-            self.reader.content = reader
+            self.body.content = reader
             self.page.on_resize = reader.data['resize']
-            self.body.visible = False
-            self.reader.visible = True
             return
-        if self.reader.visible:
-            self.reader.visible = False
-            self.body.visible = True
-            self.page.banner.visible = True
+        self.page.banner.visible = True
+        self.espacer.col = 1
+        self.body.col = 11
         self.body.content = self.routes[r.route]
         self.body.update()
         if r.route == '/favorites' or r.route == '/':

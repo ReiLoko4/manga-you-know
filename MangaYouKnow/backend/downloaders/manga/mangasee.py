@@ -55,8 +55,12 @@ class MangaSeeDl(MangaDl):
             manga.grade = 0.0
             if query.lower() in manga.name.lower():
                 manga.grade += 1
+            if manga.name.lower().startswith(query.lower()):
+                manga.grade += 1
             if True in map(lambda x: query.lower() in x.lower(), manga.extra_name):
                 manga.grade += 1
+            if query.lower() in manga.name.lower().split(' '):
+                manga.grade += 0.5
             if True in map(lambda x: query.lower() in x.lower(), manga.author):
                 manga.grade += 0.5
             if manga.grade:

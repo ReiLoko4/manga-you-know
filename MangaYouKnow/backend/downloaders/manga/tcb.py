@@ -76,9 +76,7 @@ class TCBScansDl(MangaDl):
         return sorted_mangas[:10]
 
     def get_chapters(self, manga_id: str) -> list[Chapter] | bool:
-        response = self.session.get(f'{self.base_url}mangas/{manga_id}', cookies = {
-            'cf_clearance': 'nAxl8ZCSRxoKsYnm2fCLuut3aD8YNGSrT5_67jnTjJ8-1717032062-1.0.1.1-_j_JIecvqrQJqMzkfh2DTPRAhxHoOue1ToszMNFQpNt2n0F1QVL.wfMX_BVDRpQkYYsCm8JTThNtEVvsIc_Gtg',
-        })
+        response = self.session.get(f'{self.base_url}mangas/{manga_id}')
         if not response:
             return False
         soup = BeautifulSoup(response.content, 'html.parser')

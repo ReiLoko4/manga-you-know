@@ -1,4 +1,6 @@
 from time import sleep
+from typing import Generator
+
 import flet as ft
 from threading import Thread
 import flet_core.margin as margin 
@@ -28,7 +30,7 @@ def verify_chapters(manga: Favorite, text: ft.Text, card: ft.Card, container: ft
         last_readed.language = 'en' if last_readed.source == 'md' else None
         last_readed.chapter_id = None
     try:
-        if manga.type == 'manga':
+        if manga.type in ('manga', 'hq'):
             chapters: list[Chapter] = dl.get_chapters(last_readed.source, last_readed.favorite_source_id, last_readed.language if last_readed.language else None)
         else:
             chapters: list[Chapter] = dl.get_episodes(last_readed.source, last_readed.favorite_source_id)
@@ -78,14 +80,13 @@ def verify_ten_minutes():
 def MangasCardNotify(
         cards_row: ft.Row,
         page: ft.Page,
-    ) -> list[ft.Card]:
+    ) -> Generator[ft.Card, None, None]:
     def togle_notify(e: ft.ControlEvent, manga: Favorite) -> None:
         database.add_notify(manga.id) if e.control.value \
             else database.delete_notify(manga.id)
         cards_row.controls = MangasCardNotify(cards_row, page)
         page.update()
     favorites_notify = database.get_favorites_notify()
-    mangas_card = []
     threads.delete_all()
     for manga in favorites_notify:
         text_chapters = ft.Text('...', italic=True)
@@ -114,10 +115,10 @@ def MangasCardNotify(
             ], alignment=ft.CrossAxisAlignment.STRETCH)
         ], alignment=ft.MainAxisAlignment.CENTER)
         threads.add_thread_by_args(verify_chapters, args=(manga, text_chapters, card, container, page))
-        mangas_card.append(card)
-    if page.data['is_first']:
-        page.data['is_first'] = False
-        Thread(target=verify_ten_minutes).start()
-    else:
-        threads.start()
-    return mangas_card    
+        yield card
+    threads.start()
+    # if page.data['is_first']:
+    #     page.data['is_first'] = False
+    #     Thread(target=verify_ten_minutes).start()
+    # else:
+    #     threads.start()

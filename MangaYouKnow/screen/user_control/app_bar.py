@@ -4,6 +4,7 @@ import flet as ft
 def NavBar(page: ft.Page) -> ft.NavigationRail:
     navbar = ft.NavigationRail(
         selected_index=0,
+        col=1,
         label_type=ft.NavigationRailLabelType.SELECTED,
         min_width=90,
         width=90,

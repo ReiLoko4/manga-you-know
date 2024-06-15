@@ -3,21 +3,21 @@
 class Language:
     LANGUAGE = {
         'md': [
-            'pt-br', 'en', 
+            'pt-br', 'eng', 
             'es', 'ja-ro',
             'ko-ro', 'zh',
             'es-la', 'zh-hk',
             'zh-ro'
         ],
         'ml': ['pt-br'],
-        'ms': ['en'],
+        'ms': ['eng'],
         'mc': ['pt-br'], 
-        'mf': ['en'],
+        'mf': ['eng'],
         'mx': ['pt-br'],
         'gkk': ['pt-br'],
         'tsct': ['pt-br'],
-        'tcb': ['en'],
-        'op': ['en'],
+        'tcb': ['eng'],
+        'op': ['eng'],
         'opex': ['pt-br'],
         'lmorg': ['pt-br'],
         'av': ['pt-br'],
@@ -28,4 +28,6 @@ class Language:
         'go': ['pt-br'],
         'ba': ['pt-br'],
         'aon': ['pt-br'],
+        'rac': ['eng'],
+        'hqn': ['pt-br'],
     }

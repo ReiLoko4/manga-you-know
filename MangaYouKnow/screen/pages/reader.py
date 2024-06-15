@@ -112,7 +112,7 @@ class MangaReader:
         self.panel = ft.Image(src_base64=self.pages.next(), fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
         self.page.window_full_screen = True
         self.page.title = f'{self.manga.name} - {self.chapter.number} {' > ' + self.chapter.title if self.chapter.title else ''}'  
-        self.page.banner.visible = False
+        # self.page.banner.visible = False
         if not self.db.is_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapter.id):
             self.db.add_all_readed_below(self.manga, self.source, self.chapter, self.chapters, self.language)
         self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=lambda e: self.change_chapter())
@@ -194,9 +194,7 @@ class MangaReader:
         self.content.data = {
             'resize': resize
         }
-        if is_second_time:
-            self.page.data['reader_container'].content = self.content
-        else:
+        if not is_second_time:
             self.page.on_keyboard_event = on_key
         self.page.update()
 

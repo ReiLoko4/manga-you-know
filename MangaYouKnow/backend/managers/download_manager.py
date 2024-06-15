@@ -49,6 +49,10 @@ class DownloadManager:
             'tcb': TCBScansDl(),
             'lmorg': LermangaOrgDl()
         }
+        self.hq_downloaders = {
+            'rac': ReadAllComicsDl(),
+            'hqn': HqNowDl(),
+        }
         self.anime_downloaders = {
             'av': AnimesVisionDl(),
             'af': AnimeFireDl(),
@@ -65,9 +69,11 @@ class DownloadManager:
 
     @conditional_cache_lru(maxsize=1024)
     def __match_source__(self, source: str, fav_type: str = 'manga') -> MangaDl | AnimeDl:
-        if fav_type == 'manga':
-            return self.manga_downloaders[source]
-        return self.anime_downloaders[source]
+        if fav_type in ('manga', 'hq'):
+            return self.manga_downloaders[source] if source in self.manga_downloaders \
+                else self.hq_downloaders[source]
+        else:
+            return self.anime_downloaders[source]
     
     @retry(stop_max_attempt_number=3, wait_fixed=1000)
     @conditional_cache_lru(maxsize=1024)
@@ -249,7 +255,6 @@ class DownloadManager:
             relatory = executor.map(
                 self.download_chapter, 
                 [manga] * len(chapters), 
-                [manga.source] * len(chapters), 
                 list(reversed(chapters)), 
                 [True] * len(chapters)
             )

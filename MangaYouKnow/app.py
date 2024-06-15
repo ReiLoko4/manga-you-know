@@ -25,20 +25,14 @@ def main(page: ft.Page) -> ft.FletApp:
     page.data['dl'] = DownloadManager()
     router = Router(page)
     page.on_route_change = router.route_change
-    page.banner = NavBar(page)
     page.scroll = ft.ScrollMode.ADAPTIVE
+    page.banner = NavBar(page)
     page.add(
-        ft.Stack([
-            ft.Column([
-                router.body
-            ],
-            left=90,
-            top=0
-            ),
-            router.reader
+        ft.ResponsiveRow([
+            router.espacer,
+            router.body,
         ])
     )
-    page.data['reader_container'] = router.reader
     page.data['version'] = __version__
     page.go('/')
     page.update()

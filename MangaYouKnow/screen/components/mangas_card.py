@@ -1,3 +1,5 @@
+from typing import Generator
+
 import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
@@ -22,23 +24,24 @@ def MangasCard(
         page: ft.Page,
         order_by: str,
         query: str = None,
-        favorite_type: list[str] = ['manga']
-    ) -> list[ft.Card]:
+        favorite_types: list[str] = ['manga']
+    ) -> Generator[ft.Card, None, None]:
     favorites = database.get_favorites(
         None if mark_selector.value == 'all' else mark_selector.value, 
         order_by, 
-        favorite_type[0] if len(favorite_type) == 1 else None
+        favorite_types
     )
     if mark_selector.value == 'all':
         page.data['last_favorites'] = favorites
+    fav_types_str = favorite_types[0] if len(favorite_types) == 1 else ' ou '.join(favorite_types)
     if query is not None:
         favorites = [i for i in favorites if query.lower() in i.name.lower()]
         if not len(favorites):
             return [
                 ft.Card(
                     content=ft.Text(
-                        f'Não existe nenhum manga que contenha "{query}" nos seus favoritos' if mark_selector.value == 'all'
-                        else f'Não existe nenhum manga que contenha "{query}" nos seus favoritos com a marcação "{database.get_mark(mark_selector.value).name}"'
+                        f'Não existe nenhum {fav_types_str} que contenha "{query}" nos seus favoritos' if mark_selector.value == 'all'
+                        else f'Não existe nenhum {fav_types_str} que contenha "{query}" nos seus favoritos com a marcação "{database.get_mark(mark_selector.value).name}"'
                     ), key='nothing'
                 )
             ]
@@ -55,12 +58,13 @@ def MangasCard(
         return [
             ft.Card(
                 content=ft.Text(
-                    f'Não existe nenhum manga com a marcação "{database.get_mark(mark_selector.value).name}" nos seus favoritos'
+                    f'Não existe nenhum {fav_types_str} com a marcação "{database.get_mark(mark_selector.value).name}" nos seus favoritos'
                 ), key='nothing'
             )
         ]
-    return [
-        ft.Card(
+    
+    for manga in favorites:
+        yield ft.Card(
             ft.Row([
                 ft.Column([
                     ft.Container(
@@ -83,5 +87,3 @@ def MangasCard(
             height=340,
             width=190,
         )
-        for manga in favorites
-    ]

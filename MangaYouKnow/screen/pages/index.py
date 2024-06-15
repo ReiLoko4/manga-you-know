@@ -24,6 +24,10 @@ class Index:
             # ft.dropdown.Option('lmorg', text='LerManga.org'),
             # ft.dropdown.Option('op', text='OP Scans'),
         ]
+        hq_options = [
+            ft.dropdown.Option('hqn', text='HQNow!'),
+            ft.dropdown.Option('rac', text='ReadAllComics'),
+        ]
         anime_options = [
             ft.dropdown.Option('aon', text='AnimesOnNZ'),
             ft.dropdown.Option('ba', text='BetterAnime'),
@@ -38,9 +42,13 @@ class Index:
             ft.icons.ASSESSMENT_OUTLINED,
             tooltip='Gerar relatório'
         )
+        def refresh(_=None):
+            favorites_row.controls = MangasCardNotify(favorites_row, page)
+            page.update()
         btn_refresh = ft.IconButton(
             ft.icons.CACHED_OUTLINED,
-            tooltip='Recarregar'
+            tooltip='Recarregar',
+            on_click=refresh
         )
         source_selector = ft.Dropdown(options=manga_options, value='md', width=140)
         favorite_type = ft.SegmentedButton(
@@ -49,6 +57,7 @@ class Index:
             allow_empty_selection=False,
             segments=[
                 ft.Segment('manga', label=ft.Text('Manga')),
+                ft.Segment('hq', label=ft.Text('HQ')),
                 ft.Segment('anime', label=ft.Text('Anime')),
             ],
             selected={'manga'},
@@ -98,11 +107,14 @@ class Index:
 
         btn_relatory.on_click = get_relatory
         def change_options(e: ft.ControlEvent):
-            source_selector.options = manga_options if list(e.control.selected)[0] == 'manga' else anime_options
+            selected = list(e.control.selected)[0]
+            source_selector.options = manga_options if selected == 'manga' \
+                else hq_options if selected == 'hq' \
+                else anime_options
             source_selector.value = source_selector.options[0].key
             search.label = f'Pesquisar {list(favorite_type.selected)[0]}s...'
-            search_mangas(search.value)
             page.update()
+            search_mangas(search.value)
 
         favorite_type.on_change = change_options
         def togle_favorite(manga: Manga, button: ft.IconButton, is_on_search: bool = False):
@@ -271,18 +283,27 @@ class Index:
         def update(e):
             if e:
                 favorites_row.width = e
-                stack.width = e
+                stack.width = e 
                 index.width = e
                 self.content.width = e
-            favorites = MangasCardNotify(favorites_row, page)
-            count = 1
-            for num in range(len(favorites)):
-                if num % 3 == 0:
-                    count += 1
-            stack.height = count * 800
-            index.height = count * 800
-            favorites_row.height = count * 800
-            favorites_row.controls = favorites
+            favorites_row.controls.clear()
+            for i, favorite in enumerate(
+                MangasCardNotify(favorites_row, page)):
+                favorites_row.controls.append(favorite)
+                if i % 3 == 0:
+                    page.update()
+
+            favorites_row.height = len(favorites_row.controls) * 74
+            index.height = len(favorites_row.controls) * 74
+            stack.height = len(favorites_row.controls) * 74
+            # count = 1
+            # for num in range(len(favorites)):
+            #     if num % 3 == 0:
+            #         count += 1
+            # stack.height = count * 800
+            # index.height = count * 800
+            # favorites_row.height = count * 800
+            # favorites_row.controls = favorites
             page.update()
 
         def resize(e):

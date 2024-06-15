@@ -28,9 +28,10 @@ class Favorites:
             allow_multiple_selection=True,
             segments=[
                 ft.Segment('manga', label=ft.Text('Manga')),
+                ft.Segment('hq', label=ft.Text('HQ')),
                 ft.Segment('anime', label=ft.Text('Anime')),
             ],
-            selected={'manga', 'anime'},
+            selected={'manga', 'hq', 'anime'},
         )
         order_favorites = ft.Dropdown(
             options=[
@@ -197,33 +198,47 @@ class Favorites:
             confirmation.open = True
             page.update()
 
-        row_mangas = ft.Row(
-            wrap=True,
-            width=page.width - 90,
-            top=100,
-            alignment=ft.MainAxisAlignment.START,
-            scroll='always'
+        # row_mangas = ft.Row(
+        #     wrap=True,
+        #     width=page.width - 90,
+        #     top=100,
+        #     alignment=ft.MainAxisAlignment.START,
+        #     scroll='always'
+        # )
+        row_mangas = ft.GridView(
+            expand=True, 
+            max_extent=500,
+            child_aspect_ratio=1,
         )
         def load_mangas(query: str = None):
             if query == None:
                 query = search.value if search.value != '' else None
             if query: query = query.lower()
-            favorites = MangasCard(
-                source_languages,
-                mark_selector,
-                load_mangas,
-                remove_manga,
-                page,
-                order_favorites.value,
-                query=query,
-                favorite_type=list(favorite_type.selected)
-            )
-            row_mangas.controls = favorites
-            if favorites[0].key == 'nothing':
+            row_mangas.controls.clear()
+            count = 0
+            first_favorite = None
+            for i, favorite in enumerate(
+                MangasCard(
+                    source_languages,
+                    mark_selector,
+                    load_mangas,
+                    remove_manga,
+                    page,
+                    order_favorites.value,
+                    query=query,
+                    favorite_types=list(favorite_type.selected)
+                )):
+                row_mangas.controls.append(favorite)
+                count += 1
+                if i % 20 == 0:
+                    page.update()
+                if i == 0:
+                    first_favorite = favorite
+            if first_favorite.key == 'nothing':
                 count_results.value = '0'
                 page.update()
                 return
-            count_results.value = str(len(favorites))
+            count_results.value = str(count)
             page.update()
         # page.data['load_mangas'] = load_mangas
         order_favorites.on_change = lambda e: load_mangas()
@@ -231,7 +246,7 @@ class Favorites:
         load_mangas()
         mark_selector.on_change = lambda e: load_mangas()
         favorites_by_mark = database.get_favorites()
-        stack = ft.Stack([
+        stack = ft.Column([
             ft.Row([
                 ft.Container(favorite_type, padding=10),
                 ft.Container(order_favorites, padding=10),
@@ -240,9 +255,9 @@ class Favorites:
                 show_agrouped,
                 ft.Container(ft.Column([count_results], alignment=ft.MainAxisAlignment.CENTER), height=60, border=ft.border.all(1, ft.colors.GREY_700), border_radius=20, padding=5),
                 ft.Container(ft.Row([mark_selector, mark_add]), width=250, padding=10),
-            ], alignment=ft.MainAxisAlignment.CENTER
+            ], alignment=ft.MainAxisAlignment.CENTER, 
             ),
-            ft.Divider(height=170, color='white'),
+            ft.Divider(height=70, color='white',),
             row_mangas
         ],
             width=page.width - 90,
@@ -281,6 +296,7 @@ class Favorites:
                     stack
                 ],
                 scroll='always',
+                expand=True
             )
         self.content.data = [update, resize]
 

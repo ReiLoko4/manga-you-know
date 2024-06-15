@@ -149,7 +149,7 @@ class DataBase:
                         .values({'favorite_source_id': readed['manga_source_id']})
                     )
     
-    def get_favorites(self, mark_id: str = None, order: str = 'asc', fav_type: str = None) -> list[Favorite]:
+    def get_favorites(self, mark_id: str = None, order: str = 'asc', fav_types: list[str] = None) -> list[Favorite]:
         sess = self.get_session()
         if mark_id:
             return sess.exec(
@@ -157,18 +157,18 @@ class DataBase:
                 .join(MarkFavorite, Favorite.id == MarkFavorite.favorite_id)
                 .where(MarkFavorite.mark_id == mark_id)
                 .order_by(self.order_dict[f'{order}-mark' if order in ['asc', 'desc'] else order])
-            ).all() if fav_type is None else sess.exec(
+            ).all() if fav_types is None else sess.exec(
                 select(Favorite)
                 .join(MarkFavorite, Favorite.id == MarkFavorite.favorite_id)
-                .where(MarkFavorite.mark_id == mark_id, Favorite.type == fav_type)
+                .where(MarkFavorite.mark_id == mark_id, Favorite.type.in_(fav_types))
                 .order_by(self.order_dict[f'{order}-mark' if order in ['asc', 'desc'] else order])
             ).all()
         return sess.exec(
             select(Favorite)
             .order_by(self.order_dict[order])
-        ).all() if fav_type is None else sess.exec(
+        ).all() if fav_types is None else sess.exec(
             select(Favorite)
-            .where(Favorite.type == fav_type)
+            .where(Favorite.type.in_(fav_types))
             .order_by(self.order_dict[order])
         ).all()
     
@@ -184,6 +184,10 @@ class DataBase:
         return sess.exec(
             select(Favorite)
             .where(Favorite.notify == True)
+            .order_by(
+                desc(Favorite.score),
+                asc(Favorite.name)
+            )
         ).all()
     
     def get_favorites_sources(self) -> list[str]:

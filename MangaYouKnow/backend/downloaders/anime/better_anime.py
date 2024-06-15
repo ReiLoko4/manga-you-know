@@ -23,7 +23,7 @@ class BetterAnimeDl(AnimeDl):
             'Sec-Fetch-User': '?1',
         })
         self.session.cookies.update({
-            'betteranime_session': 'eyJpdiI6IlVuRk5LRldvc3pJaWdHbThoVCtYSlE9PSIsInZhbHVlIjoiTkJvbitCOW1uMWpYSkxCNXNsdHJTYnJUaWFabCtMdlhhdElnVFYrTlgwUUFENUhPYlIrMW5WSE9BWEd5ZG5Ba1Nqbjlma1BqWTJqQ001eWsvdnZxL1Awa21OMU96SGRlV2FMZmNyalI0MTdHYjk0UlZCeXdHakdIV1FUcWVTRkIiLCJtYWMiOiI1MjM3OGY0OGIyOWM3MWQyNmE2NDQyZGExNDJjNDliNGZjMGFmOTk0NjY4NmI5ZTQ0NzU5ZjczODUyZWMzMDYzIiwidGFnIjoiIn0%3D'
+            'betteranime_session': 'eyJpdiI6InA3MkpuakJhK2lsWitEdzBNYWQvSFE9PSIsInZhbHVlIjoiTlNFYlQ5dVpoUGxzYjJkQUFTN1UrWnpVTW5HT3lrWCtScFYrWmo4ZTJyMm5sL3JEZzl2elBMNGptMkN5eWtuWVEyWU9aSG5jRkVzUTduczJQK3FBN3hMZ21xQXd6L2NOL3IvVmhCTldJQ0d2cStwb0t5Q0J2T0crQy9vZzdFRHIiLCJtYWMiOiIzYjg4NzM1ODIyMzkzNmUwN2RmODgxYzYyOGVmMzZiZjI0NTkwYjJlOWE0ZDY5MWNjMmQ1NGZkMjNjZmUxOTFkIiwidGFnIjoiIn0%3D'
         })
 
     def search(self, query: str) -> list[Manga] | bool:
