@@ -3,12 +3,13 @@
 class Language:
     LANGUAGE = {
         'md': [
-            'pt-br', 'eng', 
+            'pt-br', 'en', 
             'es', 'ja-ro',
             'ko-ro', 'zh',
             'es-la', 'zh-hk',
             'zh-ro'
         ],
+        'mdj': ['pt-br'],
         'ml': ['pt-br'],
         'ms': ['eng'],
         'mc': ['pt-br'], 

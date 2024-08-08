@@ -37,6 +37,7 @@ class Router:
     def route_change(self, r: ft.RouteChangeEvent):
         self.page.scroll_to(0)
         if r.route == '/reader':
+            self.page.data['is_first'] = True
             self.page.banner.visible = False
             self.espacer.col = 0
             self.body.col = 12

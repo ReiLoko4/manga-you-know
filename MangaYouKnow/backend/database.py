@@ -61,6 +61,19 @@ class DataBase:
             'gkk_id', 
             'lmorg_id'
         ]
+        self.config_columns = [
+            ('theme-mode', 'dark'),
+            ('theme-color', 'blue'),
+            ('reader-type', 'h-n'),
+            ('download-path', './mangas/'),
+            ('double-page', False),
+            ('keybinds', {
+                'full-screen': 'F11',
+                'return-home': 'F4',
+                'next-page': 'Arrow Right',
+                'previous-page': 'Arrow Left'
+            })
+        ]
 
     def get_session(self) -> Session:
         self.create_database()
@@ -81,6 +94,8 @@ class DataBase:
                     'theme-mode': 'dark',
                     'theme-color':'blue',
                     'reader-type': 'h-n',
+                    'download-path': './mangas/',
+                    'double-page': False,
                     'keybinds': {
                         'full-screen': 'F11',
                         'return-home': 'F4',
@@ -91,8 +106,18 @@ class DataBase:
 
     def init_database(self):
         self.create_database()
+        self.create_config()
         self.fix_favorites()
         self.fix_readed()
+        self.fix_configs()
+
+    def fix_configs(self):
+        data = self._get_config()
+        for column in self.config_columns:
+            if column[0] not in data['config']:
+                data['config'][column[0]] = column[1]
+        with open(self.config, 'w', encoding='UTF-8') as file:
+            json.dump(data, file)
     
     def fix_favorites(self):
         table_columns = self.execute_data('PRAGMA TABLE_INFO(favorites);')
@@ -197,14 +222,11 @@ class DataBase:
         ).unique().all()
 
     def get_config(self) -> dict:
-        self.create_config()
-        with open(self.config, 'r', encoding='UTF-8') as file:
-            return json.load(file)['config']
+        return self._get_config()['config']
     
     def set_config(self, key: str, value: any) -> bool:
         self.create_config()
-        with open(self.config, 'r', encoding='UTF-8') as file:
-            data = json.load(file)
+        data = self._get_config()
         data['config'][key] = value
         with open(self.config, 'w', encoding='UTF-8') as file:
             json.dump(data, file)

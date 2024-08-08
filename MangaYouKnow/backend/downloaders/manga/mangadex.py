@@ -13,8 +13,11 @@ class MangaDexDl(MangaDl):
     
     def search(self, entry: str, limit='10') -> list[Manga] | bool:
         response = requests.get(
-            f'https://api.mangadex.org/manga?includes[]=cover_art&order[relevance]=desc&contentRating[]=safe&contentRating[]=suggestive&contentRating[]=erotica',
+            f'https://api.mangadex.org/manga',
             params={
+                'includes[]': 'cover_art',
+                'order[relevance]': 'desc',
+                'contentRating[]': ['safe', 'suggestive', 'erotica', 'pornographic'],
                 'title': entry,
                 'limit': limit,
             }

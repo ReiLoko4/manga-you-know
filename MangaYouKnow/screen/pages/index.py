@@ -15,6 +15,7 @@ class Index:
             ft.dropdown.Option('md', text='MangaDex'),
             # ft.dropdown.Option('ml', text='MangaLivre'),
             ft.dropdown.Option('ms', text='MangaSee'),
+            ft.dropdown.Option('mdj', text='Mangá Dōjō'),
             ft.dropdown.Option('mc', text='MangasChan'),
             # ft.dropdown.Option('mf', text='MangaFire'),
             ft.dropdown.Option('mx', text='MangaNexus'),
@@ -43,7 +44,12 @@ class Index:
             tooltip='Gerar relatório'
         )
         def refresh(_=None):
-            favorites_row.controls = MangasCardNotify(favorites_row, page)
+            favorites_row.controls.clear()
+            for i, favorite in enumerate(
+                MangasCardNotify(favorites_row, page)):
+                favorites_row.controls.append(favorite)
+                if i % 3 == 0:
+                    page.update()
             page.update()
         btn_refresh = ft.IconButton(
             ft.icons.CACHED_OUTLINED,

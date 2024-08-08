@@ -1,4 +1,5 @@
 import flet as ft
+
 from backend.database import DataBase
 from backend.managers import DownloadManager
 from backend.tables import Favorite
@@ -59,7 +60,26 @@ class MangaReader:
             )
         self.load_drawer()
         self.dl: DownloadManager = page.data['dl']
-        self.content = None
+        self.stack = ft.Stack()
+        self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=lambda e: self.change_chapter())
+        self.currently_page = ft.Text(f'')
+        self.panel = ft.Image(src_base64='', fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
+        self.image_row = ft.Row(
+            [self.panel],
+            alignment=ft.MainAxisAlignment.CENTER
+        )
+        self.stack.controls = [
+            ft.Row([
+                self.image_row,                
+            ], alignment=ft.MainAxisAlignment.CENTER),
+            ft.Row(
+                [
+                    self.btn_next_chapter,
+                    ft.Card(ft.Row([self.currently_page], alignment=ft.MainAxisAlignment.CENTER), height=30, width=50,
+                            opacity=0.5), ft.Container(width=10)],
+                alignment=ft.MainAxisAlignment.END,
+            )
+        ]
         self.create_content()
 
     def focus_drawer(self):
@@ -107,36 +127,17 @@ class MangaReader:
     def create_content(self):
         self.pages = self.page.data['chapter_images']
         self.pages_len = len(self.pages)
-        self.pages = EnableBackwardIterator(iter(self.pages))
-        self.currently_page = ft.Text(f' 1/{self.pages_len}')
-        self.panel = ft.Image(src_base64=self.pages.next(), fit=ft.ImageFit.FIT_HEIGHT, height=self.page.height)
+        self.pages = EnableBackwardIterator(self.pages)
+        self.currently_page.value = f'1/{self.pages_len}'
+        print(len(self.pages))
+        self.panel.src_base64 = self.pages.next()
+        self.image_row.controls = [self.panel]
         self.page.window_full_screen = True
         self.page.title = f'{self.manga.name} - {self.chapter.number} {' > ' + self.chapter.title if self.chapter.title else ''}'  
-        # self.page.banner.visible = False
         if not self.db.is_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapter.id):
             self.db.add_all_readed_below(self.manga, self.source, self.chapter, self.chapters, self.language)
-        self.btn_next_chapter = ft.IconButton(ft.icons.NAVIGATE_NEXT_SHARP, on_click=lambda e: self.change_chapter())
         self.btn_next_chapter.visible = True if self.pages_len == 1 \
             and not self.chapters[0].id == self.chapter.id else False
-        is_second_time = False
-        if self.content != None:
-            is_second_time = True
-        self.image_row = ft.Row(
-            [self.panel],
-            alignment=ft.MainAxisAlignment.CENTER
-        )
-        self.content = ft.Stack([
-            ft.Row([
-                self.image_row,                
-            ], alignment=ft.MainAxisAlignment.CENTER),
-            ft.Row(
-                [
-                    self.btn_next_chapter,
-                    ft.Card(ft.Row([self.currently_page], alignment=ft.MainAxisAlignment.CENTER), height=30, width=50,
-                            opacity=0.5), ft.Container(width=10)],
-                alignment=ft.MainAxisAlignment.END,
-            )
-        ])
         def next_page(e=None):
             if self.pages.i == self.pages_len:
                 return
@@ -155,6 +156,20 @@ class MangaReader:
             self.panel.height = self.page.height
             self.currently_page.value = f'{self.pages.i}/{self.pages_len}'
             self.page.update()
+        
+        def join_next_image():
+            if self.pages.i == self.pages_len:
+                return
+            new_image = self.dl.join_base64_images(self.panel.src_base64, self.pages.peek_next())
+            self.pages.delete_next()
+            self.pages.change_current(new_image)
+            self.panel.src_base64 = new_image
+            self.pages_len = len(self.pages)
+            if self.pages.i == self.pages_len and \
+                not self.chapters[0].id == self.chapter.id:
+                self.btn_next_chapter.visible = True
+            self.currently_page.value = f'{self.pages.i}/{self.pages_len}'
+            self.page.update()
 
         keybinds = self.db.get_config()['keybinds']
 
@@ -163,6 +178,8 @@ class MangaReader:
                 next_page()
             if e.key == keybinds['previous-page']:
                 prev_page()
+            if e.key == 'J':
+                join_next_image()
             if e.key == keybinds['full-screen']:
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
@@ -174,6 +191,8 @@ class MangaReader:
                     self.focus_drawer()
                 else:
                     self.drawer.open = False
+            if e.key == 'F5':
+                self.page.update()
             if e.key == 'Escape':
                 if self.page.window_full_screen:
                     self.page.window_full_screen = False
@@ -185,21 +204,24 @@ class MangaReader:
                 self.page.scroll = ft.ScrollMode.ADAPTIVE
                 self.page.window_full_screen = False
                 self.page.data['MangaOpen']()
+                self.page.update()
+                self.page.data['is_first'] = True
             self.page.update()
 
         def resize(e):
             self.panel.height = float(e.control.height)
             self.page.update()
 
-        self.content.data = {
+        self.stack.data = {
             'resize': resize
         }
-        if not is_second_time:
+        if self.page.data['is_first']:
+            self.page.data['is_first'] = False
             self.page.on_keyboard_event = on_key
         self.page.update()
 
     def return_content(self):
-        return self.content
+        return self.stack
 
     def change_chapter(self, chapter: Chapter=None):
         self.image_row.controls = [ft.ProgressRing(width=120, height=120)]

@@ -227,6 +227,8 @@ def MangaOpen(
     match manga_info.source:
         case 'md':
             text = 'MangaDex'
+        case 'mdj':
+            text = 'Mangá Dōjō'
         case 'ml':
             text = 'MangaLivre'
         case 'ms':
@@ -577,13 +579,27 @@ def MangaOpen(
         label='Notificações',
         label_position=ft.LabelPosition.RIGHT,
     )
+    switch_double = ft.Switch(
+        value=db.get_config()['double-page'],
+        width=50,
+        height=30,
+        label='Páginas duplas\n(ultra experimental)',
+        label_position=ft.LabelPosition.RIGHT,
+        on_change=lambda e: db.set_config('double-page', e.control.value)
+    )
     switch_notify.on_change=lambda e: togle_notify(e, manga_info)
     source_options.on_change = lambda e: load_chapters()
     language_options.on_change = lambda e: load_chapters()
     chapter_search.on_change = lambda e: load_chapters(e.control.value if e.control.value != '' else None)
     def close(_=None):
         if is_index:
-            cards_row.controls = mangas_card_notify(cards_row, page)
+            cards_row.controls.clear()
+            for i, favorite_card in enumerate(
+                mangas_card_notify(cards_row, page)):
+                cards_row.controls.append(favorite_card)
+                if i % 3 == 0:
+                    page.update()
+            page.update()
         column_chapters.controls = []
         alert.open = False
         page.update()
@@ -614,6 +630,7 @@ def MangaOpen(
                     ft.Container(ft.Image(manga_info.cover, height=240, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
                     source_options,
                     language_options,
+                    switch_double,
                     switch_notify,
                     ft.Row([
                         ft.Container(ft.Column([score], alignment=ft.MainAxisAlignment.CENTER), height=40, border=ft.border.all(1, ft.colors.GREY_700), border_radius=10, padding=10),

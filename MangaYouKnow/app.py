@@ -5,7 +5,7 @@ from backend.managers import DownloadManager
 from backend.database import DataBase
 
 
-__version__ = '0.9.16b'
+__version__ = '0.9.17b'
 
 
 database = DataBase()
@@ -18,6 +18,7 @@ def main(page: ft.Page) -> ft.FletApp:
     page.window_min_width = 1200
     page.window_min_height = 800
     page.window_center()
+    page.horizontal_alignment = ft.MainAxisAlignment.CENTER
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     database.init_database()
     page.data = {}

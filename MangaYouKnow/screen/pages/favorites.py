@@ -198,19 +198,19 @@ class Favorites:
             confirmation.open = True
             page.update()
 
-        # row_mangas = ft.Row(
-        #     wrap=True,
-        #     width=page.width - 90,
-        #     top=100,
-        #     alignment=ft.MainAxisAlignment.START,
-        #     scroll='always'
-        # )
-        row_mangas = ft.GridView(
-            expand=True, 
-            max_extent=500,
-            child_aspect_ratio=1,
+        row_mangas = ft.Row(
+            wrap=True,
+            width=page.width - 90,
+            # top=100,
+            alignment=ft.MainAxisAlignment.START,
+            scroll='always'
         )
-        def load_mangas(query: str = None):
+        # row_mangas = ft.GridView(
+        #     expand=True, 
+        #     max_extent=500,
+        #     child_aspect_ratio=1,
+        # )
+        def load_mangas(query=None):
             if query == None:
                 query = search.value if search.value != '' else None
             if query: query = query.lower()

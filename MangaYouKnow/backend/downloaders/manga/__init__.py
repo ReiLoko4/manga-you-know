@@ -11,3 +11,4 @@ from .opex import OpexDl
 from .taosect import TaoSectScanDl
 from .tcb import TCBScansDl
 from .lermanga_org import LermangaOrgDl
+from .mangadojo import MangaDojoDl

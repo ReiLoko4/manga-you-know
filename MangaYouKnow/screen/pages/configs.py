@@ -5,6 +5,8 @@ class Configs:
     def __init__(self, page: ft.Page):
         database = DataBase()
         configs = database.get_config()
+        pick_directory_dialog = ft.FilePicker()
+        download_path = ft.TextField(read_only=True, value=configs['download-path'])
         def change_keybind(_=None):
             keybinds = database.get_config()['keybinds']
             def listen_key(btn:ft.TextButton):
@@ -30,6 +32,13 @@ class Configs:
             page.dialog = change_keys
             change_keys.open = True
             page.update()
+        def pick_files_result(e: ft.FilePickerResultEvent):
+            if e.path:
+                download_path.value = e.path
+                database.set_config('download-path', e.path)
+                download_path.update()
+        pick_directory_dialog.on_result = pick_files_result
+        page.overlay.append(pick_directory_dialog)
         def change_theme(theme: str):
             database.set_config('theme-mode', theme)
             page.theme_mode = theme
@@ -45,7 +54,16 @@ class Configs:
                         ft.Radio(label='Escuro', value='dark'),
                     ]), on_change=lambda e: change_theme(e.control.value), 
                     value=configs['theme-mode']
-                    )
+                    ),
+                    ft.Text('Pasta de download'),
+                    download_path,
+                    ft.ElevatedButton(
+                        'Escolher pasta',
+                        icon=ft.icons.UPLOAD_FILE,
+                        on_click=lambda _: pick_directory_dialog.get_directory_path(
+                            'Escolha a pasta de download',
+                        ),
+                    ),
                 ])
             ],
             alignment=ft.MainAxisAlignment.CENTER,

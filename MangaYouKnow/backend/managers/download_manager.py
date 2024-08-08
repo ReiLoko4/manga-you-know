@@ -1,10 +1,13 @@
-import base64
 import os
+import base64
+from io import BytesIO
 import subprocess
 from pathlib import Path
 import concurrent.futures
 
 import py7zr
+from PIL import Image
+from backend.database import DataBase
 from backend.downloaders.hq import *
 from backend.downloaders.anime import *
 from backend.downloaders.manga import *
@@ -28,7 +31,11 @@ from yt_dlp import YoutubeDL
 
 class DownloadManager:
     def __init__(self) -> None:
+        self.db = DataBase()
         self.session = Session()
+        self.session.headers.update({
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
+        })
         retry = Retry(connect=3, backoff_factor=0.5)
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount('http://', adapter)
@@ -38,6 +45,7 @@ class DownloadManager:
             'aoashi': AoAshiDl(),
             'gkk': GekkouDl(),
             'md': MangaDexDl(),
+            'mdj': MangaDojoDl(),
             'ms': MangaSeeDl(),
             'mc': MangasChanDl(),
             'ml': MangaLivreDl(),
@@ -156,7 +164,47 @@ class DownloadManager:
                 args=[image]
             )
         threads.start()
-        return [i for i in threads.join() if i]
+        if not self.db.get_config()['double-page']:
+            return [i for i in threads.join() if i]
+        return self.join_base64_images_list(
+            [i for i in threads.join() if i]
+        )
+
+    
+    def join_base64_images(self, base64_image1, base64_image2):
+        image_data1 = base64.b64decode(base64_image1)
+        image_data2 = base64.b64decode(base64_image2)
+        image1 = Image.open(BytesIO(image_data1))
+        image2 = Image.open(BytesIO(image_data2))
+        new_width = image1.width + image2.width
+        new_height = max(image1.height, image2.height)
+        new_image = Image.new('RGB', (new_width, new_height))
+        new_image.paste(image2, (0, 0))
+        new_image.paste(image1, (image2.width, 0))  
+        buffered = BytesIO()
+        new_image.save(buffered, format='JPEG')
+        return base64.b64encode(buffered.getvalue()).decode('utf-8')
+    
+    def join_base64_images_list(self, base64_images: list[str]) -> list[str]:
+        if len(base64_images) == 1:
+            return base64_images
+        for i, img in enumerate(base64_images[1:], 1):
+            if i == len(base64_images):
+                break
+            img_data1 = base64.b64decode(img)
+            img1 = Image.open(BytesIO(img_data1))
+            img_data2 = base64.b64decode(base64_images[i + 1])
+            img2 = Image.open(BytesIO(img_data2))
+            if img1.width > img1.height or \
+               img2.width > img2.height:
+                continue
+            new_img = self.join_base64_images(img, base64_images[i + 1])
+            base64_images[i] = new_img
+            base64_images.pop(i + 1)
+        return base64_images
+
+
+            
     
     def start_video_player(
             self, 
@@ -230,7 +278,7 @@ class DownloadManager:
     def download_chapter(self, manga: Favorite, chapter: Chapter, is_in_list: bool = False) -> bool:
         manga_images = self.get_chapter_image_urls(manga.source, chapter.id)
         if manga_images:
-            folder = Path(f'mangas/{manga.folder_name}/{chapter.number}')
+            folder = Path(f'{self.db.get_config()['download-path']}/{manga.folder_name}/{chapter.number}')
             folder.mkdir(parents=True, exist_ok=True)
             with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
                 executor.map(
@@ -264,11 +312,12 @@ class DownloadManager:
         return True
     
     def is_downloaded(self, manga: Favorite, chapter : Chapter) -> bool:
-        return Path(f'mangas/{manga.folder_name}/{chapter.number}').exists()
+        return Path(f'{self.db.get_config()['download-path']}/{manga.folder_name}/{chapter.number}').exists()
 
     def is_each_downloaded(self, manga: Favorite, chapters: list[Chapter]) -> list[bool]:
-        if Path(f'mangas/{manga.folder_name}').exists():
-            downloaded_chapters = Path(f'mangas/{manga.folder_name}').iterdir()
+        path_favorite = Path(f'{self.db.get_config()['download-path']}/{manga.folder_name}')
+        if path_favorite.exists():
+            downloaded_chapters = path_favorite.iterdir()
             chapters_names = [chapter.name for chapter in downloaded_chapters]
             return [str(chapter.number) in chapters_names for chapter in chapters]
         return [False] * len(chapters)

@@ -84,7 +84,12 @@ def MangasCardNotify(
     def togle_notify(e: ft.ControlEvent, manga: Favorite) -> None:
         database.add_notify(manga.id) if e.control.value \
             else database.delete_notify(manga.id)
-        cards_row.controls = MangasCardNotify(cards_row, page)
+        cards_row.controls.clear()
+        for i, favorite_card in enumerate(
+            MangasCardNotify(cards_row, page)):
+            cards_row.controls.append(favorite_card)
+            if i % 3 == 0:
+                page.update()
         page.update()
     favorites_notify = database.get_favorites_notify()
     threads.delete_all()
