@@ -74,7 +74,9 @@ class Favorites:
                 ),
                 content=agrouped_row
             )
-            page.dialog = dialog
+            page.overlay.append(
+                dialog
+            )
             dialog.open = True
             page.update()
             favorites_by_mark = database.get_favorites(mark_selector.value if mark_selector.value != 'all' else None)
@@ -149,8 +151,8 @@ class Favorites:
                 if mark_selector.value == str(mark_id):
                     mark_selector.value = 'all'
                     load_mangas()
-                    page.update()
                 load_marks()
+                page.update()
             saved_marks = database.get_marks()
             load_marks()
             if len(saved_marks) > 5:
@@ -167,7 +169,9 @@ class Favorites:
                     ])
                 )
             )
-            page.dialog = alert
+            page.overlay.append(
+                alert
+            )
             alert.open = True
             page.update()
         mark_add.on_click = mark_add_click
@@ -194,7 +198,9 @@ class Favorites:
 
                 ],
             )
-            page.dialog = confirmation
+            page.overlay.append(
+                confirmation
+            )
             confirmation.open = True
             page.update()
 

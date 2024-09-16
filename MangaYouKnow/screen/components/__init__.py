@@ -4,3 +4,4 @@ from .mangas_card import MangasCard
 from .mangas_notify import MangasCardNotify
 from .relatory_card import RelatoryCard
 from .agrouped_card import AgroupedCard
+from .error_gif import ErrorGif

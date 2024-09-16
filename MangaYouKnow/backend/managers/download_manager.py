@@ -188,24 +188,29 @@ class DownloadManager:
     def join_base64_images_list(self, base64_images: list[str]) -> list[str]:
         if len(base64_images) == 1:
             return base64_images
-        for i, img in enumerate(base64_images[1:], 1):
-            if i == len(base64_images):
+        new_b64_images = []
+        count = 0
+        while count != len(base64_images):
+            if count == len(base64_images) - 1:
+                new_b64_images.append(base64_images[count])
                 break
-            img_data1 = base64.b64decode(img)
-            img1 = Image.open(BytesIO(img_data1))
-            img_data2 = base64.b64decode(base64_images[i + 1])
-            img2 = Image.open(BytesIO(img_data2))
-            if img1.width > img1.height or \
-               img2.width > img2.height:
+            if count == 0:
+                new_b64_images.append(base64_images[count])
+                count += 1
                 continue
-            new_img = self.join_base64_images(img, base64_images[i + 1])
-            base64_images[i] = new_img
-            base64_images.pop(i + 1)
-        return base64_images
+            img_data1 = base64.b64decode(base64_images[count])
+            img1 = Image.open(BytesIO(img_data1))
+            img_data2 = base64.b64decode(base64_images[count + 1])
+            img2 = Image.open(BytesIO(img_data2))
+            if img1.width > img1.height or img2.width > img2.height:
+                new_b64_images.append(base64_images[count])
+                count += 1
+                continue
+            new_img = self.join_base64_images(base64_images[count], base64_images[count + 1])
+            new_b64_images.append(new_img)
+            count += 2
+        return new_b64_images
 
-
-            
-    
     def start_video_player(
             self, 
             url: str, 

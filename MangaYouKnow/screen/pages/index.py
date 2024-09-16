@@ -1,5 +1,6 @@
 import flet as ft
 from time import sleep
+from threading import Thread
 from backend.models import Manga, Chapter
 from backend.tables import Favorite, Readed
 from backend.database import DataBase
@@ -51,6 +52,10 @@ class Index:
                 if i % 3 == 0:
                     page.update()
             page.update()
+        def refresh_10_minutes(_=None):
+            while True:
+                sleep(600)
+                refresh()
         btn_refresh = ft.IconButton(
             ft.icons.CACHED_OUTLINED,
             tooltip='Recarregar',
@@ -298,6 +303,7 @@ class Index:
                 favorites_row.controls.append(favorite)
                 if i % 3 == 0:
                     page.update()
+            page.update()
 
             favorites_row.height = len(favorites_row.controls) * 74
             index.height = len(favorites_row.controls) * 74
@@ -311,7 +317,6 @@ class Index:
             # favorites_row.height = count * 800
             # favorites_row.controls = favorites
             page.update()
-
         def resize(e):
             favorites_row.width = float(e.control.width) - 90
             index.width = float(e.control.width) - 90
@@ -319,6 +324,7 @@ class Index:
             self.content.width = float(e.control.width) - 90
             page.update()
         self.content.data = [update, resize]
+        Thread(target=refresh_10_minutes).start()
 
     def return_content(self) -> ft.Row:
         return self.content

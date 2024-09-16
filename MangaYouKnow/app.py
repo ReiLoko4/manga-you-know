@@ -13,11 +13,11 @@ database = DataBase()
 def main(page: ft.Page) -> ft.FletApp:
     page.title = f'MangaYouKnow {__version__}'
     page.theme_mode = database.get_config()['theme-mode']
-    page.window_width = 1200
-    page.window_height = 800
-    page.window_min_width = 1200
-    page.window_min_height = 800
-    page.window_center()
+    page.window.width = 1200
+    page.window.height = 800
+    page.window.min_width = 1200
+    page.window.min_height = 800
+    page.window.center()
     page.horizontal_alignment = ft.MainAxisAlignment.CENTER
     page.vertical_alignment = ft.CrossAxisAlignment.CENTER
     database.init_database()
@@ -27,7 +27,9 @@ def main(page: ft.Page) -> ft.FletApp:
     router = Router(page)
     page.on_route_change = router.route_change
     page.scroll = ft.ScrollMode.ADAPTIVE
-    page.banner = NavBar(page)
+    page.overlay.append(
+        NavBar(page)
+    )
     page.add(
         ft.ResponsiveRow([
             router.espacer,

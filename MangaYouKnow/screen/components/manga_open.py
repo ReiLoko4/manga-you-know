@@ -4,6 +4,7 @@ from threading import Thread
 
 import flet as ft
 import pyperclip
+from .error_gif import ErrorGif
 from backend.database import DataBase
 from backend.managers import DownloadManager
 from backend.models import Chapter, Episode
@@ -68,7 +69,11 @@ def MangaOpen(
             ft.ProgressRing(height=140, width=140),
         ], alignment=ft.MainAxisAlignment.CENTER
         )
-        page.dialog.content = ft.Container(
+        dialog = ''
+        for overlay in page.overlay:
+            if type(overlay) == ft.AlertDialog:
+                dialog = overlay
+        dialog.content = ft.Container(
             ft.Column([
                 ft.Row([
                     ft.Image(manga.cover, height=200, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10),
@@ -469,7 +474,7 @@ def MangaOpen(
                     key=chapter.id if query == None else grade
                 )
             )
-            if i % 30 == 0:
+            if i % 10 == 0:
                 page.update()
         if query != None:
             column_chapters.controls.sort(key=lambda x: x.key, reverse=True)
@@ -627,7 +632,7 @@ def MangaOpen(
         content=ft.Container(
             ft.Row([
                 ft.Column([
-                    ft.Container(ft.Image(manga_info.cover, height=240, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
+                    ft.Container(ft.Image(manga_info.cover, error_content=ErrorGif(), height=240, width=160, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10), padding=5),
                     source_options,
                     language_options,
                     switch_double,
@@ -660,7 +665,9 @@ def MangaOpen(
             ]), height=600, width=440
         ), on_dismiss=close
     )
-    page.dialog = alert
+    page.overlay.append(
+        alert
+    )
     alert.open = True
     page.update()
     load_chapters()

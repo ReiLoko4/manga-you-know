@@ -42,7 +42,30 @@ class EnableBackwardIterator:
             raise StopIteration
         else:
             return self.history[self.i - 1]
+        
+    def go_to(self, index):
+        for elem in self.iterator:
+            if elem not in self.history:
+                self.history.append(elem)
+        if index < 0 or index >= len(self.history):
+            raise IndexError("Index out of range")
+        self.i = index
+        return self.history[index]
 
+    def first(self):
+        for elem in self.iterator:
+            if elem not in self.history:
+                self.history.append(elem)
+        self.i = 0
+        return self.history[1]
+    
+    def last(self):
+        for elem in self.iterator:
+            if elem not in self.history:
+                self.history.append(elem)
+        self.i = len(self.history) - 1
+        return self.history[-1]
+    
     def delete_next(self):
         self.length -= 1
         if self.i + 1 < len(self.history):

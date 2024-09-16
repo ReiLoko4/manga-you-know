@@ -3,6 +3,7 @@ from typing import Generator
 import flet as ft
 import flet_core.margin as margin
 import flet_core.padding as padding
+from .error_gif import ErrorGif
 from backend.database import DataBase
 from backend.tables import Favorite
 from screen.components import MangaEdit, MangaOpen
@@ -73,7 +74,7 @@ def MangasCard(
                         ], alignment=ft.MainAxisAlignment.CENTER, width=170),
                         margin=margin.only(left=5, top=5)
                     ),
-                    ft.Row([ft.Image(manga.cover, height=250, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10)],
+                    ft.Row([ft.Image(manga.cover, error_content=ErrorGif(), height=250, width=170, fit=ft.ImageFit.FIT_HEIGHT, border_radius=10)],
                             width=180, alignment=ft.MainAxisAlignment.CENTER),
                     ft.Container(
                         ft.Row([

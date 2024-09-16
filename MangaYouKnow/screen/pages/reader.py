@@ -132,7 +132,7 @@ class MangaReader:
         print(len(self.pages))
         self.panel.src_base64 = self.pages.next()
         self.image_row.controls = [self.panel]
-        self.page.window_full_screen = True
+        self.page.window.full_screen = True
         self.page.title = f'{self.manga.name} - {self.chapter.number} {' > ' + self.chapter.title if self.chapter.title else ''}'  
         if not self.db.is_readed(self.source, self.manga.id, self.manga.source_id if self.manga.source_id != 'opex' else 'opex', self.chapter.id):
             self.db.add_all_readed_below(self.manga, self.source, self.chapter, self.chapters, self.language)
@@ -171,20 +171,50 @@ class MangaReader:
             self.currently_page.value = f'{self.pages.i}/{self.pages_len}'
             self.page.update()
 
+        def go_to_page(page_index: int):
+            if page_index > self.pages_len or page_index < 1:
+                return
+            self.panel.src_base64 = self.pages.go_to(page_index)
+            self.currently_page.value = f'{page_index}/{self.pages_len}'
+            self.page.update()
+
+        def go_to_first_page():
+            self.panel.src_base64 = self.pages.first()
+            self.currently_page.value = f'1/{self.pages_len}'
+            self.page.update()
+
+        def go_to_last_page():
+            self.panel.src_base64 = self.pages.last()
+            self.currently_page.value = f'{self.pages_len}/{self.pages_len}'
+            if self.pages.i == self.pages_len and \
+                not self.chapters[0].id == self.chapter.id:
+                self.btn_next_chapter.visible = True
+            self.page.update()
+
         keybinds = self.db.get_config()['keybinds']
 
         def on_key(e: ft.KeyboardEvent):
-            if e.key == keybinds['next-page']:
+            if e.key == keybinds['next-page'] \
+                or e.key == 'Page Down':
                 next_page()
-            if e.key == keybinds['previous-page']:
+            if e.key == keybinds['previous-page'] \
+                or e.key == 'Page Up':
                 prev_page()
+            if e.key.isdigit():
+                if e.key == '0':
+                    go_to_page(10)
+                go_to_page(int(e.key))
+            if e.key == 'Home':
+                go_to_first_page()
+            if e.key == 'End':
+                go_to_last_page()
             if e.key == 'J':
                 join_next_image()
             if e.key == keybinds['full-screen']:
-                if self.page.window_full_screen:
-                    self.page.window_full_screen = False
+                if self.page.window.full_screen:
+                    self.page.window.full_screen = False
                 else:
-                    self.page.window_full_screen = True
+                    self.page.window.full_screen = True
             if e.key == 'F3':
                 if not self.drawer.open:
                     self.page.show_end_drawer(self.drawer)
@@ -194,15 +224,15 @@ class MangaReader:
             if e.key == 'F5':
                 self.page.update()
             if e.key == 'Escape':
-                if self.page.window_full_screen:
-                    self.page.window_full_screen = False
+                if self.page.window.full_screen:
+                    self.page.window.full_screen = False
             if e.key == keybinds['return-home']:
                 self.drawer.open = False
                 self.page.update()
                 self.page.title = f'MangaYouKnow {self.page.data['version']}' 
                 self.page.go('/favorites') if not self.page.data['is_index'] else self.page.go('/')
                 self.page.scroll = ft.ScrollMode.ADAPTIVE
-                self.page.window_full_screen = False
+                self.page.window.full_screen = False
                 self.page.data['MangaOpen']()
                 self.page.update()
                 self.page.data['is_first'] = True
@@ -210,7 +240,8 @@ class MangaReader:
 
         def resize(e):
             self.panel.height = float(e.control.height)
-            self.page.update()
+            if self.page.route == '/reader':
+                self.page.update()
 
         self.stack.data = {
             'resize': resize

@@ -38,20 +38,25 @@ class Router:
         self.page.scroll_to(0)
         if r.route == '/reader':
             self.page.data['is_first'] = True
-            self.page.banner.visible = False
             self.espacer.col = 0
             self.body.col = 12
-            self.page.dialog.open = False
+            for overlay in self.page.overlay:
+                if type(overlay) == ft.AlertDialog:
+                    overlay.open = False
+                if type(overlay) == ft.NavigationRail:
+                    overlay.visible = False
             self.page.scroll = False
             reader = MangaReader(self.page).return_content()
             self.body.content = reader
-            self.page.on_resize = reader.data['resize']
+            self.page.on_resized = reader.data['resize']
             return
-        self.page.banner.visible = True
+        for overlay in self.page.overlay:
+            if type(overlay) == ft.NavigationRail:
+                overlay.visible = True
         self.espacer.col = 1
         self.body.col = 11
         self.body.content = self.routes[r.route]
         self.body.update()
         if r.route == '/favorites' or r.route == '/':
             self.update[r.route](self.page.width - 80)
-            self.page.on_resize = self.resize[r.route]
+            self.page.on_resized = self.resize[r.route]
