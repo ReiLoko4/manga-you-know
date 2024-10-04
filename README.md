@@ -4,6 +4,16 @@
 
 
 
+
+!!! THIS REPOSITORY IS DEPRACATED
+
+please look to my better writed version! thx
+https://github.com/manga-you-know/desktop
+<br>
+<br>
+
+
+
 ####
 [- English version here -](https://github.com/ReiLoko4/manga-you-know/blob/main/README.en.md)
 <br>
