@@ -9,19 +9,6 @@ class TCBScansDl(MangaDl):
     def __init__(self):
         self.base_url = 'https://tcbscans.me/'
         self.session = Session()
-        # self.session.headers.update({
-        #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
-        #     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        #     'Accept-Language': 'pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3',
-        #     'Referer': 'https://tcbscans.me/',
-        #     'Alt-Used': 'tcbscans.me',
-        #     'Connection': 'keep-alive',
-        #     'Upgrade-Insecure-Requests': '1',
-        #     'Sec-Fetch-Dest': 'document',
-        #     'Sec-Fetch-Mode': 'navigate',
-        #     'Sec-Fetch-Site': 'same-origin',
-        #     'Sec-Fetch-User': '?1',
-        # })
         self.session.headers.update({
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'accept-language': 'en-US,en;q=0.9',
